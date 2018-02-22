@@ -1,0 +1,27 @@
+####################################################################
+# Attributes definitions
+####################################################################
+[attr]git              text diff merge=text
+[attr]rawtext          text diff merge
+[attr]windowsscript    text eol=crlf diff merge=text
+[attr]nixscript        text eol=lf diff merge=text
+[attr]yml              text diff merge=text
+[attr]markup           text diff merge
+[attr]binary           -text -diff -merge
+
+####################################################################
+# Default settings for all files
+####################################################################
+*                      binary
+
+####################################################################
+# File extensions
+####################################################################
+.gitattributes         git
+.gitignore             git
+*.sh                   nixscript
+*.cmd                  windowsscript
+*.ps1                  windowsscript
+*.txt                  rawtext
+*.md                   markup
+*.yml                  yml

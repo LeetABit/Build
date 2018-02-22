@@ -1,0 +1,7 @@
+﻿version: 0.0.0.{build}-{branch}
+nuget:
+  disable_publish_on_pr: true
+install:
+build_script:
+- cmd: run.cmd
+test: off

@@ -7,3 +7,6 @@
 #  Buildstrapper script for passing local Leet.Build tools feed to the
 #  general buildstrapper.
 #==========================================================================
+
+current_folder="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+"$current_folder/src/Leet.Buildstrapper/run.sh" -RepositoryRoot "$current_folder" -LeetBuildFeed "$current_folder" -ForceInstallLeetBuild "$@"

@@ -1,0 +1,11 @@
+{
+  "title": "Config file for Leet.Build",
+  "$schema": "http://json-schema.org/draft-07/hyper-schema",
+  "type": "object",
+  "properties": {
+    "LeetBuildVersion": {
+      "description": "Version of the Leet.Build tools to for this repository.",
+      "type": "string"
+    }
+  }
+}

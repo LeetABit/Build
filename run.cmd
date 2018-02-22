@@ -7,3 +7,9 @@ REM --------------------------------------------------------------------------
 REM   Buildstrapper script for passing local Leet.Build tools feed to the
 REM   general buildstrapper.
 REM ==========================================================================
+
+:Init
+
+"%~dp0src\Leet.Buildstrapper\run.cmd" -RepositoryRoot "%~dp0\" -LeetBuildFeed "%~dp0\" -ForceInstallLeetBuild %*
+
+:End

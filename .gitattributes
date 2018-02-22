@@ -5,6 +5,7 @@
 [attr]rawtext          text diff merge
 [attr]windowsscript    text eol=crlf diff merge=text
 [attr]nixscript        text eol=lf diff merge=text
+[attr]json             text diff merge=text
 [attr]yml              text diff merge=text
 [attr]markup           text diff merge
 [attr]binary           -text -diff -merge
@@ -24,4 +25,5 @@
 *.ps1                  windowsscript
 *.txt                  rawtext
 *.md                   markup
+*.json                 json
 *.yml                  yml

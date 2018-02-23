@@ -226,7 +226,12 @@ function Install-LeetBuild {
 
             $srcDirectory = Join-Path $sourceDirectoryPath 'src'
             if (Test-Path -Path $srcDirectory -PathType Container) {
-                $sourceDirectoryPath = $srcDirectory
+                $sourceDirectoryPath = Resolve-Path $srcDirectory
+            } else {
+                $srcDirectory = Join-Path $sourceDirectoryPath '*' 'src'
+                if (Test-Path -Path $srcDirectory -PathType Container) {
+                    $sourceDirectoryPath = Resolve-Path $srcDirectory
+                }
             }
 
             if (Test-Path -Path (Join-Path $sourceDirectoryPath 'Leet.Build*') -PathType Container) {
@@ -245,7 +250,7 @@ function Install-LeetBuild {
             if ($archiveExtracted) {
                 Write-Modification "Removing Leet.Build archive '$tempFilePath' and temporary directory '$sourceDirectoryPath'."
                 Remove-Item -Path $tempFilePath -Force -ErrorAction Continue
-                Remove-Item -Path $sourceDirectoryPath -Force -ErrorAction Continue
+                Remove-Item -Path $sourceDirectoryPath -Force -Recurse -ErrorAction Continue
             }
         }
 
@@ -542,8 +547,12 @@ function Test-RemoteFileExists ( [String] $SourcePath ) {
     if ($SourcePath -notlike 'http*') {
         return (Test-Path $SourcePath -PathType Leaf)
     } else {
-        $response = Invoke-WebRequest -UseBasicParsing -Uri $SourcePath -Method 'Head'
-        return $response.StatusCode -ne 200
+        try {
+            $response = Invoke-WebRequest -UseBasicParsing -Uri $SourcePath -Method 'Head' -ErrorAction SilentlyContinue
+            return $response.StatusCode -eq 200
+        } catch {
+            return $False
+        }
     }
 }
 

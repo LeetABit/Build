@@ -55,7 +55,8 @@ Set-StrictMode -Version 2
 $ErrorActionPreference   = 'Stop'
 $WarningPreference       = 'Continue'
 
-$LastFoldName       = ""
+$LastFoldName    = ""
+$ImportedModules = @()
 
 $StepColor         = [char]0x001b + '[0;36m'
 $ModificationColor = [char]0x001b + '[1;35m'
@@ -71,7 +72,9 @@ function Invoke-MainScript () {
         Write-Invocation (Get-Variable -Name MyInvocation -Scope 1 -ValueOnly)
         Initialize-ScriptConfiguration
         Install-LeetBuild
+        Import-LeetBuildModules
     } finally {
+        Remove-ImportedLeetBuildModules
         Write-Host
     }
 }
@@ -195,7 +198,7 @@ Otherwise this function downloads them from GitHub releases and place zip conten
 function Install-LeetBuild {
     Write-Step -FoldName LeetBuildVersion -Message "Checking Leet.Build v$script:LeetBuildVersion availability."
     $leetBuildModulesRoot = Join-Path $script:LeetBuildHome $script:LeetBuildVersion
-
+    
     if ($script:ForceInstallLeetBuild -or -not (Test-LeetBuildDeployed $leetBuildModulesRoot)) {
         $sourceDirectoryPath   = Join-Path $script:LeetBuildHome "Leet.Build-$LeetBuildVersion"
         $tempFilePath          = $sourceDirectoryPath + ".zip"
@@ -224,7 +227,7 @@ function Install-LeetBuild {
                 $sourceDirectoryPath = $srcDirectory
             }
 
-            if (Test-Path -Path (Join-Path $sourceDirectoryPath 'Leet.Build') -PathType Container) {
+            if (Test-Path -Path (Join-Path $sourceDirectoryPath 'Leet.Build*') -PathType Container) {
                 if (Test-Path -Path $leetBuildModulesRoot -PathType Container) {
                     Write-Modification "Removing content of '$leetBuildModulesRoot' directory."
                     Remove-Item -Path $leetBuildModulesRoot -Force -Recurse -Confirm:$False
@@ -274,6 +277,48 @@ function Test-LeetBuildDeployed ( [String] $DeploymentPath ) {
 
     $calculatedHash = Get-DirectoryHash $DeploymentPath
     return -Not (Compare-Object $storedHash $calculatedHash -PassThru)
+}
+
+<#
+.SYNOPSIS
+Imports Leet.Build module from its install location.
+#>
+function Import-LeetBuildModules {
+    Write-Step -FoldName "LeetBuildImport" -Message "Importing Leet.Build modules."
+
+    $modulesBefore = Get-Module 'Leet.Build*'
+    try {
+        Get-Module 'Leet.Build*' -ListAvailable | Foreach-Object {
+            Write-Host "Importing '$($_.Name)' module..."
+            Import-Module $_
+            $script:ImportedModules += $_
+        }   
+    }
+    finally {
+        $modulesAfter = Get-Module 'Leet.Build*'
+        $script:ImportedModules = if ($modulesBefore) {
+            Compare-Object $modulesAfter $modulesBefore -PassThru
+        } else {
+            $modulesAfter
+        }
+    }
+
+    Write-Success -FoldName "LeetBuildImport"
+}
+
+<#
+.SYNOPSIS
+Unloads Leet.Build module.
+#>
+function Remove-ImportedLeetBuildModules {
+    Write-Step -FoldName  "LeetBuildCleanup" -Message "Removing imported Leet.Build modules."
+
+    $script:ImportedModules | Foreach-Object {
+        Write-Host "Removing '$($_.Name)' module..."
+        Remove-Module $_ -ErrorAction Continue
+    }
+
+    Write-Success -FoldName "LeetBuildCleanup"
 }
 
 <#

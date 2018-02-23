@@ -6,7 +6,7 @@
     Copyright         = 'Copyright (c) Leet. All rights reserved.'
     Description       = 'Represents the main Leet.Build module.'
     PowerShellVersion = '6.0'
-    NestedModules     = @()
+    NestedModules     = @('Leet.Build.Logging')
     FunctionsToExport = @('Invoke-LeetBuild')
     VariablesToExport = @()
     CmdletsToExport   = @()

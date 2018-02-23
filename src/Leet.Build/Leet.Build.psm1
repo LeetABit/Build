@@ -20,6 +20,10 @@ Invoke-LeetBuildCommand "msbuild" /t:Rebuild
 #>
 function Invoke-LeetBuild ( [String]   $RepositoryRoot ,
                             [String[]] $Arguments      ) {
+    Write-Invocation $MyInvocation
+    
+    Write-Step -StepName "LeetBuild" -Message "Starting Leet.Build" -Major
+    Write-Success
 }
 
 Export-ModuleMember -Variable '*' -Alias '*' -Function '*' -Cmdlet '*'

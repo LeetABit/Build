@@ -23,6 +23,8 @@
 *.sh                   nixscript
 *.cmd                  windowsscript
 *.ps1                  windowsscript
+*.psd1                 windowsscript
+*.psm1                 windowsscript
 *.txt                  rawtext
 *.md                   markup
 *.json                 json

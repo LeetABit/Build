@@ -73,8 +73,10 @@ function Invoke-MainScript () {
         Initialize-ScriptConfiguration
         Install-LeetBuild
         Import-LeetBuildModules
+
+        try     { Invoke-LeetBuild $script:RepositoryRoot $Arguments }
+        finally { Remove-ImportedLeetBuildModules  }
     } finally {
-        Remove-ImportedLeetBuildModules
         Write-Host
     }
 }
@@ -198,7 +200,7 @@ Otherwise this function downloads them from GitHub releases and place zip conten
 function Install-LeetBuild {
     Write-Step -FoldName LeetBuildVersion -Message "Checking Leet.Build v$script:LeetBuildVersion availability."
     $leetBuildModulesRoot = Join-Path $script:LeetBuildHome $script:LeetBuildVersion
-    
+
     if ($script:ForceInstallLeetBuild -or -not (Test-LeetBuildDeployed $leetBuildModulesRoot)) {
         $sourceDirectoryPath   = Join-Path $script:LeetBuildHome "Leet.Build-$LeetBuildVersion"
         $tempFilePath          = $sourceDirectoryPath + ".zip"
@@ -523,7 +525,7 @@ This cmdlet is designed to work with the data exposed by any provider. To list t
 Join-Paths 'C:' ('First\', '\Second', '\Third\', 'Fourth.file')
 #>
 function Join-Paths ( [String]   $Path       ,
-                      [String[]] $ChildPaths ) {
+                            [String[]] $ChildPaths ) {
     $isWeb = ($Path -like 'http*')
     $ChildPaths | ForEach-Object { $Path = if ($isWeb) { "$Path/$_" } else { Join-Path $Path $_ } }
     return $Path

@@ -1,13 +1,13 @@
 ####################################################################
 # Attributes definitions
 ####################################################################
-[attr]git              text diff merge=text
-[attr]rawtext          text diff merge
-[attr]windowsscript    text eol=crlf diff merge=text
-[attr]nixscript        text eol=lf diff merge=text
-[attr]json             text diff merge=text
-[attr]yml              text diff merge=text
-[attr]markup           text diff merge
+[attr]git              !binary text diff merge=text
+[attr]rawtext          !binary text diff merge
+[attr]windowsscript    !binary text eol=crlf diff merge=text
+[attr]nixscript        !binary text eol=lf diff merge=text
+[attr]json             !binary text diff merge=text
+[attr]yml              !binary text diff merge=text
+[attr]markup           !binary text diff merge
 [attr]binary           -text -diff -merge
 
 ####################################################################

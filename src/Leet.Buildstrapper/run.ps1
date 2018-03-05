@@ -22,7 +22,7 @@ Path to the Leet.Build tools feed to be used.
 For GitHub releases use 'https://github.com/Leet/BuildTools/releases/download'
 For GitHub source code use 'https://github.com/hubuk/Corelib/archive'
 
-.PARAMETER $ForceInstallLeetBuild
+.PARAMETER ForceInstallLeetBuild
 Determines whether a specified version of Leet.Build shall be installed even if it is already available in the system.
 
 .PARAMETER Arguments
@@ -52,11 +52,10 @@ param( [String]   $RepositoryRoot   = $PSScriptRoot ,
 
 Set-StrictMode -Version 2
 
-$ErrorActionPreference   = 'Stop'
-$WarningPreference       = 'Continue'
+$ErrorActionPreference = 'Stop'
+$WarningPreference     = 'Continue'
 
-$LastFoldName    = ""
-$ImportedModules = @()
+$LastFoldName = ""
 
 $StepColor         = [char]0x001b + '[0;36m'
 $ModificationColor = [char]0x001b + '[1;35m'
@@ -68,14 +67,22 @@ $DefaultColor      = [char]0x001b + '[0m'
 Invokes main script's procedure.
 #>
 function Invoke-MainScript () {
+    $BackupPSModulePath = $env:PSModulePath
+
     try {
-        Write-Invocation (Get-Variable -Name MyInvocation -Scope 1 -ValueOnly)
+        Write-BuildstrapperInvocation (Get-Variable -Name MyInvocation -Scope 1 -ValueOnly)
         Initialize-ScriptConfiguration
         Install-LeetBuild
         Import-LeetBuildModules
 
-        try     { Invoke-LeetBuild $script:RepositoryRoot $Arguments }
-        finally { Remove-ImportedLeetBuildModules  }
+        try {
+            Leet.Build\Invoke-LeetBuild $script:RepositoryRoot $Arguments
+        }
+        finally {
+            Remove-LeetBuildModules
+            Write-Verbose "Undoing changes for `$env:PSModulePath."
+            $env:PSModulePath = $BackupPSModulePath
+        }
     } finally {
         Write-Host
     }
@@ -196,12 +203,15 @@ Installs Leet.Build tools in a version specified by script parameters and return
 .DESCRIPTION
 If the Leet.Build tools in a specified version are already present in the target directory this returns.
 Otherwise this function downloads them from GitHub releases and place zip content in the target directory before returning.
+
+.OUTPUTS
+A string path to the Leet.Build installation directory.
 #>
 function Install-LeetBuild {
-    Write-Step -FoldName LeetBuildVersion -Message "Checking Leet.Build v$script:LeetBuildVersion availability."
-    $leetBuildModulesRoot = Join-Path $script:LeetBuildHome $script:LeetBuildVersion
+    Write-BuildstrapperStep -FoldName LeetBuildVersion -Message "Checking Leet.Build v$script:LeetBuildVersion availability."
+    $script:LeetBuildModulesRoot = Join-Path $script:LeetBuildHome $script:LeetBuildVersion
 
-    if ($script:ForceInstallLeetBuild -or -not (Test-LeetBuildDeployed $leetBuildModulesRoot)) {
+    if ($script:ForceInstallLeetBuild -or -not (Test-LeetBuildDeployed $script:LeetBuildModulesRoot)) {
         $sourceDirectoryPath   = Join-Path $script:LeetBuildHome "Leet.Build-$LeetBuildVersion"
         $tempFilePath          = $sourceDirectoryPath + ".zip"
         $archiveExtracted      = $False
@@ -213,7 +223,7 @@ function Install-LeetBuild {
             foreach ($suffix in $supportedPathSuffixes) {
                 $sourceFilePath = Join-Paths $script:LeetBuildFeed $suffix
                 if (Get-RemoteFile $sourceFilePath $tempFilePath) {
-                    Write-Modification -Message "Extracting Leet.Build avchive to '$sourceDirectoryPath'."
+                    Write-BuildstrapperModification -Message "Extracting Leet.Build avchive to '$sourceDirectoryPath'."
                     Expand-Archive -Path $tempFilePath -DestinationPath $sourceDirectoryPath
                     $archiveExtracted = $True
                     break
@@ -235,32 +245,34 @@ function Install-LeetBuild {
             }
 
             if (Test-Path -Path (Join-Path $sourceDirectoryPath 'Leet.Build*') -PathType Container) {
-                if (Test-Path -Path $leetBuildModulesRoot -PathType Container) {
-                    Write-Modification "Removing content of '$leetBuildModulesRoot' directory."
-                    Remove-Item -Path $leetBuildModulesRoot -Force -Recurse -Confirm:$False
+                if (Test-Path -Path $script:LeetBuildModulesRoot -PathType Container) {
+                    Write-BuildstrapperModification "Removing content of '$script:LeetBuildModulesRoot' directory."
+                    Remove-Item -Path $script:LeetBuildModulesRoot -Force -Recurse -Confirm:$False
                 }
 
-                Write-Modification "Copying Leet.Build files from '$sourceDirectoryPath' to '$leetBuildModulesRoot'..."
-                Copy-Item -Path $sourceDirectoryPath -Destination $leetBuildModulesRoot -Force -Container -Recurse
-                $checksumFilePath = Join-Path $leetBuildModulesRoot 'Leet.Build.md5'
-                Write-Modification "Writing checksum to '$checksumFilePath' file..."
+                Write-BuildstrapperModification "Copying Leet.Build files from '$sourceDirectoryPath' to '$script:LeetBuildModulesRoot'..."
+                Copy-Item -Path $sourceDirectoryPath -Destination $script:LeetBuildModulesRoot -Force -Container -Recurse
+                $checksumFilePath = Join-Path $script:LeetBuildModulesRoot 'Leet.Build.md5'
+                Write-BuildstrapperModification "Writing checksum to '$checksumFilePath' file..."
                 Get-DirectoryHash $sourceDirectoryPath | Out-File $checksumFilePath
             }
+
+            Write-Verbose "Setting '$script:LeetBuildModulesRoot' as a head of `$env:PSModulePath variable."
+            $env:PSModulePath = Set-DirectoryAsPathHead $script:LeetBuildModulesRoot $env:PSModulePath
         } finally {
             if ($archiveExtracted) {
-                Write-Modification "Removing Leet.Build archive '$tempFilePath' and temporary directory '$sourceDirectoryPath'."
+                Write-BuildstrapperModification "Removing Leet.Build archive '$tempFilePath' and temporary directory '$sourceDirectoryPath'."
                 Remove-Item -Path $tempFilePath -Force -ErrorAction Continue
                 Remove-Item -Path $sourceDirectoryPath -Force -Recurse -ErrorAction Continue
             }
         }
 
-        Write-Host "Leet.Build v$script:LeetBuildVersion has been installed at '$leetBuildModulesRoot'."        
+        Write-Host "Leet.Build v$script:LeetBuildVersion has been installed at '$script:LeetBuildModulesRoot'."        
     } else {
-        Write-Host "Leet.Build v$script:LeetBuildVersion already installed at '$leetBuildModulesRoot'."        
+        Write-Host "Leet.Build v$script:LeetBuildVersion already installed at '$script:LeetBuildModulesRoot'."        
     }
-
-    $env:PSModulePath = Add-DirectoryToPath $leetBuildModulesRoot $env:PSModulePath
-    Write-Success
+    
+    Write-BuildstrapperSuccess
 }
 
 <#
@@ -288,44 +300,25 @@ function Test-LeetBuildDeployed ( [String] $DeploymentPath ) {
 
 <#
 .SYNOPSIS
-Imports Leet.Build module from its install location.
+Imports Leet.Build modules.
 #>
 function Import-LeetBuildModules {
-    Write-Step -FoldName "LeetBuildImport" -Message "Importing Leet.Build modules."
-
-    $modulesBefore = Get-Module 'Leet.Build*'
-    try {
-        Get-Module 'Leet.Build*' -ListAvailable | Foreach-Object {
-            Write-Host "Importing '$($_.Name)' module..."
-            Import-Module $_
-            $script:ImportedModules += $_
-        }   
-    }
-    finally {
-        $modulesAfter = Get-Module 'Leet.Build*'
-        $script:ImportedModules = if ($modulesBefore) {
-            Compare-Object $modulesAfter $modulesBefore -PassThru
-        } else {
-            $modulesAfter
-        }
-    }
-
-    Write-Success -FoldName "LeetBuildImport"
+    Write-BuildstrapperStep -FoldName "LeetBuildImport" -Message "Importing Leet.Build modules."
+    Write-Host "Importing 'Leet.Build.Modules' module..."
+    Import-Module 'Leet.Build.Modules' -Force -Global
+    Leet.Build.Modules\Import-ModulesFromLocation $script:LeetBuildModulesRoot
+    Write-BuildstrapperSuccess
 }
 
 <#
 .SYNOPSIS
 Unloads Leet.Build module.
 #>
-function Remove-ImportedLeetBuildModules {
-    Write-Step -FoldName  "LeetBuildCleanup" -Message "Removing imported Leet.Build modules."
-
-    $script:ImportedModules | Foreach-Object {
-        Write-Host "Removing '$($_.Name)' module..."
-        Remove-Module $_ -ErrorAction Continue
-    }
-
-    Write-Success -FoldName "LeetBuildCleanup"
+function Remove-LeetBuildModules {
+    Write-BuildstrapperStep -FoldName  "LeetBuildCleanup" -Message "Removing imported Leet.Build modules."
+    Write-Host "Removing 'Leet.Build.Modules' module..."
+    Remove-Module 'Leet.Build.Modules' -Force -ErrorAction Continue
+    Write-BuildstrapperSuccess
 }
 
 <#
@@ -335,7 +328,7 @@ Writes to the host information about the specified invocation.
 .PARAMETER Invocation
 Invocation which information shall be written.
 #>
-function Write-Invocation( [System.Management.Automation.InvocationInfo] $Invocation ) {
+function Write-BuildstrapperInvocation( [System.Management.Automation.InvocationInfo] $Invocation ) {
     Write-Verbose "Executing: '$($Invocation.MyCommand)' with parameters:"
     $Invocation.BoundParameters.Keys | ForEach-Object {
         Write-Verbose "  -$_ = `"$($Invocation.BoundParameters[$_])`""
@@ -349,7 +342,7 @@ Writes a message that informs about state change in the current system.
 .PARAMETER Message
 Installation message to be written by the host.
 #>
-function Write-Modification ( [String] $Message ) {
+function Write-BuildstrapperModification ( [String] $Message ) {
     Write-Host "$script:ModificationColor$Message$script:DefaultColor"
 }
 
@@ -363,7 +356,7 @@ Step information message to be written by the host.
 .PARAMETER FoldName
 Name of the fold to start if supported by the host.
 #>
-function Write-Step ( [String] $Message  ,
+function Write-BuildstrapperStep ( [String] $Message  ,
                       [String] $FoldName ) {
     $preamble = ""
 
@@ -379,7 +372,7 @@ function Write-Step ( [String] $Message  ,
 .SYNOPSIS
 Writes a specified build step success message string to the host.
 #>
-function Write-Success () {
+function Write-BuildstrapperSuccess () {
     $preamble = ""
 
     if ($env:TRAVIS) {
@@ -392,30 +385,18 @@ function Write-Success () {
 
 <#
 .SYNOPSIS
-Adds a specified directory to environmental variable PATH if not yet contained.
+Adds a specified directory to the $Path variable head.
 
 .PARAMETER Directory
-A directory to be added to the PATH.
+A directory to be added to the $Path.
 
 .PARAMETER Path
-A value of the environmental variable PATH to which the directory shall be added.
-
-.NOTES
-Equality for $Directory and each item in the $Path parameter is determined using [System.IO.Path]::GetFullPath method.
+A value of the path set to which the directory shall be added.
 #>
-function Add-DirectoryToPath ( [String] $Directory ,
-                               [String] $Path  ) {
+function Set-DirectoryAsPathHead ( [String] $Directory ,
+                                   [String] $Path      ) {
     $delimiter = if ($IsWindows) { ';' } else { ':' }
-    $resolvedDirectory = [System.IO.Path]::GetFullPath($Directory)
-    
-    foreach ($item in $Path -split $delimiter) {
-        $resolvedItem = [System.IO.Path]::GetFullPath($item)
-        if ($resolvedDirectory -eq $resolvedItem) {
-            return $Path
-        }
-    }
-    
-    return "$resolvedDirectory$delimiter$Path"
+    return "$Directory$delimiter$Path"
 }
 
 <#
@@ -453,7 +434,7 @@ function Get-RemoteFile ( [String] $SourcePath      ,
                           [Switch] $ThrowOnError    ) {
     $result = $False
     if (Test-RemoteFileExists $SourcePath) {
-        Write-Modification "Obtaining file from '$SourcePath' to '$DestinationPath'..."
+        Write-BuildstrapperModification "Obtaining file from '$SourcePath' to '$DestinationPath'..."
 
         if ($SourcePath -notlike 'http*') {
             if (Test-Path $SourcePath -PathType Leaf) {

@@ -7,10 +7,10 @@ $WarningPreference     = 'Continue'
 
 <#
 .SYNOPSIS
-Execute the given LeetBuild command.
+Execute the given Leet.Build command.
 
-.PARAMETER Command
-The command to be executed.
+.PARAMETER RepositoryRoot
+The path to the repository root folder.
 
 .PARAMETER Arguments
 Command arguments to be passed to the command.
@@ -21,7 +21,6 @@ Invoke-LeetBuildCommand "msbuild" /t:Rebuild
 function Invoke-LeetBuild ( [String]   $RepositoryRoot ,
                             [String[]] $Arguments      ) {
     Write-Invocation $MyInvocation
-    
     Write-Step -StepName "LeetBuild" -Message "Starting Leet.Build" -Major
     Write-Success
 }

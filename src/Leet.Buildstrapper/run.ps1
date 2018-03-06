@@ -306,7 +306,7 @@ function Import-LeetBuildModules {
     Write-BuildstrapperStep -FoldName "LeetBuildImport" -Message "Importing Leet.Build modules."
     Write-Host "Importing 'Leet.Build.Modules' module..."
     Import-Module 'Leet.Build.Modules' -Force -Global
-    Leet.Build.Modules\Import-ModulesFromLocation $script:LeetBuildModulesRoot
+    Leet.Build.Modules\Import-ModulesFromDirectory $script:LeetBuildModulesRoot
     Write-BuildstrapperSuccess
 }
 

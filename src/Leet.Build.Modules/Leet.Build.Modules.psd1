@@ -7,8 +7,10 @@
     Description       = 'Provides import and removal of Leet.Build extension modules.'
     PowerShellVersion = '6.0'
     NestedModules     = @('Leet.Build.Logging')
-    FunctionsToExport = @('Import-ModulesFromLocation',
-                          'Remove-ModulesFromLocation')
+    FunctionsToExport = @('Import-ModulesFromDirectory',
+                          'Remove-ModulesFromDirectory',
+                          'Import-ModuleFromManifest',
+                          'Remove-ModuleFromManifest')
     VariablesToExport = @()
     CmdletsToExport   = @()
     AliasesToExport   = @()

@@ -23,6 +23,7 @@ function Invoke-LeetBuild ( [String]   $RepositoryRoot ,
     Write-Invocation $MyInvocation
     Write-Step -StepName "LeetBuild" -Message "Starting Leet.Build" -Major
     Leet.Build.Extensions\Import-ProjectExtensionModules $RepositoryRoot
+    Leet.Build.Arguments\Set-CommandArguments $RepositoryRoot $Arguments
     Write-Success
 }
 

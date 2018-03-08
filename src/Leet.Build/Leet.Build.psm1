@@ -21,8 +21,8 @@ Invoke-LeetBuildCommand "msbuild" /t:Rebuild
 function Invoke-LeetBuild ( [String]   $RepositoryRoot ,
                             [String[]] $Arguments      ) {
     Write-Invocation $MyInvocation
-    Write-Step -StepName "LeetBuild" -Message "Starting Leet.Build" -Major
-    Leet.Build.Arguments\Set-CommandArguments $RepositoryRoot $Arguments
+    Write-Step -Message "Starting Leet.Build" -Major
+    Leet.Build.Commands\Invoke-Command $RepositoryRoot $Arguments
     Write-Success
 }
 

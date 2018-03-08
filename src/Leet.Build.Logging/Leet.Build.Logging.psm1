@@ -109,7 +109,7 @@ Determines whether the step is a major one or minor.
 function Write-Step ( [String] $StepName ,
                       [String] $Message  ,
                       [Switch] $Major    ) {
-    $preamble = if ($env:TRAVIS) { "travis_fold:start:$StepName`r" } else { '' }
+    $preamble = if ($env:TRAVIS -and $StepName) { "travis_fold:start:$StepName`r" } else { '' }
     $color    = if ($Major) { "$script:LightPrefix$script:CyanColor" } else { "$script:DarkPrefix$script:CyanColor" }
 
     Write-Message -Preamble $preamble -Color $color -Message $Message
@@ -127,7 +127,7 @@ function Write-Success ( [String] $StepName ,
     $foldName = if ($psboundparameters.ContainsKey("StepName")) { $StepName } else { $script:LastStepName }
     $isMajor  = if ($psboundparameters.ContainsKey("Major"))    { $Major    } else { $script:LastIsMajor  }
   
-    $preamble = if ($env:TRAVIS) { "travis_fold:end:$foldName`r" } else { '' }
+    $preamble = if ($env:TRAVIS -and $foldName) { "travis_fold:end:$foldName`r" } else { '' }
     $color    = if ($isMajor) { "$script:LightPrefix$script:GreenColor" } else { "$script:DarkPrefix$script:GreenColor" }
     
     Write-Message -Preamble $preamble -Color $color -Message 'Success.'

@@ -48,6 +48,8 @@ function Set-CommandArguments ( [String]   $RepositoryRoot ,
         if (-not $command) { $command = 'verify' }
         $script:NamedArguments.Add('Command', $command)
     }
+
+    return $command
 }
 
 <#
@@ -248,6 +250,35 @@ function Test-ParameterName (       [String] $Argument     ,
 
     $ParametrName = $null
     return $False
+}
+
+<#
+.SYNOPSIS
+Selects arguments for the specified parameters.
+
+.PARAMETER Parameters
+Dictionary that contains name of the parameters mapped to a value which determines whether the parameter is a switch.
+
+.PARAMETER NamedArguments
+Variable which gets a dictionary of parameter names mapped to its argument's values.
+
+.PARAMETER PositionalArguments
+Variable which gets a collection of argument's values for parameters which names were not specfied.
+#>
+function Select-Arguments([Hashtable] $Parameters, [Ref][Hashtable] $NamedArguments, [Ref][String[]] $PositionalArguments) {
+    $NamedArguments.Value = @{}
+    $PositionalArguments.Value = @()
+    
+    $Parameters.Keys | ForEach-Object {
+        $argument = $null
+        if (Find-NamedArgument $_ -IsSwitch:$Parameters[$_] ([Ref]$argument)) {
+            $NamedArguments.Value[$_] = $argument
+        }
+    }
+
+    if ($NamedArguments.Value.Count -lt $Parameters.Count) {
+        $PositionalArguments.Value = $script:PositionalArguments + $script:UnknownArguments
+    }
 }
 
 Export-ModuleMember -Variable '*' -Alias '*' -Function '*' -Cmdlet '*'

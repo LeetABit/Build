@@ -5,9 +5,11 @@ Set-StrictMode -Version 2
 $ErrorActionPreference = 'Stop'
 $WarningPreference     = 'Continue'
 
-$NamedArguments = @{}
+$ConfigurationJson = $Null
+$NamedArguments    = @{}
+
 [Collections.Generic.List[String]]$script:PositionalArguments = [Collections.Generic.List[String]]::new()
-[Collections.Generic.List[String]]$script:UnknownArguments = [Collections.Generic.List[String]]::new()
+[Collections.Generic.List[String]]$script:UnknownArguments    = [Collections.Generic.List[String]]::new()
 
 <#
 .SYNOPSIS
@@ -21,6 +23,7 @@ Collection of other arguments passed.
 #>
 function Set-CommandArguments ( [String]   $RepositoryRoot ,
                                 [String[]] $Arguments      ) {
+    Initialize-ConfigurationFromFile $RepositoryRoot
     $script:NamedArguments.Clear()
     $script:NamedArguments.Add('RepositoryRoot', $RepositoryRoot)
 
@@ -32,6 +35,64 @@ function Set-CommandArguments ( [String]   $RepositoryRoot ,
     }
 
     Find-PositionalArguments
+
+    $command = $Null
+    if (-not (Find-NamedArgument 'Command' ([Ref]$command))) {
+        if ($script:PositionalArguments.Count -gt 0) {
+            $command = $script:PositionalArguments[0]
+            $script:PositionalArguments.RemoveAt(0)
+        } else {
+            $command = Find-FirstPositionalArgument
+        }
+
+        if (-not $command) { $command = 'verify' }
+        $script:NamedArguments.Add('Command', $command)
+    }
+}
+
+<#
+.SYNOPSIS
+Initializes a script configuration values from Leet.Build.json configuration file.
+
+.PARAMETER RepositoryRoot
+Value of the -RepositoryRoot parameter.
+#>
+function Initialize-ConfigurationFromFile ( [String] $RepositoryRoot ){
+    $configFilePath = Join-Paths $RepositoryRoot ('build', 'Leet.Build.json')
+    Write-Verbose "Initializing configuration using '$configFilePath' as fallback file."
+    $script:ConfigurationJson = $Null
+
+    if (Test-Path $configFilePath -PathType Leaf) {
+        $configFileContent = Get-Content -Raw -Encoding UTF8 -Path $configFilePath
+        $script:ConfigurationJson = ConvertFrom-Json $configFileContent
+    }
+}
+
+<#
+.SYNOPSIS
+Gets a value for the specified script's parameter from the Leet.Build.json configuration file.
+
+.PARAMETER ParameterName
+Name of the script's parameter which value shall be obtained.
+
+.PARAMETER DefaultValue
+A default value for the script's parameter that shall be used if parameter's value is not present in the configuration file.
+
+.NOTES
+If default value is $Null then this function throws an exception if the parameter's value is not present if the configuration file.
+#>
+function Get-ConfigurationFileParameterValue ( [String] $ParameterName         ,
+                                               [String] $DefaultValue  = $Null ) {
+    $result = $DefaultValue
+    if ($script:ConfigurationJson -and (Get-Member -Name $ParameterName -InputObject $script:ConfigurationJson)) {
+        $result = $script:ConfigurationJson.$ParameterName
+    }
+    
+    if ($result -eq $Null) {
+        throw "Could not find '$ParameterName' member in Leet.Build.json configuration file."
+    }
+
+    return $result
 }
 
 <#
@@ -81,8 +142,8 @@ A variable that receives a value of the named parameter found.
 function Find-NamedArgument (       [String] $ParameterName ,
                                     [Switch] $IsSwitch      ,
                               [Ref] [Object] $ArgumentFound ) {
-    if ($script:NamedArguments[$ArgumentName]) {
-        $ArgumentFound.Value = $script:NamedArguments[$ArgumentName]
+    if ($script:NamedArguments[$ParameterName]) {
+        $ArgumentFound.Value = $script:NamedArguments[$ParameterName]
         return $True
     }
 
@@ -92,50 +153,51 @@ function Find-NamedArgument (       [String] $ParameterName ,
         if ($hasNaxtArgument) {
             $nextCandidate = $script:UnknownArguments[$i + 1]
         } elseif (-Not ($IsSwitch)) {
-            $ArgumentFound.Value = $null
-            return $False
+            break
         }
 
         $parameterName = Select-ParameterName $unknownCandidate
-        if ($parameterName -eq $ArgumentName) {
+        if ($parameterName -eq $ParameterName) {
             if ($IsSwitch) {
                 if ($unknownCandidate.EndsWith(':')) {
                     if ($hasNaxtArgument) {
                         if (($nextCandidate -eq 'True') -or ($nextCandidate -eq 'False')) {
-                            $script:NamedArguments[$ArgumentName] = [Switch][System.Boolean]$nextCandidate
+                            $script:NamedArguments[$ParameterName] = [Switch][System.Boolean]$nextCandidate
                             $script:UnknownArguments.RemoveAt($i)
                             $script:UnknownArguments.RemoveAt($i)
-                            if ($i -eq 0) { Find-PositionalArguments }                            
-                            $ArgumentFound.Value = $script:NamedArguments[$ArgumentName]
+                            if ($i -eq 0) { Find-PositionalArguments }
+                            $ArgumentFound.Value = $script:NamedArguments[$ParameterName]
                             return $True
                         }
                     }
                 } else {
-                    $script:NamedArguments[$ArgumentName] = [Switch]$True
+                    $script:NamedArguments[$ParameterName] = [Switch]$True
                     $script:UnknownArguments.RemoveAt($i)
                     if ($i -eq 0) { Find-PositionalArguments }
-                    $ArgumentFound.Value = $script:NamedArguments[$ArgumentName]
+                    $ArgumentFound.Value = $script:NamedArguments[$ParameterName]
                     return $True
                 }
             } else {
-                $script:NamedArguments[$ArgumentName] = $nextCandidate
+                $script:NamedArguments[$ParameterName] = $nextCandidate
                 $script:UnknownArguments.RemoveAt($i)
                 $script:UnknownArguments.RemoveAt($i)
                 if ($i -eq 0) { Find-PositionalArguments }
-                $ArgumentFound.Value = $script:NamedArguments[$ArgumentName]
+                $ArgumentFound.Value = $script:NamedArguments[$ParameterName]
                 return $True
             }
         }
     }
 
-    return $False
+    $defaultValue = [guid]::NewGuid()
+    $ArgumentFound.Value = Get-ConfigurationFileParameterValue $ParameterName $defaultValue
+    return $ArgumentFound.Value -ne $defaultValue
 }
 
 <#
 .SYNOPSIS
 Finds positional arguments in list of not currently known arguments.
 #>
-function Find-PositionalArguments () {
+function Find-PositionalArguments {
     while ($script:UnknownArguments.Count -gt 0) {
         if (-Not (Test-ParameterName $script:UnknownArguments[0])) {
             $script:PositionalArguments += $script:UnknownArguments[0]
@@ -146,10 +208,33 @@ function Find-PositionalArguments () {
 
 <#
 .SYNOPSIS
+Finds first positional arguments in list of not currently known arguments skipping candidates for named arguments.
+#>
+function Find-FirstPositionalArgument {
+    $index = 0
+
+    while ($script:UnknownArguments.Count -gt $index) {
+        if (-Not (Test-ParameterName $script:UnknownArguments[$index])) {
+            $result = $script:UnknownArguments[$index]
+            $script:UnknownArguments.RemoveAt($index)
+            return $result
+        } else {
+            $index += 2
+        }
+    }
+
+    return $Null
+}
+
+<#
+.SYNOPSIS
 Checks whether the specified argument represents a name of the parameter specifier.
 
 .PARAMETER Argument
 Argument which shall be checked.
+
+.PARAMETER ParametrName
+A variable that gets a value of the parameter's name found.
 #>
 function Test-ParameterName (       [String] $Argument     ,
                               [Ref] [String] $ParametrName ) {

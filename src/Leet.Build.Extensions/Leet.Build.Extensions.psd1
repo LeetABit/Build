@@ -8,7 +8,9 @@
     PowerShellVersion = '6.0'
     NestedModules     = @('Leet.Build.Logging',
                           'Leet.Build.Modules')
-    FunctionsToExport = @('Import-ProjectExtensionModules')
+    FunctionsToExport = @('Import-ProjectExtensionModules',
+                          'Remove-ProjectExtensionModules',
+                          'Get-ExtensionModules')
     VariablesToExport = @()
     CmdletsToExport   = @()
     AliasesToExport   = @()

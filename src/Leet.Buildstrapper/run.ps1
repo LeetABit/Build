@@ -307,6 +307,7 @@ function Import-LeetBuildModules {
     Write-Host "Importing 'Leet.Build.Modules' module..."
     Import-Module 'Leet.Build.Modules' -Force -Global
     Leet.Build.Modules\Import-ModulesFromDirectory $script:LeetBuildModulesRoot
+    Leet.Build.Extensions\Import-ProjectExtensionModules $script:RepositoryRoot
     Write-BuildstrapperSuccess
 }
 

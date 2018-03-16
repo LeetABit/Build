@@ -75,7 +75,7 @@ The path to the module manifest file to import.
 function Import-ModuleFromManifest ( [String] $ManifestPath ) {
     $moduleName = $(Test-ModuleManifest $ManifestPath).Name
     Write-Host "Importing '$moduleName' module..."
-    $script:ImportedModulesFromManifests[$ManifestPath] = Import-Module -Name $ManifestPath -Global -PassThru
+    return $script:ImportedModulesFromManifests[$ManifestPath] = Import-Module -Name $ManifestPath -Global -PassThru
 }
 
 <#
@@ -87,7 +87,7 @@ The path to the module manifest to unload.
 #>
 function Remove-ModuleFromManifest ( [String] $ManifestPath ) {
     if ($script:ImportedModulesFromManifests.ContainsKey($ManifestPath)) {
-        $moduleName = $(Test-ModuleManifest $ManifestPath).Name
+        $moduleName = (Get-ChildItem $ManifestPath).BaseName
         Write-Host "Removing '$moduleName' module..."
         Remove-Module $script:ImportedModulesFromManifests[$ManifestPath] -ErrorAction Continue -Force
         $script:ImportedModulesFromManifests.Remove($ManifestPath)
@@ -159,6 +159,23 @@ function Undo-ModuleChanges () {
         $directoryPath = $script:ImportedModulesFromManifests.Keys | Select-Object -Last 1
         Remove-ModuleFromManifest  $directoryPath
     }
+}
+
+<#
+.SYNOPSIS
+Gets all imported Leet.Build modules.
+#>
+function Get-ImportedModules () {
+    $result = @()
+    foreach ($modules in $script:ImportedModulesFromDirectories.Values) {
+        $result += $modules
+    }
+
+    foreach ($module in $script:ImportedModulesFromManifests.Values) {
+        $result += $module
+    }
+
+    return $result
 }
 
 Export-ModuleMember -Variable '*' -Alias '*' -Function '*' -Cmdlet '*'

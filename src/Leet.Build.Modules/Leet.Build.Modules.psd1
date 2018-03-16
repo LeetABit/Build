@@ -10,7 +10,8 @@
     FunctionsToExport = @('Import-ModulesFromDirectory',
                           'Remove-ModulesFromDirectory',
                           'Import-ModuleFromManifest',
-                          'Remove-ModuleFromManifest')
+                          'Remove-ModuleFromManifest',
+                          'Get-ImportedModules')
     VariablesToExport = @()
     CmdletsToExport   = @()
     AliasesToExport   = @()

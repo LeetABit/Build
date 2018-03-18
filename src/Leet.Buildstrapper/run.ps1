@@ -22,8 +22,11 @@ Path to the Leet.Build tools feed to be used.
 For GitHub releases use 'https://github.com/Leet/BuildTools/releases/download'
 For GitHub source code use 'https://github.com/hubuk/Corelib/archive'
 
-.PARAMETER ForceInstallLeetBuild
+.PARAMETER SkipDeploymentCheck
 Determines whether a specified version of Leet.Build shall be installed even if it is already available in the system.
+
+.PARAMETER SuppressLocalCopy
+Determines whether the buildstrapper shall skip installing Leet.Build if its feed is located localy.
 
 .PARAMETER Arguments
 Arguments to be passed to the Leet.Build toolchain.
@@ -45,7 +48,8 @@ param( [String]   $RepositoryRoot   = $PSScriptRoot ,
        [String]   $LeetBuildVersion = $Null         ,
        [String]   $LeetBuildHome    = $Null         ,
        [String]   $LeetBuildFeed    = $Null         ,
-       [Switch]   $ForceInstallLeetBuild            ,
+       [Switch]   $SkipDeploymentCheck              ,
+       [Switch]   $SuppressLocalCopy                ,
        [Parameter(ValueFromRemainingArguments = $True)]
        [String[]] $Arguments
 )
@@ -211,13 +215,14 @@ function Install-LeetBuild {
     Write-BuildstrapperStep -FoldName LeetBuildVersion -Message "Checking Leet.Build v$script:LeetBuildVersion availability."
     $script:LeetBuildModulesRoot = Join-Path $script:LeetBuildHome $script:LeetBuildVersion
 
-    if ($script:ForceInstallLeetBuild -or -not (Test-LeetBuildDeployed $script:LeetBuildModulesRoot)) {
+    if ($script:SkipDeploymentCheck -or -not (Test-LeetBuildDeployed $script:LeetBuildModulesRoot)) {
         $sourceDirectoryPath   = Join-Path $script:LeetBuildHome "Leet.Build-$LeetBuildVersion"
         $tempFilePath          = $sourceDirectoryPath + ".zip"
         $archiveExtracted      = $False
         $supportedPathSuffixes = ( ("v$script:LeetBuildVersion", 'Leet.Build.zip') ,
                                    "$script:LeetBuildVersion.zip"                  ,
                                    "Leet.Build-$script:LeetBuildVersion.zip"       )
+        $installed             = $false
 
         try {
             foreach ($suffix in $supportedPathSuffixes) {
@@ -245,16 +250,24 @@ function Install-LeetBuild {
             }
 
             if (Test-Path -Path (Join-Path $sourceDirectoryPath 'Leet.Build*') -PathType Container) {
-                if (Test-Path -Path $script:LeetBuildModulesRoot -PathType Container) {
-                    Write-BuildstrapperModification "Removing content of '$script:LeetBuildModulesRoot' directory."
-                    Remove-Item -Path $script:LeetBuildModulesRoot -Force -Recurse -Confirm:$False
-                }
+                if ($script:SuppressLocalCopy -and -not $archiveExtracted) {
+                    $script:LeetBuildModulesRoot = $sourceDirectoryPath
+                } else {
+                    if (Test-Path -Path $script:LeetBuildModulesRoot -PathType Container) {
+                        Write-BuildstrapperModification "Removing content of '$script:LeetBuildModulesRoot' directory."
+                        Remove-Item -Path $script:LeetBuildModulesRoot -Force -Recurse -Confirm:$False
+                    }
 
-                Write-BuildstrapperModification "Copying Leet.Build files from '$sourceDirectoryPath' to '$script:LeetBuildModulesRoot'..."
-                Copy-Item -Path $sourceDirectoryPath -Destination $script:LeetBuildModulesRoot -Force -Container -Recurse
-                $checksumFilePath = Join-Path $script:LeetBuildModulesRoot 'Leet.Build.md5'
-                Write-BuildstrapperModification "Writing checksum to '$checksumFilePath' file..."
-                Get-DirectoryHash $sourceDirectoryPath | Out-File $checksumFilePath
+                    Write-BuildstrapperModification "Copying Leet.Build files from '$sourceDirectoryPath' to '$script:LeetBuildModulesRoot'..."
+                    Copy-Item -Path $sourceDirectoryPath -Destination $script:LeetBuildModulesRoot -Force -Container -Recurse
+                    $checksumFilePath = Join-Path $script:LeetBuildModulesRoot 'Leet.Build.md5'
+                    Write-BuildstrapperModification "Writing checksum to '$checksumFilePath' file..."
+                    Get-DirectoryHash $sourceDirectoryPath | Out-File $checksumFilePath
+
+                    $installed = $true
+                }
+            } else {
+                throw "Specified Leet.Build feed location '$sourceDirectoryPath' does not contain any modules."
             }
 
             Write-Verbose "Setting '$script:LeetBuildModulesRoot' as a head of `$env:PSModulePath variable."
@@ -267,9 +280,13 @@ function Install-LeetBuild {
             }
         }
 
-        Write-Host "Leet.Build v$script:LeetBuildVersion has been installed at '$script:LeetBuildModulesRoot'."        
+        if ($installed) {
+            Write-Host "Leet.Build v$script:LeetBuildVersion has been installed at '$script:LeetBuildModulesRoot'."
+        } else {
+            Write-Host "Using Leet.Build v$script:LeetBuildVersion from its feed location '$script:LeetBuildModulesRoot' as installation has been suppressed by -SuppressLocalCopy switch."
+        }
     } else {
-        Write-Host "Leet.Build v$script:LeetBuildVersion already installed at '$script:LeetBuildModulesRoot'."        
+        Write-Host "Leet.Build v$script:LeetBuildVersion already installed at '$script:LeetBuildModulesRoot'."
     }
     
     Write-BuildstrapperSuccess

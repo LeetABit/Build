@@ -10,6 +10,6 @@ REM ==========================================================================
 
 :Init
 
-"%~dp0src\Leet.Buildstrapper\run.cmd" -RepositoryRoot "%~dp0\" -LeetBuildFeed "%~dp0\" -ForceInstallLeetBuild %*
+"%~dp0src\Leet.Buildstrapper\run.cmd" -RepositoryRoot "%~dp0\" -LeetBuildFeed "%~dp0\" -SkipDeploymentCheck -SuppressLocalCopy %*
 
 :End

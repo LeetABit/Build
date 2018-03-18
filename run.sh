@@ -9,4 +9,4 @@
 #==========================================================================
 
 current_folder="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-"$current_folder/src/Leet.Buildstrapper/run.sh" -RepositoryRoot "$current_folder" -LeetBuildFeed "$current_folder" -ForceInstallLeetBuild "$@"
+"$current_folder/src/Leet.Buildstrapper/run.sh" -RepositoryRoot "$current_folder" -LeetBuildFeed "$current_folder" -SkipDeploymentCheck -SuppressLocalCopy "$@"

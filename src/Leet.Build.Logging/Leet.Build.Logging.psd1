@@ -10,7 +10,8 @@
     FunctionsToExport = @('Write-Step'
                           'Write-Success'
                           'Write-Modification'
-                          'Write-Invocation')
+                          'Write-Invocation',
+                          'Write-Message')
     AliasesToExport   = @()
     VariablesToExport = @()
     CmdletsToExport   = @()

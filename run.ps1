@@ -17,7 +17,8 @@ $WarningPreference       = 'Continue'
 
 $buildstrapperPath = $PSScriptRoot
 ('src', 'Leet.Buildstrapper', 'run.ps1') | ForEach-Object { $buildstrapperPath = Join-Path $buildstrapperPath $_ }
-[Parser]::ParseInput($MyInvocation.Line, ([ref]$Tokens), [ref]$null)
+$Tokens = $Null
+[Parser]::ParseInput($MyInvocation.Line, ([ref]$Tokens), ([ref]$null))
 $scriptName = ($Tokens[1]).Text
 $index = $MyInvocation.Line.IndexOf($scriptName) + $scriptName.Length
 while (($index -lt $MyInvocation.Line.Length) -and (-not [char]::IsWhiteSpace($MyInvocation.Line[$index]))) { ++$index }

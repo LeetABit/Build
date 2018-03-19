@@ -56,8 +56,10 @@ param( [String]   $RepositoryRoot   = $PSScriptRoot ,
 
 Set-StrictMode -Version 2
 
-$ErrorActionPreference = 'Stop'
-$WarningPreference     = 'Continue'
+if ($env:VERBOSE_LOGGING)
+{ $VerbosePreference     = 'Continue' }
+  $ErrorActionPreference = 'Stop'
+  $WarningPreference     = 'Continue'
 
 $LastFoldName = ""
 

@@ -19,10 +19,14 @@ SET "ArchiveDownloadPath=https://github.com/PowerShell/PowerShell/releases/downl
 SET "ArchiveDestinationPath=%TEMP%\%ArchiveFileName%"
 SET "InstallationPath=%userprofile%\PowerShell\%PowerShellVersion%"
 
+SET "LightPrefix=1;3"
+IF DEFINED APPVEYOR ( SET "LightPrefix=1;9" )
+
 SET "StepColor=[36m"
 SET "SuccessColor=[32m"
-SET "ModificationColor=[1;35m"
-SET "ErrorColor=[1;31m"
+SET "ModificationColor=[%LightPrefix%5m"
+SET "DiagnosticColor=[%LightPrefix%0m"
+SET "ErrorColor=[%LightPrefix%1m"
 SET "ResetColor=[0m"
 
 ECHO.
@@ -44,9 +48,9 @@ IF [%pwshPath%]==[] (
   )
 
   SET "pwshPath=%InstallationPath%\pwsh.exe"
-  ECHO PowerShell Core v%PowerShellVersion% has been installed at '%InstallationPath%\pwsh.exe'.
+  ECHO %DiagnosticColor%PowerShell Core v%PowerShellVersion% has been installed at '%InstallationPath%\pwsh.exe'.%ResetColor%
 ) ELSE (
-  ECHO PowerShell Core v%PowerShellVersion% already installed at '%InstallationPath%\pwsh.exe'.
+  ECHO %DiagnosticColor%PowerShell Core v%PowerShellVersion% already installed at '%InstallationPath%\pwsh.exe'.%ResetColor%
 )
 
 ECHO %SuccessColor%Success.%ResetColor%

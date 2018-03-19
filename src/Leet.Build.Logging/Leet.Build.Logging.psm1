@@ -98,6 +98,17 @@ function Write-Modification ( [String] $Message ) {
 
 <#
 .SYNOPSIS
+Writes a diagnostic message that informs about less relevant script progress.
+
+.PARAMETER Message
+Diagnostic message to be written by the host.
+#>
+function Write-Diagnostics ( [String] $Message ) {
+    Write-Message -Color $script:LightPrefix$script:BlackColor -Message $Message
+}
+
+<#
+.SYNOPSIS
 Writes a specified build step message string to the host.
 
 .PARAMETER Message

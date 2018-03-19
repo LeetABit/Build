@@ -61,9 +61,12 @@ $WarningPreference     = 'Continue'
 
 $LastFoldName = ""
 
+$LightPrefix = if ($env:APPVEYOR) { '1;9' } else { '1;3' }
+
 $StepColor         = [char]0x001b + '[0;36m'
-$ModificationColor = [char]0x001b + '[1;35m'
+$ModificationColor = [char]0x001b + "[$($LightPrefix)5m"
 $SuccessColor      = [char]0x001b + '[0;32m'
+$DiagnosticColor   = [char]0x001b + "[$($LightPrefix)0m"
 $DefaultColor      = [char]0x001b + '[0m'
 
 <#
@@ -281,12 +284,12 @@ function Install-LeetBuild {
         }
 
         if ($installed) {
-            Write-Host "Leet.Build v$script:LeetBuildVersion has been installed at '$script:LeetBuildModulesRoot'."
+            Write-BuildstrapperDiagnostics "Leet.Build v$script:LeetBuildVersion has been installed at '$script:LeetBuildModulesRoot'."
         } else {
-            Write-Host "Using Leet.Build v$script:LeetBuildVersion from its feed location '$script:LeetBuildModulesRoot' as installation has been suppressed by -SuppressLocalCopy switch."
+            Write-BuildstrapperDiagnostics "Using Leet.Build v$script:LeetBuildVersion from its feed location '$script:LeetBuildModulesRoot' as installation has been suppressed by -SuppressLocalCopy switch."
         }
     } else {
-        Write-Host "Leet.Build v$script:LeetBuildVersion already installed at '$script:LeetBuildModulesRoot'."
+        Write-BuildstrapperDiagnostics "Leet.Build v$script:LeetBuildVersion already installed at '$script:LeetBuildModulesRoot'."
     }
     
     Write-BuildstrapperSuccess
@@ -321,7 +324,7 @@ Imports Leet.Build modules.
 #>
 function Import-LeetBuildModules {
     Write-BuildstrapperStep -FoldName "LeetBuildImport" -Message "Importing Leet.Build modules."
-    Write-Host "Importing 'Leet.Build.Modules' module..."
+    Write-BuildstrapperDiagnostics "Importing 'Leet.Build.Modules' module..."
     Import-Module 'Leet.Build.Modules' -Force -Global
     Leet.Build.Modules\Import-ModulesFromDirectory $script:LeetBuildModulesRoot
     Leet.Build.Extensions\Import-ProjectExtensionModules $script:RepositoryRoot
@@ -334,7 +337,7 @@ Unloads Leet.Build module.
 #>
 function Remove-LeetBuildModules {
     Write-BuildstrapperStep -FoldName  "LeetBuildCleanup" -Message "Removing imported Leet.Build modules."
-    Write-Host "Removing 'Leet.Build.Modules' module..."
+    Write-BuildstrapperDiagnostics "Removing 'Leet.Build.Modules' module..."
     Remove-Module 'Leet.Build.Modules' -Force -ErrorAction Continue
     Write-BuildstrapperSuccess
 }
@@ -362,6 +365,17 @@ Installation message to be written by the host.
 #>
 function Write-BuildstrapperModification ( [String] $Message ) {
     Write-Host "$script:ModificationColor$Message$script:DefaultColor"
+}
+
+<#
+.SYNOPSIS
+Writes a message that informs about state change in the current system.
+
+.PARAMETER Message
+Installation message to be written by the host.
+#>
+function Write-BuildstrapperDiagnostics ( [String] $Message ) {
+    Write-Host "$script:DiagnosticColor$Message$script:DefaultColor"
 }
 
 <#

@@ -28,9 +28,9 @@ function main {
       return 2
     fi
 
-    echo -e "PowerShell Core v$power_shell_version has been installed at '$pwsh_path'."
+    write_diagnostic "PowerShell Core v$power_shell_version has been installed at '$pwsh_path'."
   else
-    echo -e "PowerShell Core v$power_shell_version already installed at '$pwsh_path'."
+    write_diagnostic "PowerShell Core v$power_shell_version already installed at '$pwsh_path'."
   fi
 
   write_step_succeed
@@ -179,6 +179,18 @@ function write_modification() {
   local message=$1
 
   echo -e "\x1B[1;35m$message\x1B[0m"
+}
+
+#============================================================================
+#  Writes a diagnostic message about script execution.
+#--------------------------------------------------------------------------
+#  $message
+#    Diagnostic message.
+#============================================================================
+function write_diagnostic() {
+  local message=$1
+
+  echo -e "\x1B[1;30m$message\x1B[0m"
 }
 
 #============================================================================

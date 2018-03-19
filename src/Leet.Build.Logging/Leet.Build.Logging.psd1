@@ -11,7 +11,8 @@
                           'Write-Success'
                           'Write-Modification'
                           'Write-Invocation',
-                          'Write-Message')
+                          'Write-Message',
+                          'Write-Diagnostics')
     AliasesToExport   = @()
     VariablesToExport = @()
     CmdletsToExport   = @()

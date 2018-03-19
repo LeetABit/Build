@@ -35,7 +35,7 @@ function Import-ModulesFromDirectory ( [String] $DirctoryPath ) {
                 continue
             }
 
-            Write-Host "Importing '$($availableModule.Name)' module..."
+            Write-Diagnostics "Importing '$($availableModule.Name)' module..."
             $importedModule = Import-Module -Name $($availableModule.Name) -RequiredVersion $($availableModule.Version) -Global -PassThru
             $script:ImportedModulesFromDirectories[$DirctoryPath] += $importedModule
         }
@@ -55,7 +55,7 @@ The path to the directory modules from which shall be unloaded.
 function Remove-ModulesFromDirectory ( [String] $DirctoryPath ) {
     if ($script:ImportedModulesFromDirectories.ContainsKey($DirctoryPath)) {
         $script:ImportedModulesFromDirectories[$DirctoryPath] | Foreach-Object {
-            Write-Host "Removing '$($_.Name)' module..."
+            Write-Diagnostics "Removing '$($_.Name)' module..."
             Remove-Module $_ -ErrorAction Continue -Force
         }
 
@@ -74,7 +74,7 @@ The path to the module manifest file to import.
 #>
 function Import-ModuleFromManifest ( [String] $ManifestPath ) {
     $moduleName = $(Test-ModuleManifest $ManifestPath).Name
-    Write-Host "Importing '$moduleName' module..."
+    Write-Diagnostics "Importing '$moduleName' module..."
     return $script:ImportedModulesFromManifests[$ManifestPath] = Import-Module -Name $ManifestPath -Global -PassThru
 }
 
@@ -88,7 +88,7 @@ The path to the module manifest to unload.
 function Remove-ModuleFromManifest ( [String] $ManifestPath ) {
     if ($script:ImportedModulesFromManifests.ContainsKey($ManifestPath)) {
         $moduleName = (Get-ChildItem $ManifestPath).BaseName
-        Write-Host "Removing '$moduleName' module..."
+        Write-Diagnostics "Removing '$moduleName' module..."
         Remove-Module $script:ImportedModulesFromManifests[$ManifestPath] -ErrorAction Continue -Force
         $script:ImportedModulesFromManifests.Remove($ManifestPath)
     }

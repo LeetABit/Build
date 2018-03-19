@@ -329,34 +329,4 @@ function Select-Arguments([Hashtable] $Parameters, [Ref][Hashtable] $NamedArgume
     }
 }
 
-<#
-.SYNOPSIS
-Combines a path with a sequence of child paths into a single path.
-
-.DESCRIPTION
-The Join-Paths cmdlet combines a path and sequence of child-paths into a single path. The provider supplies the path delimiters.
-
-.PARAMETER Path
-Specifies the main path (or paths) to which the child-path is appended. Wildcards are permitted.
-The value of Path determines which provider joins the paths and adds the path delimiters. The Path parameter is required, although the parameter name ("Path") is optional.
-
-.PARAMETER ChildPaths
-Specifies the elements to append to the value of the Path parameter. Wildcards are permitted. The ChildPaths parameter is required, although the parameter name ("ChildPaths") is optional.
-
-.NOTES
-The cmdlets that contain the Path noun (the Path cmdlets) manipulate path names and return the names in a concise format that all Windows PowerShell providers can interpret. They are designed for use in programs and scripts where you want to display all or part of a path name in a particular format. Use them like you would use Dirname, Normpath, Realpath, Join, or other path manipulators.
-You can use the path cmdlets with several providers, including the FileSystem, Registry, and Certificate providers.
-This cmdlet is designed to work with the data exposed by any provider. To list the providers available in your session, type Get-PSProvider. For more information, see about_Providers.
-
-.EXAMPLE
-# This function call returns 'C:\First\Second\Third\Fourth.file'
-Join-Paths 'C:' ('First\', '\Second', '\Third\', 'Fourth.file')
-#>
-function Join-Paths ( [String]   $Path       ,
-                      [String[]] $ChildPaths ) {
-    $isWeb = ($Path -like 'http*')
-    $ChildPaths | ForEach-Object { $Path = if ($isWeb) { "$Path/$_" } else { Join-Path $Path $_ } }
-    return $Path
-}
-
 Export-ModuleMember -Variable '*' -Alias '*' -Function '*' -Cmdlet '*'

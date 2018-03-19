@@ -6,7 +6,8 @@
     Copyright         = 'Copyright (c) Leet. All rights reserved.'
     Description       = 'Provides functionality related to arguments handling.'
     PowerShellVersion = '6.0'
-    NestedModules     = @('Leet.Build.Logging')
+    NestedModules     = @('Leet.Build.Logging',
+                          'Leet.Build.Common')
     FunctionsToExport = @('Set-CommandArguments',
                           'Select-Arguments')
     VariablesToExport = @()

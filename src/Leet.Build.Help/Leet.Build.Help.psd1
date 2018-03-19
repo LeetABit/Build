@@ -7,7 +7,8 @@
     Description       = 'Provides dynamic help for available commands.'
     PowerShellVersion = '6.0'
     NestedModules     = @('Leet.Build.Logging',
-                          'Leet.Build.Commands')
+                          'Leet.Build.Commands',
+                          'Leet.Build.Common')
     FunctionsToExport = @('Invoke-OnHelpCommand')
     VariablesToExport = @()
     CmdletsToExport   = @()

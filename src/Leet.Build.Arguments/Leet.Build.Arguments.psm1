@@ -54,6 +54,48 @@ function Set-CommandArguments ( [String]   $RepositoryRoot ,
 
 <#
 .SYNOPSIS
+Removes all command arguments set.
+#>
+function Reset-CommandArguments {
+    $script:ConfigurationJson = $Null
+    $script:NamedArguments.Clear()
+    $script:PositionalArguments.Clear()
+    $script:UnknownArguments.Clear()
+}
+
+<#
+.SYNOPSIS
+Gets a named and positional arguments that matches specified paramter names.
+
+.PARAMETER ParameterNames
+Name of the parameters for which values shall be found.
+
+.PARAMETER NamedArguments
+The variable that receives a hashtable with named arguments found.
+
+.PARAMETER PositionalArguments
+The variable that receives a collection with positional arguments found.
+#>
+function Select-CommandArguments(       [HashTable]    $ParameterNames      ,
+                                  [Ref] [HashTable] $NamedArguments      ,
+                                  [Ref] [String[]]  $PositionalArguments ) {
+    $NamedArguments.Value = @{}
+    $PositionalArguments.Value = @()
+
+    $ParameterNames.Keys | ForEach-Object {
+        $argument = $null
+        if (Find-NamedArgument $_ -IsSwitch:$ParameterNames[$_] ([Ref]$argument)) {
+            $NamedArguments.Value[$_] = $argument
+        }
+    }
+
+    if ($NamedArguments.Value.Count -lt $ParameterNames.Count) {
+        $PositionalArguments.Value = $script:PositionalArguments + $script:UnknownArguments
+    }
+}
+
+<#
+.SYNOPSIS
 Initializes a script configuration values from Leet.Build.json configuration file.
 
 .PARAMETER RepositoryRoot
@@ -68,36 +110,6 @@ function Initialize-ConfigurationFromFile ( [String] $RepositoryRoot ){
         $configFileContent = Get-Content -Raw -Encoding UTF8 -Path $configFilePath
         $script:ConfigurationJson = ConvertFrom-Json $configFileContent
     }
-}
-
-<#
-.SYNOPSIS
-Combines a path with a sequence of child paths into a single path.
-
-.DESCRIPTION
-The Join-Paths cmdlet combines a path and sequence of child-paths into a single path. The provider supplies the path delimiters.
-
-.PARAMETER Path
-Specifies the main path (or paths) to which the child-path is appended. Wildcards are permitted.
-The value of Path determines which provider joins the paths and adds the path delimiters. The Path parameter is required, although the parameter name ("Path") is optional.
-
-.PARAMETER ChildPaths
-Specifies the elements to append to the value of the Path parameter. Wildcards are permitted. The ChildPaths parameter is required, although the parameter name ("ChildPaths") is optional.
-
-.NOTES
-The cmdlets that contain the Path noun (the Path cmdlets) manipulate path names and return the names in a concise format that all Windows PowerShell providers can interpret. They are designed for use in programs and scripts where you want to display all or part of a path name in a particular format. Use them like you would use Dirname, Normpath, Realpath, Join, or other path manipulators.
-You can use the path cmdlets with several providers, including the FileSystem, Registry, and Certificate providers.
-This cmdlet is designed to work with the data exposed by any provider. To list the providers available in your session, type Get-PSProvider. For more information, see about_Providers.
-
-.EXAMPLE
-# This function call returns 'C:\First\Second\Third\Fourth.file'
-Join-Paths 'C:' ('First\', '\Second', '\Third\', 'Fourth.file')
-#>
-function Join-Paths ( [String]   $Path       ,
-                            [String[]] $ChildPaths ) {
-    $isWeb = ($Path -like 'http*')
-    $ChildPaths | ForEach-Object { $Path = if ($isWeb) { "$Path/$_" } else { Join-Path $Path $_ } }
-    return $Path
 }
 
 <#
@@ -125,37 +137,6 @@ function Get-ConfigurationFileParameterValue ( [String] $ParameterName         ,
     }
 
     return $result
-}
-
-<#
-.SYNOPSIS
-Gets a named and positional arguments that matches specified paramter names.
-
-.PARAMETER ParameterNames
-Name of the parameters for which values shall be found.
-
-.PARAMETER NamedArguments
-The variable that receives a hashtable with named arguments found.
-
-.PARAMETER PositionalArguments
-The variable that receives a collection with positional arguments found.
-#>
-function Select-Arguments(       [String]    $ParameterNames      ,
-                           [Ref] [hashtable] $NamedArguments      ,
-                           [Ref] [String[]]  $PositionalArguments ) {
-    $NamedArguments.Value = @{}
-    $PositionalArguments.Value = @()
-    
-    $ParameterNames.Keys | ForEach-Object {
-        $argument = $null
-        if (Find-NamedArgument $_ -IsSwitch:$ParameterNames[$_] ([Ref]$argument)) {
-            $NamedArguments.Value[$_] = $argument
-        }
-    }
-
-    if ($NamedArguments.Value.Count -lt $ParameterNames.Count) {
-        $PositionalArguments.Value = $script:PositionalArguments + $script:UnknownArguments
-    }
 }
 
 <#
@@ -298,35 +279,6 @@ function Test-ParameterName (       [String] $Argument     ,
 
     $ParametrName = $null
     return $False
-}
-
-<#
-.SYNOPSIS
-Selects arguments for the specified parameters.
-
-.PARAMETER Parameters
-Dictionary that contains name of the parameters mapped to a value which determines whether the parameter is a switch.
-
-.PARAMETER NamedArguments
-Variable which gets a dictionary of parameter names mapped to its argument's values.
-
-.PARAMETER PositionalArguments
-Variable which gets a collection of argument's values for parameters which names were not specfied.
-#>
-function Select-Arguments([Hashtable] $Parameters, [Ref][Hashtable] $NamedArguments, [Ref][String[]] $PositionalArguments) {
-    $NamedArguments.Value = @{}
-    $PositionalArguments.Value = @()
-    
-    $Parameters.Keys | ForEach-Object {
-        $argument = $null
-        if (Find-NamedArgument $_ -IsSwitch:$Parameters[$_] ([Ref]$argument)) {
-            $NamedArguments.Value[$_] = $argument
-        }
-    }
-
-    if ($NamedArguments.Value.Count -lt $Parameters.Count) {
-        $PositionalArguments.Value = $script:PositionalArguments + $script:UnknownArguments
-    }
 }
 
 Export-ModuleMember -Variable '*' -Alias '*' -Function '*' -Cmdlet '*'

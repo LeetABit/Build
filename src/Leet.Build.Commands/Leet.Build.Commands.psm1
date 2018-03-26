@@ -9,98 +9,76 @@ $WarningPreference     = 'Continue'
 .SYNOPSIS
 Invokes Leet.Build command defined by the passed arguments.
 
-.PARAMETER RepositoryRoot
-Value of the -RepositoryRoot parameter.
-
-.PARAMETER Arguments
-Collection of other arguments passed.
-#>
-function Invoke-Command ( [String]   $RepositoryRoot ,
-                          [String[]] $Arguments      ) {
-    $command = Leet.Build.Arguments\Set-CommandArguments $RepositoryRoot $Arguments
-
-    $found = Invoke-CommandFunctionFromModules "Invoke-Before$($command)Command" -IncludeExtensions
-    $found = Invoke-CommandFunctionFromModules "Invoke-On$($command)Command" -IncludeExtensions
-    if (-not $found) {
-        throw "Could not find handler for '$command' command."
-    }
-}
-
-<#
-.SYNOPSIS
-Invokes Leet.Build command specified by its name.
-
 .PARAMETER CommandName
-Name of the command which implementation shall be invoked.
+Name of the command to invoke.
 
 .PARAMETER IncludeExtensions
 Specified whether the implementation in extension modules shall also be considered.
+
+.PARAMETER ThrowOnNoHandler
+Throws an exception if no handler function has been found for the specified command.
 #>
-function Invoke-CommandFunctionFromModules ( [String] $CommandName        ,
-                                             [Switch] $IncludeExtensions  ) {
+function Invoke-Command ( [String] $CommandName       ,
+                          [Switch] $IncludeExtensions ,
+                          [Switch] $ThrowOnNoHandler  ) {
     $found = $false
-    foreach ($module in Get-CommandModules -IncludeExtensions:$IncludeExtensions) {
-        $function = Get-CommandFunction $CommandName $Module
-        if ($function) {
-            $found = $true
-            if (Invoke-CommandFunction $function) {
-                break
-            }
+    foreach ($function in Get-CommandFunctions -CommandName $CommandName -IncludeExtensions:$IncludeExtensions) {
+        $found = $true
+        if (Invoke-CommandFunction $function) {
+            break
         }
     }
-
-    return $found
+                      
+    if ($ThrowOnNoHandler) {
+        if (-not $found) {
+            throw "Could not find handler for '$CommandName' command."
+        }
+    } else {
+        return $found
+    }
 }
 
 <#
 .SYNOPSIS
-Gets Leet.Build modules loaded with optional project's extension modules.
+Gets Leet.Build modules loaded with optional project's extension module.
 
-.PARAMETER IncludeExtensions
-Specified whether the implementation in extension modules shall also be considered.
+.PARAMETER IncludeExtension
+Specified whether the project extension module shall be included in result.
 #>
-function Get-CommandModules ( [Switch] $IncludeExtensions ) {
-    $extensionModules = Leet.Build.Extensions\Get-ExtensionModules
-    $nonExtensionModules = (Leet.Build.Modules\Get-ImportedModules) | Where-Object { $extensionModules -notcontains $_ }
-    $modules = @()
-    if ($IncludeExtensions) { $modules += $extensionModules }
-    $modules += $nonExtensionModules
-    return $modules
+function Get-LeetBuildModules ( [Switch] $IncludeExtension ) {
+    if ($IncludeExtension) {
+        return Get-Module | Sort-Object {
+            if ( $_.Name -eq 'Leet.Build.Project' ) { 0 } else { 1 }
+        }
+    } else {
+        return Get-Module | Where-Object {
+            $_.Name -ne 'Leet.Build.Project'
+        }
+    }
 }
 
 <#
 .SYNOPSIS
 Gets a collection of functions of the specified name defined in all imported Leet.Build modules.
 
-.PARAMETER FunctionName
-Name of the functions to obtain.
+.PARAMETER CommandName
+Name of the command to invoke.
+
+.PARAMETER IncludeExtensions
+Specified whether the implementation in extension modules shall also be considered.
 #>
-function Get-CommandFunctions([String] $FunctionName){
+function Get-CommandFunctions( [String] $CommandName       ,
+                               [Switch] $IncludeExtensions ) {
     $result = @()
 
-    foreach ($module in Get-CommandModules -IncludeExtensions) {
-        $function = Get-CommandFunction $FunctionName $Module
-        if ($function) {
-            $result += $function
+    foreach ($module in Get-LeetBuildModules -IncludeExtensions) {
+        $functions = Get-CommandFunctionsFromModule $CommandName $module
+        if ($functions) {
+            $result += $functions
         }
     }
     
     return $result
-}
-
-<#
-.SYNOPSIS
-Invokes an implementation of the Leet.Build command located in the specified module.
-
-.PARAMETER Command
-Command function to be invoked.
-#>
-function Invoke-CommandFunction ([System.Management.Automation.CommandInfo] $Command) {
-    $NamedArguments = @{}
-    $PositionalArguments = @()
-    $Parameters = Get-FunctionParameters $Command
-    Leet.Build.Arguments\Select-Arguments $Parameters ([Ref]$NamedArguments) ([Ref]$PositionalArguments)
-    return Invoke-Expression "& `$Module $Command @NamedArguments @PositionalArguments"
 }
 
 <#
@@ -113,14 +91,34 @@ Name of the command which implementation shall be obtained.
 .PARAMETER Module
 Module which shall be searched for the command's implementation.
 #>
-function Get-CommandFunction([String] $CommandName, [PSModuleInfo] $Module){
+function Get-CommandFunctionsFromModule( [String]       $CommandName  ,
+                                         [PSModuleInfo] $Module       ) {
+    $functionNamePattern = if ($CommandName) { $CommandName } else { '.*' }
+    $functionNamePattern = "^Invoke-OnLeetBuild$($functionNamePattern)Command$"
+    $result = @()
+    
     foreach ($commandInfo in $Module.ExportedCommands.Values) {
-		if ($commandInfo.Name -eq $CommandName) {
-                return $commandInfo
+		if ($commandInfo.Name -match $functionNamePattern) {
+            $result += $commandInfo
         }
     }
 
-    return $Null
+    return $result
+}
+
+<#
+.SYNOPSIS
+Invokes an implementation of the Leet.Build command located in the specified module.
+
+.PARAMETER Command
+Command function to be invoked.
+#>
+function Invoke-CommandFunction ( [System.Management.Automation.CommandInfo] $Command ) {
+    $NamedArguments = @{}
+    $PositionalArguments = @()
+    $Parameters = Get-FunctionParameters $Command
+    Leet.Build.Arguments\Select-CommandArguments $Parameters ([Ref]$NamedArguments) ([Ref]$PositionalArguments)
+    return Invoke-Expression "& $($Command.Module.Name)\$($Command.Name) @NamedArguments @PositionalArguments"
 }
 
 <#

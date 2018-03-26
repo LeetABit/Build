@@ -1,6 +1,5 @@
 #!/usr/bin/env pwsh
 #requires -version 6
-using namespace System.Management.Automation.Language
 
 <#
 .SYNOPSIS
@@ -15,12 +14,9 @@ Set-StrictMode -Version 2
 $ErrorActionPreference   = 'Stop'
 $WarningPreference       = 'Continue'
 
-$buildstrapperPath = $PSScriptRoot
-('src', 'Leet.Buildstrapper', 'run.ps1') | ForEach-Object { $buildstrapperPath = Join-Path $buildstrapperPath $_ }
-$Tokens = $Null
-[Parser]::ParseInput($MyInvocation.Line, ([ref]$Tokens), ([ref]$null))
-$scriptName = ($Tokens[1]).Text
-$index = $MyInvocation.Line.IndexOf($scriptName) + $scriptName.Length
-while (($index -lt $MyInvocation.Line.Length) -and (-not [char]::IsWhiteSpace($MyInvocation.Line[$index]))) { ++$index }
-$arguments = $MyInvocation.Line.Substring($index)
-Invoke-Expression "& '$buildstrapperPath' -RepositoryRoot $PSScriptRoot -LeetBuildFeed $PSScriptRoot -SkipDeploymentCheck -SuppressLocalCopy $arguments"
+$localLeetBuild             = Join-Path $PSScriptRoot               'src'
+$buildstrapperDirectoryPath = Join-Path $localLeetBuild             'Leet.Buildstrapper'
+$buildstrapperPath          = Join-Path $buildstrapperDirectoryPath 'run.ps1'
+$arguments = $args
+
+Invoke-Expression "& '$buildstrapperPath' -RepositoryRoot '$PSScriptRoot' -LeetBuildLocation '$localLeetBuild' @arguments"

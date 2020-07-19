@@ -1,7 +1,11 @@
 ﻿version: 0.0.0.{build}-{branch}
+image:
+  - Visual Studio 2017
+  - Ubuntu
 nuget:
   disable_publish_on_pr: true
 install:
 build_script:
-- cmd: run.cmd
+  - cmd: run.cmd
+  - sh: ./run.sh
 test: off

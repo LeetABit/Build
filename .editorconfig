@@ -1,0 +1,24 @@
+####################################################################
+# Editor configuration file
+####################################################################
+root = true
+
+[*.{sh,cmd,ps1,psm1,psd1,ps1xml,json,yml,md,txt}]
+indent_style = space
+
+[*.{sh,cmd,ps1,psm1,psd1,md,txt}]
+indent_size = 4
+
+[*.{ps1xml,json,yml}]
+indent_size = 2
+
+[*.sh]
+end_of_line = "lf"
+
+[*.{cmd,ps1,psm1,psd1,ps1xml,json,yml,md,txt}]
+end_of_line = "crlf"
+
+[*.{gitattribute,gitignore,editorconfig,sh,cmd,ps1,psm1,psd1,ps1xml,json,yml,md,txt}]
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true

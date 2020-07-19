@@ -1,0 +1,69 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "type": "PowerShell",
+            "request": "launch",
+            "name": "PowerShell Launch Current File",
+            "script": "${file}",
+            "args": [],
+            "cwd": "${file}"
+        },
+        {
+            "type": "PowerShell",
+            "request": "launch",
+            "name": "PowerShell Launch Current File in Temporary Console",
+            "script": "${file}",
+            "args": [],
+            "cwd": "${file}",
+            "createTemporaryIntegratedConsole": true
+        },
+        {
+            "type": "PowerShell",
+            "request": "launch",
+            "name": "PowerShell Launch Current File w/Args Prompt",
+            "script": "${file}",
+            "args": [
+                "${command:SpecifyScriptArgs}"
+            ],
+            "cwd": "${file}"
+        },
+        {
+            "type": "PowerShell",
+            "request": "attach",
+            "name": "PowerShell Attach to Host Process",
+            "processId": "${command:PickPSHostProcess}",
+            "runspaceId": 1
+        },
+        {
+            "type": "PowerShell",
+            "request": "launch",
+            "name": "PowerShell Interactive Session",
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "PowerShell",
+            "request": "launch",
+            "name": "PowerShell Launch Current File Default",
+            "script": "./run.ps1",
+            "args": [
+                "-UnloadModules -Verbose help -TaskTopic help -ExtensionTopic Leet.Build.Help"
+            ],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "PowerShell",
+            "request": "launch",
+            "name": "PowerShell Launch Current File Default with Certificate",
+            "script": "./run.ps1",
+            "args": [
+                "help -CertificatePath Cert:\\CurrentUser\\My\\83189F96D7022F88F550051F98C19C2A0D989E7A -TimestampServer http://time.certum.pl -Verbose"
+            ],
+            "cwd": "${workspaceRoot}"
+        },
+    ]
+}

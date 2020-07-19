@@ -52,7 +52,6 @@
 
     # Modules that must be imported into the global environment prior to importing this module
     RequiredModules = @(
-        # @{ModuleName = 'Leet.Build.Commands'; ModuleVersion = '0.0.0'; },
         @{ModuleName = 'Leet.Build.Common'; ModuleVersion = '0.0.0'; },
         @{ModuleName = 'Leet.Build.Extensibility'; ModuleVersion = '0.0.0'; },
         @{ModuleName = 'Leet.Build.Logging'; ModuleVersion = '0.0.0'; }
@@ -122,7 +121,6 @@
 
             # External dependencies.
             ExternalModuleDependencies = @(
-                #'Leet.Build.Commands',
                 'Leet.Build.Common',
                 'Leet.Build.Extensibility',
                 'Leet.Build.Logging'

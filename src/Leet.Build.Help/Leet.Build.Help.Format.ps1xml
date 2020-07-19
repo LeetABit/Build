@@ -49,7 +49,7 @@
                           <LeftIndent>4</LeftIndent>
                           <CustomItem>
                             <ExpressionBinding>
-                              <PropertyName>DecoratedName</PropertyName>
+                              <PropertyName>Name</PropertyName>
                             </ExpressionBinding>
                             <NewLine/>
                           </CustomItem>
@@ -297,7 +297,7 @@
                                     <LeftIndent>4</LeftIndent>
                                     <CustomItem>
                                       <ExpressionBinding>
-                                        <PropertyName>Name</PropertyName>
+                                        <PropertyName>DecoratedName</PropertyName>
                                       </ExpressionBinding>
                                       <NewLine/>
                                     </CustomItem>

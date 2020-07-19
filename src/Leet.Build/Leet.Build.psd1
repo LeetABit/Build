@@ -123,7 +123,6 @@
             # External dependencies.
             ExternalModuleDependencies = @(
                 'Leet.Build.Arguments',
-                'Leet.Build.Commands',
                 'Leet.Build.Common',
                 'Leet.Build.Dotnet',
                 'Leet.Build.Extensibility',

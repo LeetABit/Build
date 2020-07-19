@@ -8,7 +8,10 @@
 #   is installed on the system and then runs 'run.ps1' PowerShell script
 #   passing all current script's parameters to it.
 ############################################################################
-set -e
+set -o errexit
+set -o nounset
+set -o errtrace
+trap 'write_error "Command '"'"'$BASH_COMMAND'"'"' caused error $? at line $LINENO in function called from line $BASH_LINENO.\nCall stack: $(printf "::%s" ${FUNCNAME[@]:-} | cut -c3-)"' ERR
 set -u
 set -o pipefail
 exec 3>&1
@@ -206,7 +209,7 @@ function find_powershell() {
         return 0
     }
 
-    local candidates="$(which $file_name)"
+    local candidates="$(which $file_name || return 0)"
     for candidate in ${candidates[@]}
     do
         check_powershell_version "$candidate" "$version" && {
@@ -266,7 +269,7 @@ function download_file() {
     if machine_has wget; then
         execute_command wget --tries 10 --quiet -O "$destination_path" "$source_location"
     elif machine_has curl; then
-        execute_command curl --retry 10 -sSL -f --create-dirs -o "$destination_path" "$source_location"
+        execute_command curl --retry 10 -sSL -f --create-dirs -s -o "$destination_path" "$source_location"
     else
         write_error "Could not download file: no downloading tool found."
         return 1
@@ -381,11 +384,7 @@ function execute_command() {
 
     end_verbose
 
-    if [[ "$verbose" == "1" ]] ; then
-        "$@"
-    else
-        "$@" > /dev/null
-    fi
+    "$@"
 
     local error=$?
 
@@ -434,7 +433,8 @@ function write_modification() {
 function write_verbose() {
     local message=$1
 
-    [[ $verbose == "1" ]] && printf "%b\n" "${color_yellow:-}VERBOSE: $message${color_reset:-}" >&3
+    [[ $verbose == "1" ]] || return 0
+    printf "%b\n" "${color_yellow:-}VERBOSE: $message${color_reset:-}" >&3
 }
 
 
@@ -442,7 +442,8 @@ function write_verbose() {
 #   Starts a verbose log section.
 #===========================================================================
 function begin_verbose() {
-    [[ $verbose == "1" ]] && printf "%b" "${color_yellow:-}" >&3
+    [[ $verbose == "1" ]]  || return 0
+    printf "%b" "${color_yellow:-}" >&3
 }
 
 
@@ -450,7 +451,8 @@ function begin_verbose() {
 #   Stops a verbose log section.
 #===========================================================================
 function end_verbose() {
-    [[ $verbose == "1" ]] && printf "%b\n" "${color_reset:-}" >&3
+    [[ $verbose == "1" ]]  || return 0
+    printf "%b\n" "${color_reset:-}" >&3
 }
 
 
@@ -463,7 +465,8 @@ function end_verbose() {
 function write_verbose_direct() {
     local message=$1
 
-    [[ $verbose == "1" ]] && printf "%b" "$message" >&3
+    [[ $verbose == "1" ]] || return 0
+    printf "%b" "$message" >&3
 }
 
 

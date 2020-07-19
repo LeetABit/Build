@@ -1,119 +1,253 @@
 #requires -version 6
+using namespace System.Collections
 
 Set-StrictMode -Version 2
+Import-LocalizedData -BindingVariable LocalizedData -FileName Leet.Build.Help.Resources.psd1
 
-$ErrorActionPreference = 'Stop'
-$WarningPreference     = 'Continue'
-
-<#
-.SYNOPSIS
-Gets help for the build script or one of its commands.
-
-.PARAMETER HelpTopic
-Name of the command for which the help text shall be obtained.
-#>
-function Invoke-OnLeetBuildHelpCommand ([String] $HelpTopic) {
-    if ($HelpTopic) {
-        Write-CommandHelp $HelpTopic
-    } else {
-        Write-GeneralHelp
+$MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {
+    if (Get-Module 'Leet.Build.Extensibility') {
+        Leet.Build.Extensibility\Unregister-Extension "Leet.Build.Help" -ErrorAction SilentlyContinue
     }
 }
 
-<#
-.SYNOPSIS
-Writes general help about build scripts usage.
-#>
-function Write-GeneralHelp() {
-    $scriptName = Join-Path '.' (Get-BaseScriptName)
-    
-    Write-Message
-    Write-Message -Message "NAME"
-    Write-Message -Message $scriptName -Indentation 4
-    Write-Message
-    Write-Message -Message "SYNOPSIS"
-    Write-Message -Message "Provides bootstrapping for Leet.Build scripts." -Indentation 4
-    Write-Message
-    Write-Message -Message "SYNTAX"
-       
-    $mapping = @{}
+$Regex_ScriptBlockSyntax_FunctionName = '(?<={0})(.+?)(?=\[(-WhatIf|-Confirm|\<CommonParameters\>))'
 
-    foreach ($exportedCommand in Get-CommandFunctions -IncludeExtensions) {
-        if (-not $mapping[$exportedCommand.Name]) {
-            $mapping[$exportedCommand.Name] = @()
-        }
 
-        $mapping[$exportedCommand.Name] += $exportedCommand.Module
+##################################################################################################################
+# Target Handlers
+##################################################################################################################
+
+Register-BuildTask "help" -Jobs {
+    <#
+    .SYNOPSIS
+    Gets help for the build script or one of its targets.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
+
+    param (
+        # Optional name of the build extension for which help shall be obtained.
+        [Parameter(Position = 0,
+                   Mandatory = $False,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $True)]
+        [String]
+        $ExtensionTopic,
+
+        # Optional name of the build task for which help shall be obtained.
+        [Parameter(Position = 1,
+                   Mandatory = $False,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $True)]
+        [String]
+        $TaskTopic
+    )
+
+    begin {
+        Leet.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
     }
-    
-    foreach ($functionName in $mapping.Keys) {
-        if ($functionName -match "^Invoke-OnLeetBuild(.*)Command$") {
-            Write-Message -Message "$scriptName $(($matches[1]).ToLower())" -Indentation 4
-            foreach ($extension in $mapping[$functionName]) {
-                $help = Get-Help $extension\$functionName
-                Write-Message -Message "[$extension]: $($help.Synopsis)" -Indentation 8
-            }
-        }
-    
-        Write-Message
+
+    process {
+        Get-LeetBuildHelp $ExtensionTopic $TaskTopic | Out-Default
     }
 }
 
-<#
-.SYNOPSIS
-Writes help about specified build command.
 
-.PARAMETER CommandName
-Name of the command for which a help message shall be obtained.
-#>
-function Write-CommandHelp([String] $CommandName) {
-    $found    = $false
-    $fileName = Join-Path '.' $(Get-BaseScriptName)
+##################################################################################################################
+# Public Commands
+##################################################################################################################
 
-    foreach ($commandFunction in Get-CommandFunctions $CommandName -IncludeExtensions) {
-        $commandModule = $commandFunction.Module
-        $found = $true
-        $helpStructure = Get-Help "$($commandModule.Name)\$($commandFunction.Name)" -Full
-        $help          = (Get-Help "$($commandModule.Name)\$($commandFunction.Name)" | Out-String)
-        $startIndex    = $help.IndexOf("SYNTAX") + "SYNTAX".Length
-        $endIndex      = $help.IndexOf("DESCRIPTION", $startIndex)
-        $syntaxText    = $help.Substring($startIndex, $endIndex - $startIndex)
-        $syntaxSets = $syntaxText -split ([Environment]::NewLine + [Environment]::NewLine)
 
-        Write-Message
-        Write-Message -Message "[$($commandModule.Name)]"
-        Write-Message -Message "SYNOPSIS"
-        Write-Message -Message "$($helpStructure.Synopsis)" -Indentation 4
-        Write-Message
+function Get-LeetBuildHelp {
+    <#
+    .SYNOPSIS
+    Writes help message about build scripts usage.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
 
-        Write-Message -Message "SYNTAX"
-        foreach ($syntaxSet in $syntaxSets) {
-            $syntax = Get-SubstringLinewise $syntaxSet
-            if ($syntax -match "Invoke-OnLeetBuild$CommandName`Command\s+(.*)\s+\[\<CommonParameters\>") {
-                Write-Message -Message "$fileName $CommandName $($matches[1])" -Indentation 4
-            } else {
-                Write-Message -Message "$fileName $CommandName" -Indentation 4
-            }
+    param (
+        # Optional name of the build extension for which help shall be obtained.
+        [Parameter(Position = 0,
+                   Mandatory = $False,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $True)]
+        [String]
+        $ExtensionTopic,
+
+        # Optional name of the build task for which help shall be obtained.
+        [Parameter(Position = 1,
+                   Mandatory = $False,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $True)]
+        [String]
+        $TaskTopic
+    )
+
+    begin {
+        Leet.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
+        $scriptName = Join-Path '.' 'run.ps1'
+    }
+
+    process {
+        $typeNameSuffix = if ($ExtensionTopic) {
+            if ($TaskTopic) { 'DetailedView' } else { 'ExtensionView' }
         }
-                
-        Write-Message
+        else {
+            if ($TaskTopic) { 'TaskView' } else { 'GeneralView' }
+        }
 
-        Write-Message -Message "PARAMETERS"
-        if ($helpStructure.parameters.PSobject.Properties.Name -contains 'parameter') {
-            foreach ($parameter in $helpStructure.parameters.parameter) {
-                Write-Message -Message "$($parameter.Name)" -Indentation 4
-                if (Get-Member -InputObject $parameter -Name "description" -ErrorAction SilentlyContinue) {
-                    Write-Message -Message "$($parameter.description.Text)" -Indentation 8
+        $helpInfo = @{}
+        $helpInfo.ScriptName = $scriptName
+        $helpInfo.Synopsis = $LocalizedData.Get_LeetBuildHelp_Buildstrapper_Synopsis
+        $helpInfo.TaskTopic = $TaskTopic
+        $helpInfo.ExtensionTopic = $ExtensionTopic
+        $helpInfo.Extensions = @()
+
+        foreach ($currentExtension in Leet.Build.Extensibility\Get-BuildExtension) {
+            if ($ExtensionTopic -and $ExtensionTopic -ne $currentExtension.Name) {
+                continue
+            }
+
+            $extension = @{}
+            $extension.Name = $currentExtension.Name
+            $extension.Description = ''
+
+            if ($currentExtension.Resolver.Module -and $currentExtension.Resolver.Module.Name -ne 'Leet.Build.Extensibility') {
+                $extension.Description = $currentExtension.Resolver.Module.Description
+            }
+
+            $extension.Tasks = @()
+
+            foreach ($currentTask in $currentExtension.Tasks.Values) {
+                if ($TaskTopic -and $TaskTopic -ne $currentTask.Name) {
+                    continue
                 }
+
+                $task = @{}
+                $task.Name = $currentTask.Name
+                $task.Before = $currentTask.Before.Clone()
+                $task.After = $currentTask.After.Clone()
+                $task.IsDefault = $currentTask.IsDefault
+                $task.Jobs = @()
+
+                $currentTask.Jobs | ForEach-Object {
+                    if ($_ -is [String]) {
+                        $task.Jobs += $_
+                    }
+                    else {
+                        if (-not $extension.Description) {
+                            if ($_.Module) {
+                                $extension.Description = $_.Module.Description
+                            }
+                        }
+
+                        $jobScriptBlock = [String]$_
+                        $function:private:ScriptBlockCommand = $jobScriptBlock
+                        $helpObject = Get-Help 'ScriptBlockCommand'
+                        $helpString = (Get-Help 'ScriptBlockCommand' -Full | Out-String)
+
+                        $job = @{}
+                        $job.Description = $helpObject.Synopsis
+
+                        $nextSection = if ($helpObject.PSObject.TypeNames -contains 'ExtendedCmdletHelpInfo') {
+                            'PARAMETERS'
+                        }
+                        else {
+                            'DESCRIPTION'
+                        }
+
+                        $startIndex = $helpString.IndexOf("SYNTAX") + "SYNTAX".Length
+                        $endIndex   = $helpString.IndexOf($nextSection, $startIndex)
+                        $syntaxText = $helpString.Substring($startIndex, $endIndex - $startIndex).Trim()
+
+                        $syntaxString = ($syntaxText -split [Environment]::NewLine) -join ''
+                        $syntax = "$scriptName $($task.Name)"
+                        $regex = $Regex_ScriptBlockSyntax_FunctionName -f 'ScriptBlockCommand'
+
+                        if ($syntaxString -match $regex) {
+                            $syntax += "$($matches[1])"
+                        }
+
+                        $job.Syntax = $syntax.Trim()
+                        $job.Parameters = @()
+
+                        if ($helpObject.parameters.PSobject.Properties.Name -contains 'parameter') {
+                            foreach ($parameterObject in $helpObject.parameters.parameter) {
+                                if (Get-Member -InputObject $parameterObject -Name "description" -ErrorAction SilentlyContinue) {
+                                    $parameter = @{}
+                                    $parameter.Name = $parameterObject.Name
+                                    $parameter.Type = $parameterObject.type.name
+                                    $parameter.Description = $parameterObject.description.Text
+                                    $parameter.Mandatory = [System.Convert]::ToBoolean($parameterObject.required)
+                                    $job.Parameters += Convert-DictionaryToHelpObject $parameter 'Parameter' $typeNameSuffix
+                                }
+                            }
+                        }
+
+                        $task.Jobs += Convert-DictionaryToHelpObject $job 'Job' $typeNameSuffix
+                    }
+                }
+
+                $extension.Tasks += Convert-DictionaryToHelpObject $task 'Task' $typeNameSuffix
+            }
+
+            if (-not $TaskTopic -or $extension.Tasks) {
+                $helpInfo.Extensions += Convert-DictionaryToHelpObject $extension 'Extension' $typeNameSuffix
             }
         }
-        
-        Write-Message
-    }
 
-    if (-not $found) {
-        throw "Could not find help topic for '$CommandName' command."
+        Convert-DictionaryToHelpObject $helpInfo 'HelpInfo' $typeNameSuffix
     }
 }
 
-Export-ModuleMember -Variable '*' -Alias '*' -Function '*' -Cmdlet '*'
+
+##################################################################################################################
+# Private Commands
+##################################################################################################################
+
+
+
+function Convert-DictionaryToHelpObject {
+    <#
+    .SYNOPSIS
+        Convets a hashtable to a PSObject using keys as property names with associated values.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
+    [OutputType([String])]
+
+    param (
+        # A hashtable with desired object's properties.
+        [Parameter(Position = 0,
+                   Mandatory = $True,
+                   ValueFromPipeline = $True,
+                   ValueFromPipelineByPropertyName = $True)]
+        [IDictionary]
+        $Properties,
+
+        # A name of the help object's type that shall be assigned to the object.
+        [Parameter(Position = 1,
+                   Mandatory = $True,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $True)]
+        [String]
+        $HelpObjectName,
+
+        # A name of the help object's type suffix that shall be assigned to the object as a secondary type.
+        [Parameter(Position = 2,
+                   Mandatory = $True,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $True)]
+        [String]
+        $HelpView
+    )
+
+    begin {
+        $typeNameNamespace = 'Leet.Build.'
+    }
+
+    process {
+        Convert-DictionaryToPSObject $Properties ($typeNameNamespace + $HelpObjectName + ".$HelpView"), ($typeNameNamespace + $HelpObjectName)
+    }
+}
+
+
+Export-ModuleMember -Function '*' -Variable '*' -Alias '*' -Cmdlet '*'

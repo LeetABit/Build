@@ -6,6 +6,6 @@ nuget:
   disable_publish_on_pr: true
 install:
 build_script:
-  - cmd: run.cmd
-  - sh: ./run.sh
+  - cmd: run.cmd help
+  - sh: ./run.sh help
 test: off

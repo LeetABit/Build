@@ -1,284 +1,962 @@
 #requires -version 6
+using namespace System.Collections
+using namespace System.Collections.Generic
+using namespace System.Management.Automation
+using module Leet.Build.Common
 
 Set-StrictMode -Version 2
+Import-LocalizedData -BindingVariable LocalizedData -FileName Leet.Build.Arguments.Resources.psd1
 
-$ErrorActionPreference = 'Stop'
-$WarningPreference     = 'Continue'
+$ConfigurationJson   = $Null
+$NamedArguments      = @{}
+$PositionalArguments = @()
+[ArrayList]$UnknownArguments = @()
 
-$ConfigurationJson = $Null
-$NamedArguments    = @{}
+$AllParameterSets = '__AllParameterSets'
 
-[Collections.Generic.List[String]]$script:PositionalArguments = [Collections.Generic.List[String]]::new()
-[Collections.Generic.List[String]]$script:UnknownArguments    = [Collections.Generic.List[String]]::new()
+##################################################################################################################
+# Public Commands
+##################################################################################################################
 
-<#
-.SYNOPSIS
-Sets an initial arguments for further processing.
 
-.PARAMETER RepositoryRoot
-Value of the -RepositoryRoot parameter.
+function Find-CommandArgument {
+    <#
+    .SYNOPSIS
+    Locates an argument for a specified named parameter.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
+    [OutputType([Object])]
 
-.PARAMETER Arguments
-Collection of other arguments passed.
-#>
-function Set-CommandArguments ( [String]   $RepositoryRoot ,
-                                [String[]] $Arguments      ) {
-    Initialize-ConfigurationFromFile $RepositoryRoot
-    $script:NamedArguments.Clear()
-    $script:NamedArguments.Add('RepositoryRoot', $RepositoryRoot)
+    param (
+        # Name of the parameter.
+        [Parameter(HelpMessage = 'Provide parameter name.',
+                   Position=0,
+                   Mandatory=$True,
+                   ValueFromPipeline=$True,
+                   ValueFromPipelineByPropertyName=$True)]
+        [String]
+        $ParameterName,
 
-    $script:PositionalArguments.Clear()
+        # Name of the build extension in which the command is defined.
+        [Parameter(Position=1,
+                   Mandatory=$False,
+                   ValueFromPipeline=$False,
+                   ValueFromPipelineByPropertyName=$True)]
+        [String]
+        $ExtensionName,
 
-    $script:UnknownArguments.Clear()
-    if ($Arguments) {
-        $script:UnknownArguments.AddRange($Arguments)
+        # Default value that shall be used when no argument with the specified name is found.
+        [Parameter(Position=2,
+                   Mandatory=$False,
+                   ValueFromPipeline=$False,
+                   ValueFromPipelineByPropertyName=$True)]
+        [Object]
+        $DefaultValue,
+
+        # Indicates whether the argument shall be threated as a value for [Switch] parameter.
+        [Parameter(Mandatory=$False,
+                   ValueFromPipeline=$False,
+                   ValueFromPipelineByPropertyName=$True)]
+        [Switch]
+        $IsSwitch,
+
+        # A dictionary that holds an additional arguments to be used as a parameter's value source.
+        [Parameter(Mandatory=$False,
+                   ValueFromPipeline=$False,
+                   ValueFromPipelineByPropertyName=$False)]
+        [IDictionary]
+        $AdditionalArguments
+    )
+
+    begin {
+        Leet.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
     }
 
-    $command = $Null
-    if (-not (Find-NamedArgument 'Command' ([Ref]$command))) {
-        if ($script:PositionalArguments.Count -gt 0) {
-            $command = $script:PositionalArguments[0]
-            $script:PositionalArguments.RemoveAt(0)
-        } else {
-            $command = Find-FirstPositionalArgument
+    process {
+        $parameterNames = @()
+        if ($ExtensionName) {
+            $parameterNames += "$($ExtensionName.Replace('.', [String]::Empty))`_$ParameterName"
         }
 
-        if (-not $command) { $command = 'verify' }
-        $script:NamedArguments.Add('Command', $command)
-    }
+        $parameterNames += "LeetBuild_$ParameterName"
+        $parameterNames += $ParameterName
 
-    Find-PositionalArguments
+        foreach ($parameterNameToFind in $parameterNames) {
+            $result = Find-CommandArgumentInDictionary $parameterNameToFind -IsSwitch:$IsSwitch -Dictionary $AdditionalArguments
+            if ($result) {
+                Convert-ArgumentValue $result -IsSwitch:$IsSwitch
+                return
+            }
 
-    return $command
-}
+            $result = Find-CommandArgumentInCommandLine $parameterNameToFind -IsSwitch:$IsSwitch
+            if ($result) {
+                Convert-ArgumentValue $result -IsSwitch:$IsSwitch
+                return
+            }
 
-<#
-.SYNOPSIS
-Removes all command arguments set.
-#>
-function Reset-CommandArguments {
-    $script:ConfigurationJson = $Null
-    $script:NamedArguments.Clear()
-    $script:PositionalArguments.Clear()
-    $script:UnknownArguments.Clear()
-}
+            $result = Find-CommandArgumentInEnvironment $parameterNameToFind -IsSwitch:$IsSwitch
+            if ($result) {
+                Convert-ArgumentString $result -IsSwitch:$IsSwitch
+                return
+            }
 
-<#
-.SYNOPSIS
-Gets a named and positional arguments that matches specified paramter names.
-
-.PARAMETER ParameterNames
-Name of the parameters for which values shall be found.
-
-.PARAMETER NamedArguments
-The variable that receives a hashtable with named arguments found.
-
-.PARAMETER PositionalArguments
-The variable that receives a collection with positional arguments found.
-#>
-function Select-CommandArguments(       [HashTable]    $ParameterNames      ,
-                                  [Ref] [HashTable] $NamedArguments      ,
-                                  [Ref] [String[]]  $PositionalArguments ) {
-    $NamedArguments.Value = @{}
-    $PositionalArguments.Value = @()
-
-    $ParameterNames.Keys | ForEach-Object {
-        $argument = $null
-        if (Find-NamedArgument $_ -IsSwitch:$ParameterNames[$_] ([Ref]$argument)) {
-            $NamedArguments.Value[$_] = $argument
-        }
-    }
-
-    if ($NamedArguments.Value.Count -lt $ParameterNames.Count) {
-        $PositionalArguments.Value = $script:PositionalArguments + $script:UnknownArguments
-    }
-}
-
-<#
-.SYNOPSIS
-Initializes a script configuration values from Leet.Build.json configuration file.
-
-.PARAMETER RepositoryRoot
-Value of the -RepositoryRoot parameter.
-#>
-function Initialize-ConfigurationFromFile ( [String] $RepositoryRoot ){
-    $configFilePath = Join-Paths $RepositoryRoot ('build', 'Leet.Build.json')
-    Write-Verbose "Initializing configuration using '$configFilePath' as fallback file."
-    $script:ConfigurationJson = $Null
-
-    if (Test-Path $configFilePath -PathType Leaf) {
-        $configFileContent = Get-Content -Raw -Encoding UTF8 -Path $configFilePath
-        $script:ConfigurationJson = ConvertFrom-Json $configFileContent
-    }
-}
-
-<#
-.SYNOPSIS
-Gets a value for the specified script's parameter from the Leet.Build.json configuration file.
-
-.PARAMETER ParameterName
-Name of the script's parameter which value shall be obtained.
-
-.PARAMETER DefaultValue
-A default value for the script's parameter that shall be used if parameter's value is not present in the configuration file.
-
-.NOTES
-If default value is $Null then this function throws an exception if the parameter's value is not present if the configuration file.
-#>
-function Get-ConfigurationFileParameterValue ( [String] $ParameterName         ,
-                                               [String] $DefaultValue  = $Null ) {
-    $result = $DefaultValue
-    if ($script:ConfigurationJson -and (Get-Member -Name $ParameterName -InputObject $script:ConfigurationJson)) {
-        $result = $script:ConfigurationJson.$ParameterName
-    }
-    
-    if ($result -eq $Null) {
-        throw "Could not find '$ParameterName' member in Leet.Build.json configuration file."
-    }
-
-    return $result
-}
-
-<#
-.SYNOPSIS
-Searches for a parameter for the specified named parameter.
-
-.PARAMETER ParameterName
-Name of the parameter for which the argument has to be found.
-
-.PARAMETER IsSwitch
-Determines whether the parametr is a switch parameter.
-
-.PARAMETER ArgumentFound
-A variable that receives a value of the named parameter found.
-#>
-function Find-NamedArgument (       [String] $ParameterName ,
-                                    [Switch] $IsSwitch      ,
-                              [Ref] [Object] $ArgumentFound ) {
-    if ($script:NamedArguments[$ParameterName]) {
-        $ArgumentFound.Value = $script:NamedArguments[$ParameterName]
-        return $True
-    }
-
-    for ($i = 0; $i -lt $script:UnknownArguments.Count; ++$i) {
-        $unknownCandidate = $script:UnknownArguments[$i]
-        $hasNaxtArgument = ($i + 1) -lt $script:UnknownArguments.Count
-        if ($hasNaxtArgument) {
-            $nextCandidate = $script:UnknownArguments[$i + 1]
-        } elseif (-Not ($IsSwitch)) {
-            break
+            $result = Find-CommandArgumentInConfiguration $parameterNameToFind -IsSwitch:$IsSwitch
+            if ($result) {
+                Convert-ArgumentString $result -IsSwitch:$IsSwitch
+                return
+            }
         }
 
-        $candidateParameterName = Select-ParameterName $unknownCandidate
-        if ($candidateParameterName -eq $ParameterName) {
-            if ($IsSwitch) {
-                if ($unknownCandidate.EndsWith(':')) {
-                    if ($hasNaxtArgument) {
-                        if (($nextCandidate -eq 'True') -or ($nextCandidate -eq 'False')) {
-                            $script:NamedArguments[$ParameterName] = [Switch][System.Boolean]$nextCandidate
-                            $script:UnknownArguments.RemoveAt($i)
-                            $script:UnknownArguments.RemoveAt($i)
-                            if ($i -eq 0) { Find-PositionalArguments }
-                            $ArgumentFound.Value = $script:NamedArguments[$ParameterName]
-                            return $True
-                        }
-                    }
-                } else {
-                    $script:NamedArguments[$ParameterName] = [Switch]$True
-                    $script:UnknownArguments.RemoveAt($i)
-                    if ($i -eq 0) { Find-PositionalArguments }
-                    $ArgumentFound.Value = $script:NamedArguments[$ParameterName]
-                    return $True
+        if ($DefaultValue) {
+            $DefaultValue
+        }
+    }
+}
+
+
+function Reset-CommandArgumentSet {
+    <#
+    .SYNOPSIS
+    Removes all command arguments set by Set-CommandArgumentSet command.
+    #>
+    [CmdletBinding(PositionalBinding = $False,
+                   SupportsShouldProcess = $True,
+                   ConfirmImpact = "Low")]
+
+    param ()
+
+    begin {
+        Leet.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
+    }
+
+    process {
+        if ($pscmdlet.ShouldProcess($LocalizedData.Resource_CurrentCommandArgumentSet,
+                                    $LocalizedData.Operation_Clear)) {
+            $script:ConfigurationJson = $Null
+            $script:NamedArguments = @{}
+            $script:PositionalArguments = @()
+            $script:UnknownArguments.Clear()
+        }
+    }
+}
+
+
+function Select-CommandArgumentSet {
+    <#
+    .SYNOPSIS
+    Selects a collection of arguments that match specified command parameters.
+    #>
+    [CmdletBinding(PositionalBinding = $False,
+                   DefaultParameterSetName = "Command")]
+    [OutputType([IDictionary],[Object[]])]
+
+    param (
+        # Command for which a matching arguments shall be seleted.
+        [Parameter(HelpMessage = 'Provide command info object for which arguments shall be selected.',
+                   Position = 0,
+                   Mandatory = $True,
+                   ValueFromPipeline = $True,
+                   ValueFromPipelineByPropertyName = $True,
+                   ParameterSetName = "Command")]
+        [System.Management.Automation.CommandInfo]
+        $Command,
+
+        # Script block for which a matching arguments shall be seleted.
+        [Parameter(HelpMessage = 'Provide script block object for which arguments shall be selected.',
+                   Position = 0,
+                   Mandatory = $True,
+                   ValueFromPipeline = $True,
+                   ValueFromPipelineByPropertyName = $True,
+                   ParameterSetName = "ScriptBlock")]
+        [System.Management.Automation.ScriptBlock]
+        $ScriptBlock,
+
+        # Collection of the parameter sets for which a matching arguments shall be seleted.
+        [Parameter(Position = 0,
+                   Mandatory = $False,
+                   ValueFromPipeline = $True,
+                   ValueFromPipelineByPropertyName = $True,
+                   ParameterSetName = "Manual")]
+        [CommandParameterSetInfo[]]
+        $ParameterSets,
+
+        # Name of the build extension for which the arguments shall be selected.
+        [Parameter(Position = 1,
+                   Mandatory = $False,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $True,
+                   ParameterSetName = "Command")]
+        [Parameter(Position = 1,
+                   Mandatory = $False,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $True,
+                   ParameterSetName = "ScriptBlock")]
+        [Parameter(Position = 1,
+                   Mandatory = $False,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $True,
+                   ParameterSetName = "Manual")]
+        [String]
+        $ExtensionName,
+
+        # Dictionary of additional arguments that shall be used as a source of parameter's values.
+        [Parameter(Position = 2,
+                   Mandatory = $False,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $False,
+                   ParameterSetName = "Command")]
+        [Parameter(Position = 2,
+                   Mandatory = $False,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $False,
+                   ParameterSetName = "ScriptBlock")]
+        [Parameter(Position = 2,
+                   Mandatory = $False,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $False,
+                   ParameterSetName = "Manual")]
+        [IDictionary]
+        $AdditionalArguments
+    )
+
+    begin {
+        Leet.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
+    }
+
+    process {
+        if ($PSCmdlet.ParameterSetName -eq 'Command') {
+            $ParameterSets = $Command.ParameterSets
+
+            if (-not $ExtensionName -and $Command.ModuleName) {
+                $ExtensionName = $Command.ModuleName
+            }
+        } elseif ($PSCmdlet.ParameterSetName -eq 'ScriptBlock') {
+            if ($ScriptBlock.Ast.ParamBlock) {
+                $function:private:ScriptBlockCommand = $ScriptBlock
+                $commandFunction = Get-Command ScriptBlockCommand -Type Function
+                $ParameterSets = $commandFunction.ParameterSets
+            }
+
+            if (-not $ExtensionName -and $ScriptBlock.Module) {
+                $ExtensionName = $ScriptBlock.Module.Name
+            }
+        }
+
+        $errors = @()
+        $namedArguments = @{}
+        $positionalArguments = @()
+        $found = $false
+        $mostWideParameterSet = $null
+        $mostWideParameterSetName = $Null
+
+        foreach ($parameterSet in $parameterSets) {
+            try {
+                $currentNamedArguments, $currentPositionalArguments = Select-CommandArgumentSetCore -Parameters $parameterSet.Parameters -ExtensionName $ExtensionName -AdditionalArguments $AdditionalArguments
+            }
+            catch {
+                if ($parameterSet.Name -eq $AllParameterSets) {
+                    $errors += $_.Exception.Message
                 }
-            } else {
-                $script:NamedArguments[$ParameterName] = $nextCandidate
-                $script:UnknownArguments.RemoveAt($i)
-                $script:UnknownArguments.RemoveAt($i)
-                if ($i -eq 0) { Find-PositionalArguments }
-                $ArgumentFound.Value = $script:NamedArguments[$ParameterName]
-                return $True
+                else {
+                    $errors += "{0}: {1}" -f $parameterSet.Name, $_.Exception.Message
+                }
+
+                continue
+            }
+
+            $found = $true
+            $currentParameterNames = $parameterSet.Parameters | Foreach-Object { $_.Name }
+            $currentParameterSetName = $parameterSet.Name
+            if (-not $mostWideParameterSet) {
+                $mostWideParameterSet = $currentParameterNames
+                $mostWideParameterSetName = $currentParameterSetName
+                $namedArguments = $currentNamedArguments
+                $positionalArguments = $currentPositionalArguments
+            }
+            else {
+                $union = $mostWideParameterSet + $currentParameterNames | Sort-Object | Get-Unique
+                if ($union.Length -gt [Math]::Max($mostWideParameterSet.Length, $currentParameterNames.Length)) {
+                    throw $LocalizedData.Error_SelectCommandArgumentSet_Reason -f
+                        ($LocalizedData.Reason_MultipleParameterSetsMatch_FirstParameterSet_SecondParameterSet -f $mostWideParameterSetName, $currentParameterSetName)
+                }
+                elseif ($currentParameterNames.Length -gt $mostWideParameterSet.Length) {
+                    $mostWideParameterSet = $currentParameterNames
+                    $mostWideParameterSetName = $currentParameterSetName
+                    $namedArguments = $currentNamedArguments
+                    $positionalArguments = $currentPositionalArguments
+                }
+            }
+        }
+
+        if (-not $found) {
+            throw $LocalizedData.Error_SelectCommandArgumentSet_Reason -f
+                ($LocalizedData.Reason_NoMatchinParameterSetFound_NewLine_Errors -f [Environment]::NewLine, $errors -join [Environment]::NewLine)
+        }
+
+        $namedArguments
+        Write-Output -NoEnumerate $positionalArguments
+    }
+}
+
+
+function Set-CommandArgument {
+    <#
+    .SYNOPSIS
+    Sets a value for the specified parameter.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
+
+    param (
+        # Name of the parameter which value shall be updated.
+        [Parameter(HelpMessage = 'Provide name of the parameter which value shall be updated',
+                   Position = 0,
+                   Mandatory = $True,
+                   ValueFromPipeline = $True,
+                   ValueFromPipelineByPropertyName = $True)]
+        [ValidateIdentifierAttribute()]
+        [String]
+        $ParameterName,
+
+        # A new value for the parameter.
+        [Parameter(HelpMessage = 'Provide a new value for the parameter.',
+                   Position=1,
+                   Mandatory=$True,
+                   ValueFromPipeline=$True,
+                   ValueFromPipelineByPropertyName=$True)]
+        [String]
+        $ParameterValue,
+
+        # Indicates that this cmdlet overwrites value already set to the parameter.
+        [Parameter(Mandatory = $False,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $False)]
+        [Switch]
+        $Force)
+
+    begin {
+        Leet.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
+    }
+
+    process {
+        if ($script:NamedArguments.ContainsKey($ParameterName)) {
+            if (-not $Force) {
+                throw $LocalizedData.Error_SetCommandArgument_Reason -f
+                    ($LocalizedData.Reason_ArgumentAlreadySet_ParameterName -f $ParameterName)
+            }
+        }
+
+        $script:NamedArguments[$ParameterName] = $ParameterValue
+    }
+}
+
+
+function Set-CommandArgumentSet {
+    <#
+    .SYNOPSIS
+    Sets a collection of arguments that shall be used for command execution.
+    #>
+    [CmdletBinding(PositionalBinding = $False,
+                   SupportsShouldProcess = $True,
+                   ConfirmImpact = 'Low')]
+
+    param (
+        # Location of the repository on which te command will be executed.
+        [Parameter(HelpMessage = 'Provide path to the root folder of the repository for which the command will be executed.',
+                   Position=0,
+                   Mandatory=$True,
+                   ValueFromPipeline=$False,
+                   ValueFromPipelineByPropertyName=$True)]
+        [ValidateContainerPathAttribute()]
+        [String]
+        $RepositoryRoot,
+
+        # Dictionary of buildstrapper parmaters (including dynamic ones) that have been successfully bound.
+        [Parameter(Position=1,
+                   Mandatory=$False,
+                   ValueFromPipeline=$False,
+                   ValueFromPipelineByPropertyName=$True)]
+        [IDictionary]
+        $NamedArguments,
+
+        # Collection of other arguments passed.
+        [Parameter(Position=2,
+                   Mandatory=$False,
+                   ValueFromPipeline=$False,
+                   ValueFromPipelineByPropertyName=$True)]
+        [String[]]
+        $UnknownArguments)
+
+    begin {
+        Leet.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
+    }
+
+    process {
+        if ($PSCmdlet.ShouldProcess($LocalizedData.Resource_CurrentCommandArgumentSet,
+                                    $LocalizedData.Operation_Overwrite)) {
+            Initialize-ConfigurationFromFile $RepositoryRoot
+            $script:NamedArguments = @{}
+            $script:PositionalArguments = @()
+            $script:UnknownArguments.Clear()
+
+            $NamedArguments.Keys | ForEach-Object {
+                $script:NamedArguments.Add($_, $NamedArguments[$_])
+            }
+
+            if ($UnknownArguments) {
+                $script:UnknownArguments.AddRange($UnknownArguments)
+                Pop-PositionalArguments
             }
         }
     }
-
-    $defaultValue = [guid]::NewGuid()
-    $ArgumentFound.Value = Get-ConfigurationFileParameterValue $ParameterName $defaultValue
-    return $ArgumentFound.Value -ne $defaultValue
 }
 
-<#
-.SYNOPSIS
-Obtains a parameter name in the specified argument if it represents a parameter name.
 
-.PARAMETER Argument
-Argument to examine.
-#>
-function Select-ParameterName ([String] $Argument) {
-    $firstParameterChar = '\p{Lu}|\p{Ll}|\p{Lt}|\p{Lm}|\p{Lo}|_|\?'
-    $parameterChar = '[^\{\}\(\)\;\,\|\&\.\[\:\s\n]'
+##################################################################################################################
+# Private Commands
+##################################################################################################################
 
-    if ($Argument -match "^-(($firstParameterChar)($parameterChar)+)\:?$") {
-        return $matches[1]
-    }
 
-    return $null
-}
+function Convert-ArgumentString {
+    <#
+    .SYNOPSIS
+    Conditionaly converts a specified string argument to a [Switch] type.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
+    [OutputType([Object[]])]
 
-<#
-.SYNOPSIS
-Finds positional arguments in list of not currently known arguments.
-#>
-function Find-PositionalArguments {
-    while ($script:UnknownArguments.Count -gt 0) {
-        if (-Not (Test-ParameterName $script:UnknownArguments[0])) {
-            $script:PositionalArguments += $script:UnknownArguments[0]
-            $script:UnknownArguments.RemoveAt(0)
-        } else { break }
-    }
-}
+    param (
+        # Argument string to convert.
+        [Parameter(HelpMessage = 'Provide argument string value.',
+                   Position=0,
+                   Mandatory=$True,
+                   ValueFromPipeline=$True,
+                   ValueFromPipelineByPropertyName=$True)]
+        [String[]]
+        $Value,
 
-<#
-.SYNOPSIS
-Finds first positional arguments in list of not currently known arguments skipping candidates for named arguments.
-#>
-function Find-FirstPositionalArgument {
-    $index = 0
+        # Indicates whether the argument shall be threated as a value for [Switch] parameter.
+        [Parameter(Position=1,
+                   Mandatory=$False,
+                   ValueFromPipeline=$False,
+                   ValueFromPipelineByPropertyName=$True)]
+        [Switch]
+        $IsSwitch)
 
-    while ($script:UnknownArguments.Count -gt $index) {
-        if (-Not (Test-ParameterName $script:UnknownArguments[$index])) {
-            $result = $script:UnknownArguments[$index]
-            $script:UnknownArguments.RemoveAt($index)
-            return $result
-        } else {
-            $index += 2
+    process {
+        $Value | ForEach-Object {
+            if ($IsSwitch) {
+                if ($_ -eq '0' -or
+                $_ -eq 'False') {
+                    [Switch]$False
+                } else {
+                    [Switch]$True
+                }
+            }
+            else {
+                $_
+            }
         }
     }
-
-    return $Null
 }
 
-<#
-.SYNOPSIS
-Checks whether the specified argument represents a name of the parameter specifier.
 
-.PARAMETER Argument
-Argument which shall be checked.
+function Convert-ArgumentValue {
+    <#
+    .SYNOPSIS
+    Conditionaly converts a specified argument to a [Switch] type.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
+    [OutputType([Object[]])]
 
-.PARAMETER ParametrName
-A variable that gets a value of the parameter's name found.
-#>
-function Test-ParameterName (       [String] $Argument     ,
-                              [Ref] [String] $ParametrName ) {
-    $firstParameterChar = '\p{Lu}|\p{Ll}|\p{Lt}|\p{Lm}|\p{Lo}|_|\?'
-    $parameterChar = '[^\{\}\(\)\;\,\|\&\.\[\:\s\n]'
+    param (
+        # Argument to convert.
+        [Parameter(HelpMessage = 'Provide argument value.',
+                   Position=0,
+                   Mandatory=$True,
+                   ValueFromPipeline=$True,
+                   ValueFromPipelineByPropertyName=$True)]
+        [Object[]]
+        $Value,
 
-    if ($Argument -match "^-(($firstParameterChar)($parameterChar)+)\:?$") {
-        $ParametrName = $matches[1]
-        return $True
+        # Indicates whether the argument shall be threated as a value for [Switch] parameter.
+        [Parameter(Position=1,
+                   Mandatory=$False,
+                   ValueFromPipeline=$False,
+                   ValueFromPipelineByPropertyName=$True)]
+        [Switch]
+        $IsSwitch)
+
+    process {
+        $Value | ForEach-Object {
+            if ($IsSwitch) {
+                if ($_) {
+                    [Switch][Boolean]$_
+                } else {
+                    [Switch]$True
+                }
+            }
+            else {
+                $_
+            }
+        }
+    }
+}
+
+
+function Find-CommandArgumentInCommandLine {
+    <#
+    .SYNOPSIS
+    Examines command line arguments for presence of a specified named parameter's value.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
+    [OutputType([Object])]
+
+    param (
+        # Name of the parameter.
+        [Parameter(HelpMessage = 'Provide parameter name.',
+                   Position=0,
+                   Mandatory=$True,
+                   ValueFromPipeline=$True,
+                   ValueFromPipelineByPropertyName=$True)]
+        [String]
+        $ParameterName,
+
+        # Indicates whether the argument shall be threated as a value for [Switch] parameter.
+        [Parameter(Position=1,
+                   Mandatory=$False,
+                   ValueFromPipeline=$False,
+                   ValueFromPipelineByPropertyName=$True)]
+        [Switch]
+        $IsSwitch)
+
+    process {
+        foreach ($dictionaryParameterName in $script:NamedArguments.Keys) {
+            if ($dictionaryParameterName -ne $ParameterName) {
+                continue
+            }
+
+            $script:NamedArguments[$ParameterName]
+            return
+        }
+
+        Find-CommandArgumentInUnknownArguments $ParameterName $IsSwitch
+    }
+}
+
+
+function Find-CommandArgumentInConfiguration {
+    <#
+    .SYNOPSIS
+    Examines JSON configuration file for presence of a specified named parameter's value.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
+    [OutputType([Object])]
+
+    param (
+        # Name of the parameter.
+        [Parameter(HelpMessage = 'Provide parameter name.',
+                   Position=0,
+                   Mandatory=$True,
+                   ValueFromPipeline=$True,
+                   ValueFromPipelineByPropertyName=$True)]
+        [String]
+        $ParameterName,
+
+        # Indicates whether the argument shall be threated as a value for [Switch] parameter.
+        [Parameter(Position=1,
+                   Mandatory=$False,
+                   ValueFromPipeline=$False,
+                   ValueFromPipelineByPropertyName=$True)]
+        [Switch]
+        $IsSwitch)
+
+    process {
+        if ($script:ConfigurationJson -and (Get-Member -Name $ParameterName -InputObject $script:ConfigurationJson)) {
+            $script:ConfigurationJson.$ParameterName
+            return
+        }
+    }
+}
+
+
+function Find-CommandArgumentInDictionary {
+    <#
+    .SYNOPSIS
+    Examines s[ecified arguments dictionary for presence of a specified named parameter's value.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
+    [OutputType([Object])]
+
+    param (
+        # Name of the parameter.
+        [Parameter(HelpMessage = 'Provide parameter name.',
+                   Position=0,
+                   Mandatory=$True,
+                   ValueFromPipeline=$True,
+                   ValueFromPipelineByPropertyName=$True)]
+        [String]
+        $ParameterName,
+
+        # Indicates whether the argument shall be threated as a value for [Switch] parameter.
+        [Parameter(Position=1,
+                   Mandatory=$False,
+                   ValueFromPipeline=$False,
+                   ValueFromPipelineByPropertyName=$True)]
+        [Switch]
+        $IsSwitch,
+
+        # A dictionary that holds an arguments to be used as a parameter's value source.
+        [Parameter(Position=2,
+                   Mandatory=$False,
+                   ValueFromPipeline=$False,
+                   ValueFromPipelineByPropertyName=$False)]
+        [IDictionary]
+        $Dictionary)
+
+    process {
+        if ($Dictionary) {
+            foreach ($dictionaryParameterName in $Dictionary.Keys) {
+                if ($dictionaryParameterName -ne $ParameterName) {
+                    continue
+                }
+
+                $Dictionary[$dictionaryParameterName]
+                break
+            }
+        }
+    }
+}
+
+
+function Find-CommandArgumentInEnvironment {
+    <#
+    .SYNOPSIS
+    Examines envirnmental variables for presence of a specified named parameter's value.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
+    [OutputType([Object])]
+
+    param (
+        # Name of the parameter.
+        [Parameter(HelpMessage = 'Provide parameter name.',
+                   Position=0,
+                   Mandatory=$True,
+                   ValueFromPipeline=$True,
+                   ValueFromPipelineByPropertyName=$True)]
+        [String]
+        $ParameterName,
+
+        # Indicates whether the argument shall be threated as a value for [Switch] parameter.
+        [Parameter(Position=1,
+                   Mandatory=$False,
+                   ValueFromPipeline=$False,
+                   ValueFromPipelineByPropertyName=$True)]
+        [Switch]
+        $IsSwitch
+    )
+
+    process {
+        $localParameterName = $ParameterName
+        if ($localParameterName -notmatch '^Leet[a-zA-Z]*_[a-zA-Z]+[a-zA-Z0-9_]*$') {
+            $localParameterName = "Leet_$localParameterName"
+        }
+
+        if (Test-Path "env:\$localParameterName") {
+            Get-Content "env:\$localParameterName"
+        }
+    }
+}
+
+
+function Find-CommandArgumentInUnknownArguments {
+    <#
+    .SYNOPSIS
+    Examines a collection of arguments which kind has not yet been determined for presence of a specified named parameter's value.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
+    [OutputType([Object])]
+
+    param (
+        # Name of the parameter.
+        [Parameter(HelpMessage = 'Provide parameter name.',
+                   Position=0,
+                   Mandatory=$True,
+                   ValueFromPipeline=$True,
+                   ValueFromPipelineByPropertyName=$True)]
+        [String]
+        $ParameterName,
+
+        # Indicates whether the argument shall be threated as a value for [Switch] parameter.
+        [Parameter(Position=1,
+                   Mandatory=$False,
+                   ValueFromPipeline=$False,
+                   ValueFromPipelineByPropertyName=$True)]
+        [Switch]
+        $IsSwitch
+    )
+
+    process {
+        for ($i = 0; $i -lt $script:UnknownArguments.Count; ++$i) {
+            $unknownCandidate = $script:UnknownArguments[$i]
+            $hasNaxtArgument = ($i + 1) -lt $script:UnknownArguments.Count
+            if ($hasNaxtArgument) {
+                $nextCandidate = $script:UnknownArguments[$i + 1]
+            } elseif (-Not ($IsSwitch)) {
+                break
+            }
+
+            $candidateParameterName = Select-ParameterName $unknownCandidate
+            if ($candidateParameterName -eq $ParameterName) {
+                $simpleSwitch = $False
+
+                if ($IsSwitch) {
+                    if ($unknownCandidate.EndsWith(':')) {
+                        if ($hasNaxtArgument) {
+                            if (($nextCandidate -eq 'True') -or ($nextCandidate -eq 'False')) {
+                                $result = [Switch][System.Boolean]$nextCandidate
+                            }
+                        }
+                    } else {
+                        $result = [Switch]$True
+                        $simpleSwitch = $True
+                    }
+                } else {
+                    $result = $nextCandidate
+                }
+
+                $script:NamedArguments[$ParameterName] = $result
+                $script:UnknownArguments.RemoveAt($i)
+                if (-not $simpleSwitch) { $script:UnknownArguments.RemoveAt($i) }
+                if ($i -eq 0)           { Pop-PositionalArguments              }
+                $script:NamedArguments[$ParameterName]
+                return
+            }
+        }
+    }
+}
+
+
+function Pop-PositionalArguments {
+    <#
+    .SYNOPSIS
+    Locates a positional argument in a head of the collection of arguments which kind has not yet been determined.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
+
+    param ()
+
+    process {
+        while ($script:UnknownArguments.Count -gt 0) {
+            if (-Not (Test-ParameterName $script:UnknownArguments[0])) {
+                $script:PositionalArguments += $script:UnknownArguments[0]
+                $script:UnknownArguments.RemoveAt(0)
+            }
+            else {
+                break
+            }
+        }
+    }
+}
+
+
+function Initialize-ConfigurationFromFile {
+    <#
+    .SYNOPSIS
+    Initializes a script configuration values from Leet.Build.json configuration file.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
+
+    param (
+        # Location of the repository for which te configuration file shall be located.
+        [Parameter(HelpMessage = "Provide path to the repository root directory.",
+                   Position=0,
+                   Mandatory=$True,
+                   ValueFromPipeline=$True,
+                   ValueFromPipelineByPropertyName=$True)]
+        [ValidateContainerPathAttribute()]
+        [String]
+        $RepositoryRoot
+    )
+
+    process {
+        $script:ConfigurationJson = @{}
+        Get-ChildItem -Path $RepositoryRoot -Filter 'Leet.Build.json' -Recurse | Foreach-Object {
+            $configFilePath = $_.FullName
+            Write-Verbose ($LocalizedData.Message_InitializingConfigurationFromFile_FilePath -f $configFilePath)
+
+            if (Test-Path $configFilePath -PathType Leaf) {
+                try {
+                    $configFileContent = Get-Content -Raw -Encoding UTF8 -Path $configFilePath
+                    $configJson = ConvertFrom-Json $configFileContent
+                    $configJson.psobject.Properties | ForEach-Object {
+                        $script:ConfigurationJson | Add-Member -MemberType $_.MemberType -Name $_.Name -Value $_.Value -Force
+                    }
+                }
+                catch {
+                    throw [System.IO.FileFormatException]::new([Uri]::new($configFilePath), $LocalizedData.Exception_IncorrectJsonFileFormat, $_)
+                }
+            }
+        }
+    }
+}
+
+
+function Select-CommandArgumentSetCore {
+    <#
+    .SYNOPSIS
+    Selects a collection of arguments that match specified command parameter set.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
+    [OutputType([IDictionary],[Object[]])]
+
+    param (
+        # Collection of the parameters for which a matching arguments shall be seleted.
+        [Parameter(HelpMessage = 'Provide collection of the parameters for which a matching arguments shall be seleted.',
+                   Position = 0,
+                   Mandatory = $True,
+                   ValueFromPipeline = $True,
+                   ValueFromPipelineByPropertyName = $True)]
+        [CommandParameterInfo[]]
+        $Parameters,
+
+        # Prefix for the parameters name that shall be used.
+        [Parameter(HelpMessage = 'Provide prefix for the parameters name that shall be used.',
+                   Position = 1,
+                   Mandatory = $True,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $True)]
+        [String]
+        $ExtensionName,
+
+        # Dictionary of additional arguments that shall be used as a source of parameter's values.
+        [Parameter(HelpMessage = "Provide dictionary of additional arguments that shall be used as a source of parameter's values.",
+                   Position = 2,
+                   Mandatory = $False,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $False)]
+        [IDictionary]
+        $AdditionalArguments
+    )
+
+    begin {
+        Leet.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
     }
 
-    $ParametrName = $null
-    return $False
+    process {
+        $namedArguments = @{}
+        $positionalArguments = @()
+        $requiredMandatoryPositionalArguments = 0
+        $requiredOptionalPositionalArguments = 0
+
+        if ($Parameters) {
+            foreach ($parameter in $Parameters) {
+                $argument = $Null
+
+                foreach ($suffix in @($parameter.Name) + $parameter.Aliases) {
+                    $argument = Find-CommandArgument $parameter.Name $ExtensionName -IsSwitch:($parameter.ParameterType -eq [SwitchParameter]) -AdditionalArguments $AdditionalArguments
+                    if ($null -ne $argument) {
+                        break
+                    }
+                }
+
+                if ($null -ne $argument) {
+                    $namedArguments[$parameter.Name] = $argument
+                    continue
+                }
+
+                if ($parameter.IsMandatory) {
+                    if ($parameter.Position -ge 0) {
+                        $requiredMandatoryPositionalArguments = [Math]::Max($requiredMandatoryPositionalArguments, ($parameter.Position + 1))
+                    } else {
+                        throw $LocalizedData.Exception_NamedParameterValueMissing_ParameterName -f $parameter.Name
+                    }
+                } else {
+                    if ($parameter.Position -ge 0) {
+                        $requiredOptionalPositionalArguments = [Math]::Max($requiredOptionalPositionalArguments, ($parameter.Position + 1))
+                    }
+                }
+            }
+        }
+
+        $missingArguments = $requiredMandatoryPositionalArguments - $script:PositionalArguments.Length
+        if ($missingArguments -gt 0) {
+            throw $LocalizedData.Exception_PositionalParameterValueMissing_ParameterCount -f $missingArguments
+        }
+
+        $missingArguments = $requiredOptionalPositionalArguments - $script:PositionalArguments.Length
+
+        if ($missingArguments -gt 0) {
+            $positionalLimit = [Math]::Min($requiredMandatoryPositionalArguments, $script:PositionalArguments.Length)
+            for ($i = 0; $i -lt $positionalLimit; ++$i) {
+                $positionalArguments += $script:PositionalArguments[$i]
+            }
+        } else {
+            $positionalLimit = [Math]::Min($requiredOptionalPositionalArguments, $script:PositionalArguments.Length)
+            for ($i = 0; $i -lt $positionalLimit; ++$i) {
+                $positionalArguments += $script:PositionalArguments[$i]
+            }
+        }
+
+        $namedArguments
+        Write-Output $positionalArguments -NoEnumerate
+    }
 }
 
-Export-ModuleMember -Variable '*' -Alias '*' -Function '*' -Cmdlet '*'
+
+function Select-ParameterName {
+    <#
+    .SYNOPSIS
+    Obtains a parameter name from the specified argument if it matches an parameter name pattern.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
+    [OutputType([String])]
+
+    param (
+        # Argument to examine.
+        [Parameter(HelpMessage = "Provide value of the command's argument.",
+                   Position=0,
+                   Mandatory=$True,
+                   ValueFromPipeline=$True,
+                   ValueFromPipelineByPropertyName=$True)]
+        [String]
+        $Argument)
+
+    process {
+        $firstParameterChar = '\p{Lu}|\p{Ll}|\p{Lt}|\p{Lm}|\p{Lo}|_|\?'
+        $parameterChar = '[^\{\}\(\)\;\,\|\&\.\[\:\s\n]'
+
+        if ($Argument -match "^-(($firstParameterChar)($parameterChar)*)\:?$") {
+            $matches[1]
+        }
+    }
+}
+
+
+function Test-ParameterName {
+    <#
+    .SYNOPSIS
+    Checks whether the specified argument represents a name of the parameter specifier.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
+    [OutputType([System.Boolean])]
+
+    param (
+        # Argument which shall be checked.
+        [Parameter(HelpMessage = "Provide value of the command's argument.",
+                   Position=0,
+                   Mandatory=$True,
+                   ValueFromPipeline=$True,
+                   ValueFromPipelineByPropertyName=$True)]
+        [String]
+        $Argument)
+
+    process {
+        $firstParameterChar = '\p{Lu}|\p{Ll}|\p{Lt}|\p{Lm}|\p{Lo}|_|\?'
+        $parameterChar = '[^\{\}\(\)\;\,\|\&\.\[\:\s\n]'
+
+        $Argument -match "^-(($firstParameterChar)($parameterChar)*)\:?$"
+    }
+}
+
+
+Export-ModuleMember -Function '*' -Variable '*' -Alias '*' -Cmdlet '*'

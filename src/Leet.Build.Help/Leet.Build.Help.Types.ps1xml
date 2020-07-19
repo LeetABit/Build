@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Types>
+
+  <Type>
+    <Name>Leet.Build.Extension</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>TaskListString</Name>
+        <GetScriptBlock>
+          $this.Tasks.Name -join ", "
+        </GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+
+
+  <Type>
+    <Name>Leet.Build.Task</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>CumulativeDescription</Name>
+        <GetScriptBlock>
+          ($this.Jobs | ForEach-Object {
+            if ($_ -is [PSCustomObject]) {
+              $_.Description.Trim()
+            }
+          }) -join [Environment]::NewLine
+        </GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>BeforeListString</Name>
+        <GetScriptBlock>
+          if ($this.Before) {
+            $this.Before.Name -join ", "
+          }
+          else {
+            "(None)"
+          }
+        </GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>AfterListString</Name>
+        <GetScriptBlock>
+          if ($this.After) {
+            $this.After.Name -join ", "
+          }
+          else {
+            "(None)"
+          }
+        </GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>JobListString</Name>
+        <GetScriptBlock>
+          ($this.Jobs | ForEach-Object {
+            if ($_ -is [String]) {
+              $_
+            }
+            else {
+              "[ScriptBlock]"
+            }
+          }) -join [Environment]::NewLine
+        </GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>ParameterList</Name>
+        <GetScriptBlock>
+          ($this.Jobs | ForEach-Object {
+            if ($_ -is [PSCustomObject]) {
+              $_.Parameters | ForEach-Object { $_ }
+            }
+          })
+        </GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>ParameterListString</Name>
+        <GetScriptBlock>
+          ($this.ParameterList | ForEach-Object { $_.DecoratedName } | Sort-Object | Get-Unique) -join ", "
+        </GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>DecoratedName</Name>
+        <GetScriptBlock>
+          if ($this.IsDefault) {
+            "`($($this.Name)`)"
+          }
+          else {
+            $this.Name
+          }
+        </GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+
+  <Type>
+    <Name>Leet.Build.Parameter</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>DecoratedName</Name>
+        <GetScriptBlock>
+          if ($this.Mandatory) {
+            $this.Name
+          }
+          else {
+            "$($this.Name)`?"
+          }
+        </GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+  <!--
+($this.Jobs | ForEach-Object {
+            if ($_ -is [PSCustomObject]) {
+              $_.Parameters | ForEach-Object { $_.Name }
+            }
+          }) | Sort-Object | Get-Unique -join ", "
+  <Type>
+    <Name>Leet.Build.Task</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>HelpName</Name>
+        <GetScriptBlock>
+          if ($this.IsDefault) {
+            "`[$($this.Name)`]"
+          }
+          else {
+            $this.Name
+          }
+        </GetScriptBlock>
+      </ScriptProperty>
+
+      <ScriptProperty>
+        <Name>CumulativeDescription</Name>
+        <GetScriptBlock>
+          ($this.Jobs | ForEach-Object {
+            if ($_ -is [PSCustomObject]) {
+              $_.Description.Trim()
+            }
+          }) -join [Environment]::NewLine
+        </GetScriptBlock>
+      </ScriptProperty>
+
+      <ScriptProperty>
+        <Name>BeforeSequence</Name>
+        <GetScriptBlock>
+          $this.Before -join ", "
+        </GetScriptBlock>
+      </ScriptProperty>
+
+      <ScriptProperty>
+        <Name>AfterSequence</Name>
+        <GetScriptBlock>
+          $this.After -join ", "
+        </GetScriptBlock>
+      </ScriptProperty>
+
+      <ScriptProperty>
+        <Name>JobsSequence</Name>
+        <GetScriptBlock>
+          ($this.Jobs | ForEach-Object { if ($_ -is [String]) { $_ } else { '[ScriptBlock]' } }) -join " -> "
+        </GetScriptBlock>
+      </ScriptProperty>
+
+      <ScriptProperty>
+        <Name>DependenciesView</Name>
+        <GetScriptBlock>
+          if ($this.BeforeSequence) {
+            $properties = @{}
+            $properties.Name = 'Before'
+            $properties.Sequence = $this.BeforeSequence
+            $dependency = New-Object PSObject -Property $properties
+            $dependency.PSObject.TypeNames.Add('Leet.Build.Task.DependencyView')
+            $dependency
+          }
+
+          if ($this.AfterSequence) {
+            $properties = @{}
+            $properties.Name = 'After'
+            $properties.Sequence = $this.AfterSequence
+            $dependency = New-Object PSObject -Property $properties
+            $dependency.PSObject.TypeNames.Add('Leet.Build.Task.DependencyView')
+            $dependency
+          }
+
+          if ($this.JobsSequence) {
+            $properties = @{}
+            $properties.Name = 'Jobs'
+            $properties.Sequence = $this.JobsSequence
+            $dependency = New-Object PSObject -Property $properties
+            $dependency.PSObject.TypeNames.Add('Leet.Build.Task.DependencyView')
+            $dependency
+          }
+        </GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>-->
+
+</Types>

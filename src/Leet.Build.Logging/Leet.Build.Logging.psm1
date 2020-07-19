@@ -1,148 +1,287 @@
 #requires -version 6
+using namespace System.Diagnostics.CodeAnalysis
+using namespace System.Management.Automation
 
 Set-StrictMode -Version 2
-
-$ErrorActionPreference = 'Stop'
-$WarningPreference     = 'Continue'
+Import-LocalizedData -BindingVariable LocalizedData -FileName Leet.Build.Logging.Resources.psd1
 
 $EscapeSequence = [char]0x001b + '['
 
 $LightPrefix = if ($env:APPVEYOR) { '1;9' } else { '1;3' }
-$DarkPrefix  = '3'
 
 $BlackColor   = '0m'
 $RedColor     = '1m'
 $GreenColor   = '2m'
-$YellowColor  = '3m'
-$BlueColor    = '4m'
 $MagentaColor = '5m'
 $CyanColor    = '6m'
-$WhiteColor   = '7m'
 $ResetColor   = '0m'
 
-$LastStepName       = ""
-$LastIsMajor        = ""
+$LastStepName   = ""
+$LastStepFailed = $False
 
-<#
-.SYNOPSIS
-Writes to the host information about the specified invocation.
 
-.PARAMETER Invocation
-Invocation which information shall be written.
-#>
-function Write-Invocation( [System.Management.Automation.InvocationInfo] $Invocation ) {
-    Write-Verbose "Executing: '$($Invocation.MyCommand)' with parameters:"
-    $Invocation.BoundParameters.Keys | ForEach-Object {
-        Write-Verbose "  -$_ = `"$($Invocation.BoundParameters[$_])`""
+##################################################################################################################
+# Public Commands
+##################################################################################################################
+
+
+function Write-Diagnostic {
+    <#
+    .SYNOPSIS
+    Writes a diagnostic message that informs about less relevant script progress.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
+
+    param (
+        # Diagnostic message to be written by the host.
+        [Parameter(HelpMessage = 'Enter a diagnostic message.',
+                   Position = 0,
+                   Mandatory = $True,
+                   ValueFromPipeline = $True,
+                   ValueFromPipelineByPropertyName = $True)]
+        [String[]]
+        $Message)
+
+    begin {
+        Leet.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
+        $color = "$script:LightPrefix$script:BlackColor"
+    }
+
+    process {
+        Write-Message -Color $color -Message $Message
     }
 }
 
-<#
-.SYNOPSIS
-Writes a specified message string to the shell host with optional indentation and line wraps.
 
-.PARAMETER Preamble
-Additional control text to be used for the message.
+function Write-Failure {
+    <#
+    .SYNOPSIS
+    Writes a message that informs about build failure.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
 
-.PARAMETER Color
-Color for the message.
+    param (
+        # Build failure message.
+        [Parameter(HelpMessage = 'Enter message that describes the failure.',
+                   Position = 0,
+                   Mandatory = $True,
+                   ValueFromPipeline = $True,
+                   ValueFromPipelineByPropertyName = $True)]
+        [String[]]
+        $Message)
 
-.PARAMETER Message
-Message to be written by the host.
+    begin {
+        Leet.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
+        $color = "$script:LightPrefix$script:RedColor"
+    }
 
-.PARAMETER Indentation
-Indentation to applay to each line.
+    process {
+        $script:LastStepFailed = $True
+        Write-Message -Color $color -Message $Message
 
-.PARAMETER IgnoreBufferWidth
-Specifies whether the function shall ignore host buffer width when spliting message.
-
-.PARAMETER DoNotIndentFirstLine
-Specifies whether the first line of the message shall be indented by the function.
-#>
-function Write-Message ( [String]       $Preamble                 ,
-                         [String]       $Color                    ,
-                         [String]       $Message                  ,
-                         [Int]          $Indentation          = 0 ,
-                         [Switch]       $IgnoreBufferWidth        ,
-                         [Switch]       $DoNotIndentFirstLine     ) {
-    if (-not $Message) { Write-Host; return }
-
-    $indentationText     = ' ' * $Indentation
-
-    $limit = if ($IgnoreBufferWidth) { $Message.Length                                         }
-             else                    { (get-host).UI.RawUI.BufferSize.Width - $Indentation - 1 }
-    
-    for ($index = 0; $index -lt $Message.Length; $index += $limit) {
-        if (($Message.Length - $index) -lt $limit) { $limit = $Message.Length - $index }
-        $messageLine = $Message.Substring($index, $limit)
-        if (($index -gt 0) -or (-Not $DoNotIndentFirstLine)) { $messageLine = $indentationText + $messageLine }
-
-        if ($Color) {
-            Write-Host $Preamble$EscapeSequence$Color$messageLine$EscapeSequence$ResetColor
-        } else {
-            Write-Host $Preamble$messageLine
+        if ($ErrorActionPreference -eq 'Stop') {
+            Write-Error $LocalizedData.BreakingError
         }
     }
 }
 
-<#
-.SYNOPSIS
-Writes a message that informs about state change in the current system.
 
-.PARAMETER Message
-Modification message to be written by the host.
-#>
-function Write-Modification ( [String] $Message ) {
-    Write-Message -Color $script:LightPrefix$script:MagentaColor -Message $Message
+function Write-Invocation {
+    <#
+    .SYNOPSIS
+    Writes to the host information about the specified invocation.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
+
+    param (
+        # Invocation which information shall be written.
+        [Parameter(HelpMessage = "Provide invocation information about the command to write to verbose log.",
+                   Position = 0,
+                   Mandatory = $True,
+                   ValueFromPipeline = $True,
+                   ValueFromPipelineByPropertyName = $True)]
+        [ValidateNotNull()]
+        [InvocationInfo]
+        $Invocation
+    )
+
+    begin {
+        Leet.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
+    }
+
+    process {
+        $message = $LocalizedData.Write_Invocation_ExecutingCommandWithParameters_CommandName
+        $message = $message -f ($Invocation.MyCommand.ModuleName, $Invocation.MyCommand.Name)
+        Write-Verbose $message
+
+        $Invocation.BoundParameters.Keys | ForEach-Object {
+            $value = Leet.Build.Common\Format-String $Invocation.BoundParameters[$_]
+            Write-Verbose "  -$_ = `'$value`'"
+        }
+    }
 }
 
-<#
-.SYNOPSIS
-Writes a diagnostic message that informs about less relevant script progress.
 
-.PARAMETER Message
-Diagnostic message to be written by the host.
-#>
-function Write-Diagnostics ( [String] $Message ) {
-    Write-Message -Color $script:LightPrefix$script:BlackColor -Message $Message
+function Write-Message {
+    <#
+    .SYNOPSIS
+    Writes a specified message string to the shell host with optional indentation and line wraps.
+    #>
+
+    param (
+        # Message to be written by the host.
+        [Parameter(Position = 0,
+                   Mandatory = $False,
+                   ValueFromPipeline = $True,
+                   ValueFromPipelineByPropertyName = $True)]
+        [String[]]
+        $Message = @(),
+
+        # Additional control text to be used for the message.
+        [Parameter(Mandatory = $False,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $True)]
+        [String]
+        $Preamble = '',
+
+        # Color for the message.
+        [Parameter(Mandatory = $False,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $True)]
+        [String]
+        $Color = ''
+    )
+
+    begin {
+        Leet.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
+    }
+
+    process {
+        $preambleToWrite = $Preamble
+        $colorToWrite = if ($Color) { "$EscapeSequence$Color" } else { '' }
+        $resetColorToWrite = if ($Color) { "$EscapeSequence$ResetColor" } else { '' }
+
+        foreach ($messagePart in $Message) {
+            Write-Information "$preambleToWrite$colorToWrite$messagePart$resetColorToWrite"
+            $preambleToWrite = ''
+        }
+    }
 }
 
-<#
-.SYNOPSIS
-Writes a specified build step message string to the host.
 
-.PARAMETER Message
-Step information message to be written by the host.
+function Write-Modification {
+    <#
+    .SYNOPSIS
+    Writes a message that informs about state change in the current system.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
 
-.PARAMETER Major
-Determines whether the step is a major one or minor.
-#>
-function Write-Step ( [String] $StepName ,
-                      [String] $Message  ,
-                      [Switch] $Major    ) {
-    $preamble = if ($env:TRAVIS -and $StepName) { "travis_fold:start:$StepName`r" } else { '' }
-    $color    = if ($Major) { "$script:LightPrefix$script:CyanColor" } else { "$script:DarkPrefix$script:CyanColor" }
+    param (
+        # Modification message to be written by the host.
+        [Parameter(HelpMessage = 'Enter a diagnostic message.',
+                   Position = 0,
+                   Mandatory = $True,
+                   ValueFromPipeline = $True,
+                   ValueFromPipelineByPropertyName = $True)]
+        [String[]]
+        $Message
+    )
 
-    Write-Message -Preamble $preamble -Color $color -Message $Message
+    begin {
+        Leet.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
+        $color = "$script:LightPrefix$script:MagentaColor"
+    }
 
-    $script:LastStepName = $StepName
-    $script:LastIsMajor  = $Major
+    process {
+        Write-Message -Color $color -Message $Message
+    }
 }
 
-<#
-.SYNOPSIS
-Writes a specified build step success message string to the host.
-#>
-function Write-Success ( [String] $StepName ,
-                         [Switch] $Major    ) {
-    $foldName = if ($psboundparameters.ContainsKey("StepName")) { $StepName } else { $script:LastStepName }
-    $isMajor  = if ($psboundparameters.ContainsKey("Major"))    { $Major    } else { $script:LastIsMajor  }
-  
-    $preamble = if ($env:TRAVIS -and $foldName) { "travis_fold:end:$foldName`r" } else { '' }
-    $color    = if ($isMajor) { "$script:LightPrefix$script:GreenColor" } else { "$script:DarkPrefix$script:GreenColor" }
-    
-    Write-Message -Preamble $preamble -Color $color -Message 'Success.'
-    Write-Message
+
+function Write-Step {
+    <#
+    .SYNOPSIS
+    Writes a specified build step message string to the host.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
+
+    param (
+        # Name of the step that shall be writen as a message preamble.
+        [Parameter(HelpMessage = 'Enter a name of the step being reported.',
+                   Position = 0,
+                   Mandatory = $True,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $False)]
+        [ValidatePattern('^[a-z0-9_]+$')]
+        [String]
+        $StepName,
+
+        # Step information message to be written by the host.
+        [Parameter(HelpMessage = 'Enter a step message.',
+                   Position = 1,
+                   Mandatory = $True,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $False)]
+        [String[]]
+        $Message
+    )
+
+    begin {
+        Leet.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
+        $color = "$script:LightPrefix$script:CyanColor"
+    }
+
+    process {
+        $preamble = if ($env:TRAVIS -and $StepName) { "travis_fold:start:$StepName`r" }
+                    else                            { '' }
+
+        Write-Message -Preamble $preamble -Color $color -Message "$([System.Environment]::NewLine)$Message"
+
+        $script:LastStepName   = $StepName
+        $script:LastStepFailed = $False
+    }
 }
 
-Export-ModuleMember -Variable '*' -Alias '*' -Function '*' -Cmdlet '*'
+
+function Write-StepFinished {
+    <#
+    .SYNOPSIS
+    Writes a specified build step success message string to the host.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
+
+    param (
+        # Name of the step that shall be writen as a message preamble.
+        [Parameter(Position = 0,
+                   Mandatory = $False,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $False)]
+        [ValidatePattern('^[a-z0-9_]+$')]
+        [String]
+        $StepName = $script:LastStepName
+    )
+
+    begin {
+        Leet.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
+        $message  = $LocalizedData.Write_StepFinished_Success
+        $color    = "$script:LightPrefix$script:GreenColor"
+    }
+
+    process {
+        if (-not $StepName) {
+            throw $LocalizedData.Write_StepFinished_NoStepStarted
+        }
+
+        if ($script:LastStepFailed) {
+            throw $LocalizedData.Write_StepFinished_BuildStepFailed_StepName -f $StepName
+        }
+
+        $preamble = if ($env:TRAVIS -and $StepName) { "travis_fold:end:$StepName`r" } else { '' }
+
+        Write-Message -Preamble $preamble -Color $color -Message $message
+        Write-Message
+    }
+}
+
+
+Export-ModuleMember -Function '*' -Variable '*' -Alias '*' -Cmdlet '*'

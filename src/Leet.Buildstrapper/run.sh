@@ -1,212 +1,538 @@
 #!/usr/bin/env bash
-#==========================================================================
-#  Copyright (c) Leet. All rights reserved.
-#  Licensed under the MIT License.
-#  See License.txt in the project root for full license information.
-#--------------------------------------------------------------------------
-#  This script makes sure that the PowerShell Core in the required version
-#  is installed on the system and then runs 'run.ps1' PowerShell script
-#  passing all current script's parameters to it.
-#==========================================================================
+############################################################################
+#   Copyright (c) Leet. All rights reserved.
+#   Licensed under the MIT License.
+#   See License.txt in the project root for full license information.
+#===========================================================================
+#   This script makes sure that the PowerShell Core in the required version
+#   is installed on the system and then runs 'run.ps1' PowerShell script
+#   passing all current script's parameters to it.
+############################################################################
+set -e
+set -u
+set -o pipefail
+exec 3>&1
 
-current_folder="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-power_shell_version="6.0.1"
-last_fold_name=""
 
-#============================================================================
-#  Main script procedure.
-#============================================================================
-function main {
-  write_step_start "InstallPowerShellCore" "Checking PowerShell Core v$power_shell_version availability."
-  find_pwsh $power_shell_version pwsh_path
-  if [ -z "$pwsh_path" ]; then
-    install_power_shell_package $power_shell_version
+############################################################################
+#   Configuration
+############################################################################
+powershell_version="7.0.2"
+powershell_file_name="pwsh"
 
-    find_pwsh $power_shell_version pwsh_path
-    if [ -z "$pwsh_path" ]; then
-      write_error "Could not install PowerShell Core v$power_shell_version."
-      return 2
-    fi
 
-    write_diagnostic "PowerShell Core v$power_shell_version has been installed at '$pwsh_path'."
-  else
-    write_diagnostic "PowerShell Core v$power_shell_version already installed at '$pwsh_path'."
-  fi
+############################################################################
+#   Initialization.
+############################################################################
+function initialize {
+    local platform="linux" && [[ "$(uname)" = "Darwin" ]] && platform="osx"
+    local powershell_archive_file_name="powershell-$powershell_version-$platform-x64.tar.gz"
 
-  write_step_succeed
-  echo -e ""
+    installation_directory_path="$HOME/opt/local/microsoft/powershell/$powershell_version"
+    installation_pwsh_path="$installation_directory_path/$powershell_file_name"
+    powershell_download_link="https://github.com/PowerShell/PowerShell/releases/download/v$powershell_version/$powershell_archive_file_name"
+    powershell_archive_destination_path="/tmp/$powershell_archive_file_name"
 
-  $pwsh_path "$current_folder/run.ps1" "$@"
+    current_folder="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+    initialize_verbose_logging "$@"
+    initialize_console_colors
 }
 
-#============================================================================
-#  Searches for the 'pwsh' file in the current system.
-#--------------------------------------------------------------------------
-#  $power_shell_version
-#    Version of the PowerShell Core application to be found in the system.
-#
-#  $return
-#    Name of the variable that gets the PowerShell Core application path
-#    found.
-#============================================================================
-function find_pwsh() {
-  local power_shell_version=$1
-  local __resultvar=$2
 
-  if machine_has pwsh; then
-    paths=($(whereis pwsh))
-    for path in ${paths[@]:1}
-    do
-      version=$($path --version | cut -d' ' -f2-)
-      if [ "$version" == "v$power_shell_version" ]; then
-        eval $__resultvar="'$path'"
-        return 0
-      fi
+############################################################################
+#   Main script procedure.
+############################################################################
+function main {
+    pwsh_path=$(find_powershell $powershell_version "$powershell_file_name" "$installation_pwsh_path")
+
+    if [[ -z "$pwsh_path" ]]; then
+        write_verbose "No PowerShell $powershell_version has been found in the current environment."
+        begin_step "install_powershell" "Installing PowerShell Core $powershell_version..."
+
+        download_file "$powershell_download_link" "$powershell_archive_destination_path" || {
+            write_error "PowerShell archive download failed. Error code: $?"
+            return 1
+        }
+
+        install_archive "$powershell_archive_destination_path" "$installation_directory_path" "$installation_pwsh_path" || {
+            write_error "PowerShell archive installation failed. Error code: $?"
+            return 2
+        }
+
+        pwsh_path="$installation_pwsh_path"
+        delete_item "$powershell_archive_destination_path" || {
+            write_warning "Could not delete PowerShell archive file. Error code: $?"
+        }
+
+        end_step
+    fi
+
+    if [[ ! -f "$pwsh_path" ]]; then
+        write_error "Could not find PowerShell executable at '$pwsh_path'."
+        return 3
+    fi
+
+    execute_command "$pwsh_path" "$current_folder/run.ps1" "$@" || {
+        write_error "PowerShell execution failed. Error code: $?"
+        return 4
+    }
+
+    return 0
+}
+
+
+############################################################################
+#   Function definitions.
+############################################################################
+
+#===========================================================================
+#   Checks whether the verbose logging is requested.
+#---------------------------------------------------------------------------
+#   PARAMETERS:
+#       $#
+#           All the parameters sent to the script.
+#---------------------------------------------------------------------------
+#   SETS:
+#       verbose
+#           Sets to value 1 if verbose logging has been requested;
+#           to 0 otherwise.
+#===========================================================================
+function initialize_verbose_logging() {
+    if [[ "${LeetBuild_Verbose:-}" == "1" ]]; then
+        verbose=1
+        write_verbose "Verbose logging enabled: 'LeetBuild_Verbose' environmental variable with value '1' found."
+        return
+    fi
+
+    local i=1
+    while [[ "$i" -le "$#" ]]; do
+        local parameter=${@:$i:1}
+        parameter=${parameter,,}
+        if [[ $parameter =~ ^-(verbose|vb)(:(\$true)|(true)|([0-9]*[1-9][0-9]*)|(0x[0-9a-f]*[1-9a-f][0-9a-f]*))?$ ]] ; then
+            verbose=1
+            write_verbose "Verbose logging enabled: '$parameter' parameter found."
+            return
+        fi
+
+        ((i++))
     done
 
-	path=$(which pwsh)
-    if [ ! -z "$path" ]; then
-      version=$($path --version | cut -d' ' -f2-)
-      if [ "$version" == "v$power_shell_version" ]; then
-        eval $__resultvar="'$path'"
-      fi
-    fi
-  fi
+    verbose=0
 }
 
-#============================================================================
-#  Installs required version of the PowerShell Core in the current system.
-#--------------------------------------------------------------------------
-#  $power_shell_version
-#    Version of the PowerShell Core application to be found in the system.
-#============================================================================
-function install_power_shell_package() {
-  local power_shell_version=$1
 
-  local file_name_suffix="-1.ubuntu.14.04_amd64.deb" && [[ "$(uname)" = "Darwin" ]] && file_name_suffix="-osx.10.12-x64.pkg"
-  local file_name_version_connectior="_" && [[ "$(uname)" = "Darwin" ]] && file_name_version_connectior="-"
-  local file_name="powershell$file_name_version_connectior$power_shell_version$file_name_suffix"
-  local destination_path="/tmp/$file_name"
-  local download_path="https://github.com/PowerShell/PowerShell/releases/download/v$power_shell_version/$file_name";
-
-  write_modification "Downloading PowerShell Core package to '$destination_path'..."
-  local failed=false
-  if machine_has wget; then
-    wget --tries 10 --quiet -O "$destination_path" "$download_path" || failed=true
-  else
-    failed=true
-  fi
-
-  if [ "$failed" = true ] && machine_has curl; then
-    failed=false
-    curl --retry 10 -sSL -f --create-dirs -o "$destination_path" "$download_path" || failed=true
-  fi
-
-  if [ "$failed" = true ]; then
-    write_error "Could not download PowerShell Core v$power_shell_version."
-    return 1
-  fi
-
-  write_modification "Instaling PowerShell Core package..."
-  if [ "$(uname)" = "Darwin" ]; then
-    sudo installer -pkg $destination_path -target /
-  else
-    sudo dpkg -i $destination_path
-    sudo apt-get install -f
-  fi
-
-  write_modification "Deleting '$destination_path'..."
-  rm -f $destination_path
-}
-
-#============================================================================
-#  Checks whether the specified command is available in the current system.
-#--------------------------------------------------------------------------
-#  $command_name
-#    Name of the command which availability shall be determined.
-#============================================================================
-function machine_has() {
-  local command_name=$1
-
-  hash "$command_name" > /dev/null 2>&1
-  return $?
-}
-
-#============================================================================
-#  Writes a execution step start message to the host.
-#--------------------------------------------------------------------------
-#  $step_name
-#    Name of the step to start.
+#===========================================================================
+#   Initializes console colors if the current environment supports colors.
+#---------------------------------------------------------------------------
+#   SETS:
+#       color_reset
+#           Sets to a color reset command if current environment supports
+#           colors.
 #
-#  $message
-#    Step message.
-#============================================================================
-function write_step_start() {
-  local step_name=$1
-  local message=$2
+#       color_red
+#           Sets to a red color command if current environment supports
+#           colors.
+#
+#       color_green
+#           Sets to a green color command if current environment supports
+#           colors.
+#
+#       color_yellow
+#           Sets to a yellow color command if current environment supports
+#           colors.
+#
+#       color_magenta
+#           Sets to a magenta color command if current environment supports
+#           colors.
+#
+#       color_cyan
+#           Sets to a cyan color command if current environment supports
+#           colors.
+#===========================================================================
+function initialize_console_colors() {
+    ncolors=$(tput colors)
+    if [[ -n "${APPVEYOR:-}" ]] ; then
+        color_reset="\033[0m"
+        color_red="\033[91m"
+        color_green="\033[32m"
+        color_yellow="\033[93m"
+        color_magenta="\033[95m"
+        color_cyan="\033[96m"
 
-  local preamble=""
+        write_verbose "Console colors enabled: running in AppVeyor environment."
+        exec 2> >(while read line; do printf "%b\n" "${color_red:-}$line${color_reset:-}" >&2 ; done)
+    elif [[ -n "$ncolors" ]] && [[ $ncolors -ge 8 ]] ; then
+        color_reset="$(tput sgr0 || echo)"
+        color_red="$(tput setaf 1 || echo)"
+        color_green="$(tput setaf 2 || echo)$(tput bold || echo)"
+        color_yellow="$(tput setaf 3 || echo)$(tput bold || echo)"
+        color_magenta="$(tput setaf 5 || echo)$(tput bold || echo)"
+        color_cyan="$(tput setaf 6 || echo)$(tput bold || echo)"
 
-  if [ $TRAVIS ]; then
-    preamble="travis_fold:start:$step_name"
-  fi
-  
-  echo ""
-  echo -e "$preamble\x1B[36m$message\x1B[0m"
-  last_step_name=$step_name
+        write_verbose "Console colors enabled: command 'tput colors' output match."
+        exec 2> >(while read line; do printf "%b\n" "${color_red:-}$line${color_reset:-}" >&2 ; done)
+    else
+        write_verbose "Console colors disabled: command 'tput colors' output mismatch."
+    fi
 }
 
-#============================================================================
-#  Writes a execution step ended message to the host.
-#============================================================================
-function write_step_succeed() {
-  local preamble=""
 
-  if [ $TRAVIS ]; then
-    preamble="travis_fold:end:$last_step_name"
-  fi
-  
-  echo -e "$preamble\x1B[32mSuccess.\x1B[0m"
+#===========================================================================
+#   Searches for the PowerShell executable in the current system.
+#---------------------------------------------------------------------------
+#   PARAMETERS:
+#       $version
+#           Version of the PowerShell to be found.
+#
+#       $file_name
+#           Name of the PowerShell executable file.
+#
+#       $expected_path
+#           Default installation location of the PowerShell executable file.
+#---------------------------------------------------------------------------
+#   ECHOES:
+#       Path to the PowerShell executable file found.
+#===========================================================================
+function find_powershell() {
+    local version=$1
+    local file_name=$2
+    local expected_path=$3
+
+    write_verbose "Searching for '$file_name' version $version in system PATH and at '$expected_path'..."
+
+    check_powershell_version "$expected_path" "$version" && {
+        echo "$expected_path"
+        return 0
+    }
+
+    local candidates="$(which $file_name)"
+    for candidate in ${candidates[@]}
+    do
+        check_powershell_version "$candidate" "$version" && {
+            echo "$candidate"
+            return 0
+        }
+    done
+
+    return 0
 }
 
-#============================================================================
-#  Writes a message about a modification done to the executing environment.
-#--------------------------------------------------------------------------
-#  $message
-#    Execution message.
-#============================================================================
+
+#===========================================================================
+#   Checks whether the PowerShell at specified path has a required version.
+#---------------------------------------------------------------------------
+#   PARAMETERS:
+#       $power_shell_path
+#           Path to the PowerShell executable file.
+#
+#       $required_version
+#           Required PowerShell version.
+#===========================================================================
+function check_powershell_version() {
+    local power_shell_path=$1
+    local required_version=$2
+
+    if [[ -f "$power_shell_path" ]]; then
+        local candidate_version=$("$power_shell_path" --version | cut -d' ' -f2-)
+        if [[ -n "$candidate_version" ]]; then
+            write_verbose "Found PowerShell $candidate_version at '$power_shell_path'."
+            if [[ "$candidate_version" == "$required_version" ]]; then
+                return 0
+            fi
+        fi
+    fi
+
+    return 1
+}
+
+
+#===========================================================================
+#   Downloads a file from the remote location.
+#---------------------------------------------------------------------------
+#   PARAMETERS:
+#       $source_location
+#           Path to the remote file to download.
+#
+#       $destination_path
+#           Path to the destination of the downloaded file.
+#===========================================================================
+function download_file() {
+    local source_location=$1
+    local destination_path=$2
+
+    write_modification "Downloading file from '$source_location' to '$destination_path'..."
+
+    if machine_has wget; then
+        execute_command wget --tries 10 --quiet -O "$destination_path" "$source_location"
+    elif machine_has curl; then
+        execute_command curl --retry 10 -sSL -f --create-dirs -o "$destination_path" "$source_location"
+    else
+        write_error "Could not download file: no downloading tool found."
+        return 1
+    fi
+
+    local error=$?
+    if [[ ! $error ]] ; then
+        write_error "Could not download file: execute_command returned error $error."
+        delete_item "$destination_path" || {
+            write_warning "Could not delete PowerShell archive file. Error code: $?"
+        }
+
+        return 2
+    fi
+
+    if [[ ! -f "$destination_path" ]]; then
+        write_error "Could not download file: destination file does not exist."
+        return 3
+    fi
+
+    return 0
+}
+
+
+#===========================================================================
+#   Installs the specified PowerShell archive file to the specified
+#   location.
+#---------------------------------------------------------------------------
+#   PARAMETERS:
+#       $archive_path
+#           Path to the archive file to install.
+#
+#       $destination_directory_path
+#           Path to the destination directory.
+#
+#       $executable_file_path
+#           Path to the PowerShell executable file's expected location after
+#           installation.
+#===========================================================================
+function install_archive() {
+    local archive_path=$1
+    local destination_directory_path=$2
+    local executable_file_path=$3
+
+    write_verbose "Installing PowerShell at '$destination_directory_path'..."
+
+    delete_item "$destination_directory_path" || {
+        write_error "Could not delete old PowerShell destination directory. Error code: $?"
+        return 1
+    }
+
+    write_modification "Creating directory at '$destination_directory_path'..."
+    mkdir -p "$destination_directory_path" || {
+        write_error "Could not create a directory. Error code: $?"
+        return 2
+    }
+
+    write_modification "Expanding archive to '$destination_directory_path'..."
+    tar zxf "$archive_path" -C "$destination_directory_path" || {
+        write_error "Could not expand archive. Error code: $?"
+        return 3
+    }
+
+    write_modification "Setting execution permission for '$executable_file_path'..."
+    chmod +x "$executable_file_path" || {
+        write_error "Could not set execution permission. Error code: $?"
+        return 4
+    }
+
+    return 0
+}
+
+
+#===========================================================================
+#   Deletes a file system item specified by its path.
+#---------------------------------------------------------------------------
+#   PARAMETERS:
+#       $item_path
+#           Path to the item to delete.
+#===========================================================================
+function delete_item() {
+    local item_path=$1
+
+    if [[ -d "$item_path" ]] ; then
+        write_modification "Deleting directory '$item_path'..."
+        rm -rf "$item_path" > /dev/null
+        return $?
+    elif [[ -f "$item_path" ]] ; then
+        write_modification "Deleting file '$item_path'..."
+        rm -f "$item_path" > /dev/null
+        return $?
+    fi
+
+    return 0
+}
+
+#===========================================================================
+#   Executes a specified program with specified arguments and verbose
+#   command line logging.
+#---------------------------------------------------------------------------
+#   PARAMETERS:
+#       $@
+#           Program path and all the parameters for it.
+#===========================================================================
+function execute_command() {
+
+    write_verbose "Executing"
+    begin_verbose
+    for i in "$@"; do
+        write_verbose_direct "\"$i\" "
+    done
+
+    end_verbose
+
+    if [[ "$verbose" == "1" ]] ; then
+        "$@"
+    else
+        "$@" > /dev/null
+    fi
+
+    local error=$?
+
+    if [[ "$error" != "0" ]] ; then
+        write_error "Command execution failed. Error code $error"
+        return 1
+    fi
+
+    return 0
+}
+
+
+#===========================================================================
+#   Checks whether the specified command is available in the current system.
+#---------------------------------------------------------------------------
+#   $command_name
+#       Name of the command which availability shall be determined.
+#===========================================================================
+function machine_has() {
+    local command_name=$1
+
+    hash "$command_name" > /dev/null 2>&1
+    return $?
+}
+
+
+#===========================================================================
+#   Writes a message about a modification done to the executing environment.
+#---------------------------------------------------------------------------
+#   $message
+#       Modification message.
+#===========================================================================
 function write_modification() {
-  local message=$1
+    local message=$1
 
-  echo -e "\x1B[1;35m$message\x1B[0m"
+    printf "%b\n" "${color_magenta:-1}$message${color_reset:-}" >&3
 }
 
-#============================================================================
-#  Writes a diagnostic message about script execution.
-#--------------------------------------------------------------------------
-#  $message
-#    Diagnostic message.
-#============================================================================
-function write_diagnostic() {
-  local message=$1
 
-  echo -e "\x1B[1;30m$message\x1B[0m"
+#===========================================================================
+#   Writes a diagnostic message about script execution.
+#---------------------------------------------------------------------------
+#   $message
+#       Diagnostic message.
+#===========================================================================
+function write_verbose() {
+    local message=$1
+
+    [[ $verbose == "1" ]] && printf "%b\n" "${color_yellow:-}VERBOSE: $message${color_reset:-}" >&3
 }
 
-#============================================================================
-#  Writes an execution error.
-#--------------------------------------------------------------------------
-#  $message
-#    Error message.
-#============================================================================
+
+#===========================================================================
+#   Starts a verbose log section.
+#===========================================================================
+function begin_verbose() {
+    [[ $verbose == "1" ]] && printf "%b" "${color_yellow:-}" >&3
+}
+
+
+#===========================================================================
+#   Stops a verbose log section.
+#===========================================================================
+function end_verbose() {
+    [[ $verbose == "1" ]] && printf "%b\n" "${color_reset:-}" >&3
+}
+
+
+#===========================================================================
+#   Writes a verbose message without any additional formating applied.
+#---------------------------------------------------------------------------
+#   $message
+#       Diagnostic message.
+#===========================================================================
+function write_verbose_direct() {
+    local message=$1
+
+    [[ $verbose == "1" ]] && printf "%b" "$message" >&3
+}
+
+
+#===========================================================================
+#   Writes an execution warning.
+#---------------------------------------------------------------------------
+#   $message
+#       Warning message.
+#===========================================================================
+function write_warning() {
+    local message=$1
+
+    printf "%b\n" "${color_yellow:-}WARNING: $message${color_reset:-}" >&3
+}
+
+
+#===========================================================================
+#   Writes an execution error.
+#---------------------------------------------------------------------------
+#   $message
+#       Error message.
+#===========================================================================
 function write_error() {
-  local message=$1
+    local message=$1
 
-  echo -e "\x1B[1;31m$message\x1B[0m" 1>&2
+    printf "%b\n" "${color_red:-}ERROR: $message${color_reset:-}" >&2
 }
 
-#============================================================================
-#  Script start.
-#============================================================================
 
+#===========================================================================
+#   Writes a begining of the build step.
+#---------------------------------------------------------------------------
+#   $step_name
+#       Name of the step that shall be used to fold the log.
+#
+#   $message
+#       Step message.
+#===========================================================================
+function begin_step() {
+    local step_name=$1
+    local message=$2
+
+    local preamble=""
+
+    if [[ ${TRAVIS:-} ]]; then
+        preamble="travis_fold:start:$step_name"
+    fi
+
+    printf "%b\n" "$preamble${color_cyan:-}$message${color_reset:-}" >&3
+    last_step_name=$step_name
+}
+
+
+#===========================================================================
+#   Writes a success message for the latest build step started.
+#===========================================================================
+function end_step() {
+
+    local preamble=""
+    if [[ ${TRAVIS:-} ]]; then
+        preamble="travis_fold:end:$last_step_name"
+    fi
+
+    printf "%b\n" "$preamble${color_green:-}Success${color_reset:-}" >&3
+}
+
+
+############################################################################
+#   Script start
+############################################################################
+initialize "$@"
 main "$@"

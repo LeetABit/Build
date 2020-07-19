@@ -11,12 +11,8 @@ This buildstrapper is responsible for configuring local Leet.Build feed for gene
 
 Set-StrictMode -Version 2
 
-$ErrorActionPreference   = 'Stop'
-$WarningPreference       = 'Continue'
-
 $localLeetBuild             = Join-Path $PSScriptRoot               'src'
 $buildstrapperDirectoryPath = Join-Path $localLeetBuild             'Leet.Buildstrapper'
 $buildstrapperPath          = Join-Path $buildstrapperDirectoryPath 'run.ps1'
-$arguments = $args
 
-Invoke-Expression "& '$buildstrapperPath' -RepositoryRoot '$PSScriptRoot' -LeetBuildLocation '$localLeetBuild' @arguments"
+& "$buildstrapperPath" -RepositoryRoot "$PSScriptRoot" -LeetBuildLocation "$localLeetBuild" @args

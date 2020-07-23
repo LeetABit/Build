@@ -1,4 +1,4 @@
 {
-  "$schema": "https://raw.githubusercontent.com/hubuk/BuildTools/99fa46fdb4bdba07e87dbcd1c5df0796424d3b64/schema/Leet.Build.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Leet/Build/37cfab7125573b3c9cbb6184ddbbeb8eb293e954/schema/Leet.Build.schema.json",
   "LeetBuildVersion": "0.0.0"
 }

@@ -113,8 +113,6 @@ dynamicparam {
     $parameterTypeName = 'System.Management.Automation.RuntimeDefinedParameter'
     $attributes = New-Object -Type System.Management.Automation.ParameterAttribute
     $attributes.Mandatory = $false
-    $attributeCollection = New-Object -Type System.Collections.ObjectModel.Collection[System.Attribute]
-    $attributeCollection.Add($attributes)
 
     $result = New-Object -Type System.Management.Automation.RuntimeDefinedParameterDictionary
     $buildExtensionCommand = Get-Command -FullyQualifiedModule @{ ModuleName='Leet.Build.Extensibility'; ModuleVersion=$extensibilityModule.Version } -Name 'Get-BuildExtension'
@@ -131,8 +129,31 @@ dynamicparam {
                         $parameterName = $_.Name.VariablePath.UserPath
 
                         ($parameterName, "$($extensionPrefix)_$parameterName") | ForEach-Object {
-                            $dynamicParam = New-Object -Type $parameterTypeName ($parameterName, $parameterAst.StaticType, $attributeCollection)
-                            if (-not ($result.Keys -contains $dynamicParam.Name)) {
+                            if (-not ($result.Keys -contains $_)) {
+                                $attributeCollection = New-Object -Type System.Collections.ObjectModel.Collection[System.Attribute]
+                                $attributeCollection.Add($attributes)
+                                $parameterAst.Attributes | ForEach-Object {
+                                    if ($_.TypeName.Name -eq "ArgumentCompleter" -or $_.TypeName.Name -eq "ArgumentCompleterAttribute") {
+                                        $commonArgument = if ($_.PositionalArguments.Count -gt 0) {
+                                            $_.PositionalArguments[0]
+                                        }
+                                        else {
+                                            $_.NamedArguments[0].Argument
+                                        }
+
+                                        $completerParameter = if ($commonArgument -is [System.Management.Automation.Language.ScriptBlockExpressionAst]) {
+                                            $commonArgument.ScriptBlock.GetScriptBlock()
+                                        }
+                                        else {
+                                            $commonArgument.StaticType
+                                        }
+
+                                        $autocompleterAttribute = New-Object -Type System.Management.Automation.ArgumentCompleterAttribute $completerParameter
+                                        $attributeCollection.Add($autocompleterAttribute)
+                                    }
+                                }
+
+                                $dynamicParam = New-Object -Type $parameterTypeName ($_, $parameterAst.StaticType, $attributeCollection)
                                 $result.Add($dynamicParam.Name, $dynamicParam)
                             }
                         }

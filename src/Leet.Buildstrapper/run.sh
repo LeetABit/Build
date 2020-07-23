@@ -154,8 +154,7 @@ function initialize_verbose_logging() {
 #           colors.
 #===========================================================================
 function initialize_console_colors() {
-    ncolors=$(tput colors)
-    if [[ -n "${APPVEYOR:-}" ]] ; then
+    if [[ -n "${APPVEYOR:-}" ]] || [[ -n "${GITHUB_WORKFLOW:-}" ]] ; then
         color_reset="\033[0m"
         color_red="\033[91m"
         color_green="\033[32m"
@@ -165,18 +164,21 @@ function initialize_console_colors() {
 
         write_verbose "Console colors enabled: running in AppVeyor environment."
         exec 2> >(while read line; do printf "%b\n" "${color_red:-}$line${color_reset:-}" >&2 ; done)
-    elif [[ -n "$ncolors" ]] && [[ $ncolors -ge 8 ]] ; then
-        color_reset="$(tput sgr0 || echo)"
-        color_red="$(tput setaf 1 || echo)"
-        color_green="$(tput setaf 2 || echo)$(tput bold || echo)"
-        color_yellow="$(tput setaf 3 || echo)$(tput bold || echo)"
-        color_magenta="$(tput setaf 5 || echo)$(tput bold || echo)"
-        color_cyan="$(tput setaf 6 || echo)$(tput bold || echo)"
-
-        write_verbose "Console colors enabled: command 'tput colors' output match."
-        exec 2> >(while read line; do printf "%b\n" "${color_red:-}$line${color_reset:-}" >&2 ; done)
     else
-        write_verbose "Console colors disabled: command 'tput colors' output mismatch."
+        ncolors=$(tput colors)
+        if [[ -n "$ncolors" ]] && [[ $ncolors -ge 8 ]] ; then
+            color_reset="$(tput sgr0 || echo)"
+            color_red="$(tput setaf 1 || echo)"
+            color_green="$(tput setaf 2 || echo)$(tput bold || echo)"
+            color_yellow="$(tput setaf 3 || echo)$(tput bold || echo)"
+            color_magenta="$(tput setaf 5 || echo)$(tput bold || echo)"
+            color_cyan="$(tput setaf 6 || echo)$(tput bold || echo)"
+
+            write_verbose "Console colors enabled: command 'tput colors' output match."
+            exec 2> >(while read line; do printf "%b\n" "${color_red:-}$line${color_reset:-}" >&2 ; done)
+        else
+            write_verbose "Console colors disabled: command 'tput colors' output mismatch."
+        fi
     fi
 }
 

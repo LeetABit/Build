@@ -16,6 +16,6 @@ A repository for extensible build infrastructure used for building Leet projects
 [AppVeyorProject]: https://ci.appveyor.com/project/Leet/Build/branch/master
 
 [TravisCi]: https://travis-ci.org
-[TravisCiLogo]: https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=https%3A%2F%2Fcdn.travis-ci.com%2Fimages%2Flogos%2FTravisCI-Full-Color.png&container=focus&resize_h=38&refresh=31536000
+[TravisCiLogo]: https://ideracorp.com/~/media/iderainc/logos/Travis-300px
 [TravisCiShield]: https://img.shields.io/travis/Leet/Build/master.svg
 [TravisCiProject]: https://travis-ci.org/Leet/Build

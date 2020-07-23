@@ -6,7 +6,7 @@ Import-LocalizedData -BindingVariable LocalizedData -FileName Leet.Build.Help.Re
 
 $MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {
     if (Get-Module 'Leet.Build.Extensibility') {
-        Leet.Build.Extensibility\Unregister-Extension "Leet.Build.Help" -ErrorAction SilentlyContinue
+        Leet.Build.Extensibility\Unregister-BuildExtension "Leet.Build.Help" -ErrorAction SilentlyContinue
     }
 }
 
@@ -115,7 +115,7 @@ function Get-LeetBuildHelp {
                 $extension.Description = $currentExtension.Resolver.Module.Description
             }
 
-            $extension.Tasks = @()
+            $extension.Tasks = @{}
 
             foreach ($currentTask in $currentExtension.Tasks.Values) {
                 if ($TaskTopic -and $TaskTopic -ne $currentTask.Name) {
@@ -128,10 +128,14 @@ function Get-LeetBuildHelp {
                 $task.After = $currentTask.After.Clone()
                 $task.IsDefault = $currentTask.IsDefault
                 $task.Jobs = @()
+                $task.Description = @()
+                $task.Parameters = @()
 
                 $currentTask.Jobs | ForEach-Object {
                     if ($_ -is [String]) {
                         $task.Jobs += $_
+                        $task.Description += $extension.Tasks[$_].Description
+                        $task.Parameters += $extension.Tasks[$_].Parameters
                     }
                     else {
                         if (-not $extension.Description) {
@@ -147,6 +151,7 @@ function Get-LeetBuildHelp {
 
                         $job = @{}
                         $job.Description = $helpObject.Synopsis
+                        $task.Description += $helpObject.Synopsis
 
                         $nextSection = if ($helpObject.PSObject.TypeNames -contains 'ExtendedCmdletHelpInfo') {
                             'PARAMETERS'
@@ -170,7 +175,7 @@ function Get-LeetBuildHelp {
                         $job.Syntax = $syntax.Trim()
                         $job.Parameters = @()
 
-                        if ($helpObject.parameters.PSobject.Properties.Name -contains 'parameter') {
+                        if ($helpObject.parameters.PSObject.Properties.Name -contains 'parameter') {
                             foreach ($parameterObject in $helpObject.parameters.parameter) {
                                 if (Get-Member -InputObject $parameterObject -Name "description" -ErrorAction SilentlyContinue) {
                                     $parameter = @{}
@@ -178,7 +183,9 @@ function Get-LeetBuildHelp {
                                     $parameter.Type = $parameterObject.type.name
                                     $parameter.Description = $parameterObject.description.Text
                                     $parameter.Mandatory = [System.Convert]::ToBoolean($parameterObject.required)
-                                    $job.Parameters += Convert-DictionaryToHelpObject $parameter 'Parameter' $typeNameSuffix
+                                    $parameterObject = Convert-DictionaryToHelpObject $parameter 'Parameter' $typeNameSuffix
+                                    $task.Parameters += $parameterObject
+                                    $job.Parameters += $parameterObject
                                 }
                             }
                         }
@@ -187,10 +194,38 @@ function Get-LeetBuildHelp {
                     }
                 }
 
-                $extension.Tasks += Convert-DictionaryToHelpObject $task 'Task' $typeNameSuffix
+                $parametersDisctionary = @{}
+
+                $task.Parameters | ForEach-Object {
+                    if ($parametersDisctionary.ContainsKey($_.Name)) {
+                        $alredyStored = $parametersDisctionary[$_.Name]
+                        $parametersDisctionary.Remove($_.Name)
+
+                        if ($alredyStored.Type -ne $_.Type) {
+                            $alredyStored.Type = "String"
+                        }
+
+                        if ($alredyStored.Description -notcontains $_.Description) {
+                            $alredyStored.Description += $_.Description
+                        }
+
+                        $alredyStored.Mandatory = $alredyStored.Mandatory -or $_.Mandatory
+                        $parametersDisctionary.Add($alredyStored.Name, $alredyStored)
+                    }
+                    else {
+                        $_.Description = @($_.Description)
+                        $parametersDisctionary.Add($_.Name, $_)
+                    }
+                }
+
+                $task.Description = ($task.Description | Get-Unique) -join " "
+                $task.Parameters = $parametersDisctionary.Values | Sort-Object -Property Name
+
+                $extension.Tasks.Add($task.Name, (Convert-DictionaryToHelpObject $task 'Task' $typeNameSuffix))
             }
 
             if (-not $TaskTopic -or $extension.Tasks) {
+                $extension.Tasks = $extension.Tasks.Values;
                 $helpInfo.Extensions += Convert-DictionaryToHelpObject $extension 'Extension' $typeNameSuffix
             }
         }

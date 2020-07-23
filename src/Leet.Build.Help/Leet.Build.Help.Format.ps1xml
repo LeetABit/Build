@@ -141,7 +141,7 @@
                                     <LeftIndent>8</LeftIndent>
                                     <CustomItem>
                                       <ExpressionBinding>
-                                        <PropertyName>CumulativeDescription</PropertyName>
+                                        <PropertyName>Description</PropertyName>
                                       </ExpressionBinding>
                                       <NewLine/>
                                       <ExpressionBinding>
@@ -157,11 +157,12 @@
                                       </ExpressionBinding>
                                       <NewLine/>
                                       <ExpressionBinding>
-                                        <ScriptBlock>"PARAMETERS:    $($_.ParameterListString)"</ScriptBlock>
+                                        <ScriptBlock>"PARAMETERS:    $($_.ParametersString)"</ScriptBlock>
                                       </ExpressionBinding>
                                       <NewLine/>
                                     </CustomItem>
                                   </Frame>
+                                  <NewLine/>
                                 </CustomItem>
                               </CustomEntry>
                             </CustomEntries>
@@ -230,7 +231,7 @@
                                     <LeftIndent>8</LeftIndent>
                                     <CustomItem>
                                       <ExpressionBinding>
-                                        <PropertyName>CumulativeDescription</PropertyName>
+                                        <PropertyName>Description</PropertyName>
                                       </ExpressionBinding>
                                       <NewLine/>
                                       <ExpressionBinding>
@@ -309,7 +310,7 @@
                                     <LeftIndent>4</LeftIndent>
                                     <CustomItem>
                                       <ExpressionBinding>
-                                        <PropertyName>CumulativeDescription</PropertyName>
+                                        <PropertyName>Description</PropertyName>
                                       </ExpressionBinding>
                                       <NewLine/>
                                     </CustomItem>
@@ -354,7 +355,7 @@
                                   <Text>PARAMETERS</Text>
                                   <NewLine/>
                                   <ExpressionBinding>
-                                    <PropertyName>ParameterList</PropertyName>
+                                    <PropertyName>Parameters</PropertyName>
                                     <EnumerateCollection/>
                                     <CustomControl>
                                       <CustomEntries>

@@ -18,6 +18,7 @@ Operation_Clear = Clear.
 Operation_Overwrite = Overwrite.
 Reason_ArgumentAlreadySet_ParameterName = Argument for parameter '{0}' has been already set. To override already assigned value use -Force switch.
 Reason_MultipleParameterSetsMatch_FirstParameterSet_SecondParameterSet = Specified arguments may be used to run the command using two disjoint parameter sets: '{0}' and '{1}'.
+Reason_NoMatchingParameterSetFound_NewLine_Errors = No matching parameter set has been found.{0}{1}
 Resource_CurrentCommandArgumentSet = Current command argument collection.
 ###PSLOC
 '@

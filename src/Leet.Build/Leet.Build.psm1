@@ -76,7 +76,7 @@ function Build-Repository {
 
         Leet.Build.Extensibility\Resolve-Project $projectPath $LeetBuildRepository $TaskName | ForEach-Object {
             $projectPath, $extensionName = $_
-            Leet.Build.Extensibility\Invoke-BuildTask $extensionName $taskName $projectPath
+            Leet.Build.Extensibility\Invoke-BuildTask $extensionName $TaskName $projectPath
         }
     }
 }

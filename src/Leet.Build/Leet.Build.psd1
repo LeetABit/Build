@@ -124,12 +124,9 @@
             ExternalModuleDependencies = @(
                 'Leet.Build.Arguments',
                 'Leet.Build.Common',
-                'Leet.Build.Dotnet',
                 'Leet.Build.Extensibility',
                 'Leet.Build.Help',
-                'Leet.Build.Install',
                 'Leet.Build.Logging',
-                'Leet.Build.Modules',
                 'Leet.Build.PowerShell'
             )
 

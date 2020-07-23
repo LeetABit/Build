@@ -145,7 +145,7 @@ function Invoke-BuildTask {
                 ($LocalizedData.Exception_DefaultTaskNotFound_ExtensionName -f $ExtensionName)
         }
 
-        $target = $LocalizedData.BuildTask_ExtensionName_TaskName_ProjectPath -f $ExtensionName, $TaskName, $ProjectPath
+        $target = $LocalizedData.BuildTask_ExtensionName_TaskName_ProjectPath -f $ExtensionName, ($TaskName -join ", "), $ProjectPath
         $action = $LocalizedData.Invoke
         if ($PSCmdlet.ShouldProcess($target, $action)) {
             Invoke-BuildTaskCore $extension $TaskName $ProjectPath $ArgumentList
@@ -172,8 +172,7 @@ function Register-BuildExtension {
         $Resolver = $DefaultResolver,
 
         # Name of the extension for which the registration shall be performed.
-        [Parameter(HelpMessage = 'Provide name of the extension for which the registration shall be performed.',
-                   Mandatory = $True,
+        [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False)]
         [String]

@@ -263,7 +263,7 @@ function Write-StepFinished {
 
     begin {
         Leet.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
-        $message  = $LocalizedData.Write_StepFinished_Success
+        $message  = "  " + $LocalizedData.Write_StepFinished_Success
         $color    = "$script:LightPrefix$script:GreenColor"
     }
 

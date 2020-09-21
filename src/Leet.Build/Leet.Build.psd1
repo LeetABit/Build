@@ -126,8 +126,7 @@
                 'Leet.Build.Common',
                 'Leet.Build.Extensibility',
                 'Leet.Build.Help',
-                'Leet.Build.Logging',
-                'Leet.Build.PowerShell'
+                'Leet.Build.Logging'
             )
 
         } # End of PSData hashtable

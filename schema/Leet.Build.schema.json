@@ -1,6 +1,6 @@
 {
-  "title": "Config file for Leet.Build",
-  "$schema": "http://json-schema.org/draft-07/hyper-schema",
+  "title": "Configuration file for Leet.Build toolset.",
+  "$schema": "https://json-schema.org/draft/2019-09/hyper-schema",
   "type": "object",
   "properties": {
     "LeetBuildVersion": {

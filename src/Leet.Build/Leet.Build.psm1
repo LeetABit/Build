@@ -115,7 +115,7 @@ function Initialize-WellKnownParameters {
 function Import-RepositoryExtension {
     <#
     .SYNOPSIS
-    Imports Leet.Build.Repository extension module from the specified repository.
+    Executes Leet.Build.Repository scripts from the specified repository.
     #>
     [CmdletBinding(PositionalBinding = $False)]
 

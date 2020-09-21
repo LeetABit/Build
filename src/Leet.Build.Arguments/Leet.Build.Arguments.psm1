@@ -82,7 +82,7 @@ function Find-CommandArgument {
         $parameterNames += $ParameterName
 
         foreach ($parameterNameToFind in $parameterNames) {
-            $result = Find-CommandArgumentInDictionary $parameterNameToFind -IsSwitch:$IsSwitch -Dictionary $AdditionalArguments
+            $result = Find-CommandArgumentInDictionary $parameterNameToFind -Dictionary $AdditionalArguments
             if ($result) {
                 Convert-ArgumentValue $result -IsSwitch:$IsSwitch
                 return
@@ -94,13 +94,13 @@ function Find-CommandArgument {
                 return
             }
 
-            $result = Find-CommandArgumentInEnvironment $parameterNameToFind -IsSwitch:$IsSwitch
+            $result = Find-CommandArgumentInConfiguration $parameterNameToFind
             if ($result) {
                 Convert-ArgumentString $result -IsSwitch:$IsSwitch
                 return
             }
 
-            $result = Find-CommandArgumentInConfiguration $parameterNameToFind -IsSwitch:$IsSwitch
+            $result = Find-CommandArgumentInEnvironment $parameterNameToFind
             if ($result) {
                 Convert-ArgumentString $result -IsSwitch:$IsSwitch
                 return
@@ -560,15 +560,7 @@ function Find-CommandArgumentInConfiguration {
                    ValueFromPipeline=$True,
                    ValueFromPipelineByPropertyName=$True)]
         [String]
-        $ParameterName,
-
-        # Indicates whether the argument shall be threated as a value for [Switch] parameter.
-        [Parameter(Position=1,
-                   Mandatory=$False,
-                   ValueFromPipeline=$False,
-                   ValueFromPipelineByPropertyName=$True)]
-        [Switch]
-        $IsSwitch)
+        $ParameterName)
 
     process {
         if ($script:ConfigurationJson -and (Get-Member -Name $ParameterName -InputObject $script:ConfigurationJson)) {
@@ -596,14 +588,6 @@ function Find-CommandArgumentInDictionary {
                    ValueFromPipelineByPropertyName=$True)]
         [String]
         $ParameterName,
-
-        # Indicates whether the argument shall be threated as a value for [Switch] parameter.
-        [Parameter(Position=1,
-                   Mandatory=$False,
-                   ValueFromPipeline=$False,
-                   ValueFromPipelineByPropertyName=$True)]
-        [Switch]
-        $IsSwitch,
 
         # A dictionary that holds an arguments to be used as a parameter's value source.
         [Parameter(Position=2,
@@ -644,15 +628,7 @@ function Find-CommandArgumentInEnvironment {
                    ValueFromPipeline=$True,
                    ValueFromPipelineByPropertyName=$True)]
         [String]
-        $ParameterName,
-
-        # Indicates whether the argument shall be threated as a value for [Switch] parameter.
-        [Parameter(Position=1,
-                   Mandatory=$False,
-                   ValueFromPipeline=$False,
-                   ValueFromPipelineByPropertyName=$True)]
-        [Switch]
-        $IsSwitch
+        $ParameterName
     )
 
     process {

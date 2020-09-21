@@ -244,7 +244,7 @@ function Get-LeetBuildHelp {
 function Convert-DictionaryToHelpObject {
     <#
     .SYNOPSIS
-        Convets a hashtable to a PSObject using keys as property names with associated values.
+    Convets a hashtable to a PSObject using keys as property names with associated values.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([String])]

@@ -1,7 +1,7 @@
 #requires -version 6
 using namespace System.Collections
 
-Set-StrictMode -Version 2
+Set-StrictMode -Version 3.0
 Import-LocalizedData -BindingVariable LocalizedData -FileName LeetABit.Build.Help.Resources.psd1
 
 $MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {
@@ -194,32 +194,32 @@ function Get-BuildHelp {
                     }
                 }
 
-                $parametersDisctionary = @{}
+                $parametersDictionary = @{}
 
                 $task.Parameters | ForEach-Object {
-                    if ($parametersDisctionary.ContainsKey($_.Name)) {
-                        $alredyStored = $parametersDisctionary[$_.Name]
-                        $parametersDisctionary.Remove($_.Name)
+                    if ($parametersDictionary.ContainsKey($_.Name)) {
+                        $alreadyStored = $parametersDictionary[$_.Name]
+                        $parametersDictionary.Remove($_.Name)
 
-                        if ($alredyStored.Type -ne $_.Type) {
-                            $alredyStored.Type = "String"
+                        if ($alreadyStored.Type -ne $_.Type) {
+                            $alreadyStored.Type = "String"
                         }
 
-                        if ($alredyStored.Description -notcontains $_.Description) {
-                            $alredyStored.Description += $_.Description
+                        if ($alreadyStored.Description -notcontains $_.Description) {
+                            $alreadyStored.Description += $_.Description
                         }
 
-                        $alredyStored.Mandatory = $alredyStored.Mandatory -or $_.Mandatory
-                        $parametersDisctionary.Add($alredyStored.Name, $alredyStored)
+                        $alreadyStored.Mandatory = $alreadyStored.Mandatory -or $_.Mandatory
+                        $parametersDictionary.Add($alreadyStored.Name, $alreadyStored)
                     }
                     else {
                         $_.Description = @($_.Description)
-                        $parametersDisctionary.Add($_.Name, $_)
+                        $parametersDictionary.Add($_.Name, $_)
                     }
                 }
 
                 $task.Description = ($task.Description | Get-Unique) -join " "
-                $task.Parameters = $parametersDisctionary.Values | Sort-Object -Property Name
+                $task.Parameters = $parametersDictionary.Values | Sort-Object -Property Name
 
                 $extension.Tasks.Add($task.Name, (Convert-DictionaryToHelpObject $task 'Task' $typeNameSuffix))
             }
@@ -244,7 +244,7 @@ function Get-BuildHelp {
 function Convert-DictionaryToHelpObject {
     <#
     .SYNOPSIS
-    Convets a hashtable to a PSObject using keys as property names with associated values.
+    Converts a hashtable to a PSObject using keys as property names with associated values.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([String])]
@@ -280,7 +280,7 @@ function Convert-DictionaryToHelpObject {
     }
 
     process {
-        Convert-DictionaryToPSObject $Properties ($typeNameNamespace + $HelpObjectName + ".$HelpView"), ($typeNameNamespace + $HelpObjectName)
+        LeetABit.Build.Common\Convert-DictionaryToPSObject $Properties (($typeNameNamespace + $HelpObjectName + ".$HelpView"), ($typeNameNamespace + $HelpObjectName))
     }
 }
 

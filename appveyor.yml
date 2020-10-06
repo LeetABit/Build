@@ -1,7 +1,14 @@
 ﻿version: 0.0.0.{build}-{branch}
 image:
+  - Visual Studio 2013
+  - Visual Studio 2015
   - Visual Studio 2017
-  - Ubuntu
+  - Visual Studio 2019
+  - Ubuntu1604
+  - Ubuntu1804
+  - Ubuntu2004
+  - macos
+  - macos-mojave
 nuget:
   disable_publish_on_pr: true
 install:

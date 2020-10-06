@@ -14,7 +14,7 @@ By contributing to LeetABit.Build project, you assert that:
 
 First of all, thank you for your interest in contributing to LeetABit.Build! This document explains what you need to know to get started.
 
-There are two main ways to contribute to the project. First one is to create an issue with a bug report, feature request or simply a question about the project. The second one is to submit a code cahnge via pull request.
+There are two main ways to contribute to the project. First one is to create an issue with a bug report, feature request or simply a question about the project. The second one is to submit a code change via pull request.
 
 ### Creating issue submissions
 
@@ -27,10 +27,10 @@ You may create GitHub issue to report a bug, request an enhancement or feature o
 
 ### Creating pull requests
 
-When you have a solution for an issue reported in the repository you may create a pull request from the branch that contains your commited code. Similarly to the issue submission a well formatted pull request makes its review much simpler and greatly reduces time to incorporate your changes into the project. Take a look at the following guidelines that help you create a pull request:
+When you have a solution for an issue reported in the repository you may create a pull request from the branch that contains your committed code. Similarly to the issue submission a well formatted pull request makes its review much simpler and greatly reduces time to incorporate your changes into the project. Take a look at the following guidelines that help you create a pull request:
 
 * Follow pull request template defined for the project.
-* Make sure that all the tests defined for the proejct are passing before creating a pull request.
+* Make sure that all the tests defined for the project are passing before creating a pull request.
 * Submit pull request with the changes that address only one issue.
 * Follow the code style and file formatting currently used in the edited files.
 * Add or update tests for the new and modified code in your commits.

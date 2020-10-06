@@ -151,7 +151,7 @@ function Select-CommandArgumentSet {
     [OutputType([IDictionary],[Object[]])]
 
     param (
-        # Command for which a matching arguments shall be seleted.
+        # Command for which a matching arguments shall be selected.
         [Parameter(HelpMessage = 'Provide command info object for which arguments shall be selected.',
                    Position = 0,
                    Mandatory = $True,
@@ -161,7 +161,7 @@ function Select-CommandArgumentSet {
         [System.Management.Automation.CommandInfo]
         $Command,
 
-        # Script block for which a matching arguments shall be seleted.
+        # Script block for which a matching arguments shall be selected.
         [Parameter(HelpMessage = 'Provide script block object for which arguments shall be selected.',
                    Position = 0,
                    Mandatory = $True,
@@ -171,7 +171,7 @@ function Select-CommandArgumentSet {
         [System.Management.Automation.ScriptBlock]
         $ScriptBlock,
 
-        # Collection of the parameter sets for which a matching arguments shall be seleted.
+        # Collection of the parameter sets for which a matching arguments shall be selected.
         [Parameter(Position = 0,
                    Mandatory = $False,
                    ValueFromPipeline = $True,
@@ -370,7 +370,7 @@ function Set-CommandArgumentSet {
         [String]
         $RepositoryRoot,
 
-        # Dictionary of buildstrapper parmaters (including dynamic ones) that have been successfully bound.
+        # Dictionary of buildstrapper parameters (including dynamic ones) that have been successfully bound.
         [Parameter(Position=1,
                    Mandatory=$False,
                    ValueFromPipeline=$False,
@@ -419,7 +419,7 @@ function Set-CommandArgumentSet {
 function Convert-ArgumentString {
     <#
     .SYNOPSIS
-    Conditionaly converts a specified string argument to a [Switch] type.
+    Conditionally converts a specified string argument to a [Switch] type.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([Object[]])]
@@ -463,7 +463,7 @@ function Convert-ArgumentString {
 function Convert-ArgumentValue {
     <#
     .SYNOPSIS
-    Conditionaly converts a specified argument to a [Switch] type.
+    Conditionally converts a specified argument to a [Switch] type.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([Object[]])]
@@ -574,7 +574,7 @@ function Find-CommandArgumentInConfiguration {
 function Find-CommandArgumentInDictionary {
     <#
     .SYNOPSIS
-    Examines s[ecified arguments dictionary for presence of a specified named parameter's value.
+    Examines specified arguments dictionary for presence of a specified named parameter's value.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([Object])]
@@ -615,7 +615,7 @@ function Find-CommandArgumentInDictionary {
 function Find-CommandArgumentInEnvironment {
     <#
     .SYNOPSIS
-    Examines envirnmental variables for presence of a specified named parameter's value.
+    Examines environmental variables for presence of a specified named parameter's value.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([Object])]
@@ -786,8 +786,8 @@ function Select-CommandArgumentSetCore {
     [OutputType([IDictionary],[Object[]])]
 
     param (
-        # Collection of the parameters for which a matching arguments shall be seleted.
-        [Parameter(HelpMessage = 'Provide collection of the parameters for which a matching arguments shall be seleted.',
+        # Collection of the parameters for which a matching arguments shall be selected.
+        [Parameter(HelpMessage = 'Provide collection of the parameters for which a matching arguments shall be selected.',
                    Position = 0,
                    Mandatory = $True,
                    ValueFromPipeline = $True,

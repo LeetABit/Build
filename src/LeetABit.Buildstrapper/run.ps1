@@ -3,64 +3,54 @@
 
 <#
 .SYNOPSIS
-Command execution proxy for LeetABit.Build system that performs all the necessary initialization.
-
+    Command execution proxy for LeetABit.Build system that performs all the necessary initialization.
 .DESCRIPTION
-This script is responsible for carrying over any build command to the registered modules through LeetABit.Build\Build-Repository cmdlet. To make this possible the script is also responsible for finding and installing required version of the LeetABit.Build modules in the system.
-The script may be instructed in two ways:
-First one by specifying version of the required LeetABit.Build module. This orders this script to download requested version of LeetABit.Build module from available PSRepositories when it is missing in the system.
-Second one by providing path to the directory that contains required LeetABit.Build module files. This path will be added to process $env:PSModulePath variable if not alreade present there.
-
+    This script is responsible for carrying over any build command to the registered modules through LeetABit.Build\Build-Repository cmdlet. To make this possible the script is also responsible for finding and installing required version of the LeetABit.Build modules in the system.
+    The script may be instructed in two ways:
+    First one by specifying version of the required LeetABit.Build module. This orders this script to download requested version of LeetABit.Build module from available PSRepositories when it is missing in the system.
+    Second one by providing path to the directory that contains required LeetABit.Build module files. This path will be added to process $env:PSModulePath variable if not already present there.
 .EXAMPLE
-PS > ./run.ps1 help
+    PS > ./run.ps1 help
 
-Use this command to display available build commands and learn about available parameters when the required LeetABit.Build modules configuration is available in the JSON configuration file or in environmental varaible.
-
+    Use this command to display available build commands and learn about available parameters when the required LeetABit.Build modules configuration is available in the JSON configuration file or in environmental variable.
 .EXAMPLE
-PS > ./run.ps1 help -ToolsetVersion 1.0.0
+    PS > ./run.ps1 help -ToolsetVersion 1.0.0
 
-Use this command to display available build commands and learn about available parameters when a specific version of LeetABit.Build module is expected.
-
+    Use this command to display available build commands and learn about available parameters when a specific version of LeetABit.Build module is expected.
 .EXAMPLE
-PS > ./run.ps1 help -ToolsetLocation ~\LeetABit.Build
+    PS > ./run.ps1 help -ToolsetLocation ~\LeetABit.Build
 
-Use this command to display available build commands and learn about available parameters for a LeetABit.Build stored in the specified location.
-
+    Use this command to display available build commands and learn about available parameters for a LeetABit.Build stored in the specified location.
 .EXAMPLE
-PS > ./run.ps1 -TaskName test -RepositoryRoot ~\Repository
+    PS > ./run.ps1 -TaskName test -RepositoryRoot ~\Repository
 
-Use this command to execute 'test' command against repository located at ~\Repository location using LeetABit.Build configured in JSON file or via envirnmental variable.
-Configuration LeetABit.Build.json file need to be located under 'build' subfolder of the repository ~\Repository location.
-
+    Use this command to execute 'test' command against repository located at ~\Repository location using LeetABit.Build configured in JSON file or via environmental variable.
+    Configuration LeetABit.Build.json file need to be located under 'build' subfolder of the repository ~\Repository location.
 .EXAMPLE
-PS > ./run.ps1 build -LogFilePath ~\LeetABit.Build.log
+    PS > ./run.ps1 build -LogFilePath ~\LeetABit.Build.log
 
-Use this command to execute 'build' command against repository located at current location using LeetABit.Build configured in JSON file or via envirnmental variable and store execution log in ~\LeetABit.Build.log file.
-
+    Use this command to execute 'build' command against repository located at current location using LeetABit.Build configured in JSON file or via environmental variable and store execution log in ~\LeetABit.Build.log file.
 .EXAMPLE
-PS > ./run.ps1 build -PreservePreferences
+    PS > ./run.ps1 build -PreservePreferences
 
-Use this command to execute 'build' command without modification of PowerShell preference variables.
-By default this scripts modifies some of the preference variables bo values better suited for build script, i.e. error shall break execution, etc. All the preference variables are restored after each command execution.
-
+    Use this command to execute 'build' command without modification of PowerShell preference variables.
+    By default this scripts modifies some of the preference variables bo values better suited for build script, i.e. error shall break execution, etc. All the preference variables are restored after each command execution.
 .EXAMPLE
-PS > ./run.ps1 build -UnloadModules
+    PS > ./run.ps1 build -UnloadModules
 
-Use this command to execute 'build' command and unloads all LeetABit.Build modules from PowerShell before executing the command.
-
+    Use this command to execute 'build' command and unloads all LeetABit.Build modules from PowerShell before executing the command.
 .NOTES
-Any parameter for LeetABit.Build ssytem may be provided in three ways:
-1. Explicitely via PowerShell command arguments.
-2. JSON property in 'LeetABit.Build.json' file stored under 'build' subdirectory of the spcified repository root.
-3. Environmental variable with a 'LeetABit_Build_' prefix before parameter name.
+    Any parameter for LeetABit.Build system may be provided in three ways:
+    1. Explicitly via PowerShell command arguments.
+    2. JSON property in 'LeetABit.Build.json' file stored under 'build' subdirectory of the specified repository root.
+    3. Environmental variable with a 'LeetABit_' prefix before parameter name.
 
-The list above also defines precedence order of the importance.
+    The list above also defines precedence order of the importance.
 
-LeetABit.Build.json configuration file should be a simple JSON object with properties which names match parameter name and which values shall be used as arguments for the parameters.
-A JSON schema for the configuration file is available at https://raw.githubusercontent.com/LeetABit/Build/master/schema/LeetABit.Build.schema.json
-
+    LeetABit.Build.json configuration file should be a simple JSON object with properties which names match parameter name and which values shall be used as arguments for the parameters.
+    A JSON schema for the configuration file is available at https://raw.githubusercontent.com/LeetABit/Build/master/schema/LeetABit.Build.schema.json
 .LINK
-LeetABit.Build\Build-Repository
+    LeetABit.Build\Build-Repository
 #>
 
 using namespace System.Diagnostics.CodeAnalysis
@@ -131,7 +121,7 @@ Param (
     [Switch]
     $UnloadModules,
 
-    # Arguments to be passed to the LeetABit.Build toolchain.
+    # Arguments to be passed to the LeetABit.Build toolset.
     [Parameter(Mandatory = $False,
                ValueFromPipeline = $False,
                ValueFromPipelineByPropertyName = $True,
@@ -144,12 +134,11 @@ DynamicParam {
     function Initialize-ScriptConfiguration {
         <#
         .SYNOPSIS
-        Initializes the script by loading parameter values from configuration file or using default predefined values.
-
+            Initializes the script by loading parameter values from configuration file or using default predefined values.
         .NOTES
-        If the script parameter values are not specified they may be loaded from LeetABit.Build.json configuration file.
-        This configuration file should be located in 'build' subdirectory of the folder specified in $script:RepositoryRoot variable.
-        If the parameter value is not specified at command-line level nor in the configuration file then a default predefined value is being assigned to it or an error is being thrown depending on the parameter's nature.
+            If the script parameter values are not specified they may be loaded from LeetABit.Build.json configuration file.
+            This configuration file should be located in 'build' subdirectory of the folder specified in $script:RepositoryRoot variable.
+            If the parameter value is not specified at command-line level nor in the configuration file then a default predefined value is being assigned to it or an error is being thrown depending on the parameter's nature.
         #>
 
         $configurationJson = Read-ConfigurationFromFile
@@ -161,7 +150,7 @@ DynamicParam {
     function Read-ConfigurationFromFile {
         <#
         .SYNOPSIS
-        Reads a script configuration values from LeetABit.Build.json configuration file.
+            Reads a script configuration values from LeetABit.Build.json configuration file.
         #>
 
         Param (
@@ -179,7 +168,7 @@ DynamicParam {
                 try {
                     $configFileContent = Get-Content -Raw -Encoding UTF8 -Path $configFilePath
                     $configJson = ConvertFrom-Json $configFileContent
-                    $configJson.psobject.Properties | ForEach-Object {
+                    $configJson.PSObject.Properties | ForEach-Object {
                         $result | Add-Member -MemberType $_.MemberType -Name $_.Name -Value $_.Value -Force
                     }
                 }
@@ -197,7 +186,7 @@ DynamicParam {
     function Install-BuildToolset {
         <#
         .SYNOPSIS
-        Installs LeetABit.Build tools according to the specified script parameters.
+            Installs LeetABit.Build tools according to the specified script parameters.
         #>
 
         param ()
@@ -213,7 +202,7 @@ DynamicParam {
     function Install-LocalBuildToolset {
         <#
         .SYNOPSIS
-        Sets local LeetABit.Build directory path as a head of the $env:PSModulePath variable.
+            Sets local LeetABit.Build directory path as a head of the $env:PSModulePath variable.
         #>
 
         param ()
@@ -233,7 +222,7 @@ DynamicParam {
     function Install-RemoteBuildToolset {
         <#
         .SYNOPSIS
-        Installs LeetABit.Build module and its all dependencies from the available PowerShell repositories.
+            Installs LeetABit.Build module and its all dependencies from the available PowerShell repositories.
         #>
 
         param ()
@@ -253,7 +242,7 @@ DynamicParam {
     function Import-BuildToolsetModules {
         <#
         .SYNOPSIS
-        Imports LeetABit.Build modules.
+            Imports LeetABit.Build modules.
         #>
 
         param (
@@ -276,7 +265,7 @@ DynamicParam {
     function Join-DirectoryAndPath {
         <#
         .SYNOPSIS
-        Joins a specified directory and a $Path variable if it does not contain the direcory yet.
+            Joins a specified directory and a $Path variable if it does not contain the directory yet.
         #>
 
         param (
@@ -313,7 +302,7 @@ DynamicParam {
     function Set-ParameterValue {
         <#
         .SYNOPSIS
-        Sets a value for the specified script's parameter if not specified via command line using environment variables or LeetABit.Build.json configuration file.
+            Sets a value for the specified script's parameter if not specified via command line using environment variables or LeetABit.Build.json configuration file.
         #>
 
         param (
@@ -354,7 +343,7 @@ DynamicParam {
     function Import-RepositoryExtension {
         <#
         .SYNOPSIS
-        Executes LeetABit.Build.Repository scripts from the specified repository.
+            Executes LeetABit.Build.Repository scripts from the specified repository.
         #>
         [CmdletBinding(PositionalBinding = $False)]
 
@@ -440,7 +429,7 @@ Begin {
     function Start-Logging {
         <#
         .SYNOPSIS
-        Starts logging build messages to a specified log file.
+            Starts logging build messages to a specified log file.
         #>
 
         [SuppressMessage('PSUseShouldProcessForStateChangingFunctions',
@@ -458,7 +447,7 @@ Begin {
     function Stop-Logging {
         <#
         .SYNOPSIS
-        Stops logging build messages to a specified log file.
+            Stops logging build messages to a specified log file.
         #>
 
         [SuppressMessage('PSUseShouldProcessForStateChangingFunctions',
@@ -482,7 +471,7 @@ Begin {
     function Set-PreferenceVariables {
         <#
         .SYNOPSIS
-        Sets global peference variables to its local values to propagate them in module functions.
+            Sets global preference variables to its local values to propagate them in module functions.
         #>
         [CmdletBinding(PositionalBinding = $False,
                        SupportsShouldProcess = $True,
@@ -510,7 +499,7 @@ Begin {
     function Reset-PreferenceVariables {
         <#
         .SYNOPSIS
-        Resets global peference variables to the values from before script run.
+            Resets global preference variables to the values from before script run.
         #>
         [CmdletBinding(PositionalBinding = $False,
                        SupportsShouldProcess = $True,
@@ -536,7 +525,7 @@ Begin {
     function Write-Invocation {
         <#
         .SYNOPSIS
-        Writes a verbose message about the specified invocation.
+            Writes a verbose message about the specified invocation.
         #>
 
         param (
@@ -552,7 +541,7 @@ Begin {
     }
 
     try {
-        Set-StrictMode -Version 3
+        Set-StrictMode -Version 3.0
 
         $ConfirmPreferenceBackup     = $global:ConfirmPreference
         $DebugPreferenceBackup       = $global:DebugPreference

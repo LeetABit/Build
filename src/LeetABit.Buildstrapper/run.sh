@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 ############################################################################
-#   Copyright (c) Leet. All rights reserved.
+#   Copyright (c) Leet a Bit. All rights reserved.
 #   Licensed under the MIT License.
 #   See License.txt in the project root for full license information.
 #===========================================================================
@@ -20,7 +20,7 @@ exec 3>&1
 ############################################################################
 #   Configuration
 ############################################################################
-powershell_version="7.0.2"
+powershell_version="7.0.3"
 powershell_file_name="pwsh"
 
 
@@ -459,7 +459,7 @@ function end_verbose() {
 
 
 #===========================================================================
-#   Writes a verbose message without any additional formating applied.
+#   Writes a verbose message without any additional formatting applied.
 #---------------------------------------------------------------------------
 #   $message
 #       Diagnostic message.
@@ -473,33 +473,7 @@ function write_verbose_direct() {
 
 
 #===========================================================================
-#   Writes an execution warning.
-#---------------------------------------------------------------------------
-#   $message
-#       Warning message.
-#===========================================================================
-function write_warning() {
-    local message=$1
-
-    printf "%b\n" "${color_yellow:-}WARNING: $message${color_reset:-}" >&3
-}
-
-
-#===========================================================================
-#   Writes an execution error.
-#---------------------------------------------------------------------------
-#   $message
-#       Error message.
-#===========================================================================
-function write_error() {
-    local message=$1
-
-    printf "%b\n" "${color_red:-}ERROR: $message${color_reset:-}" >&2
-}
-
-
-#===========================================================================
-#   Writes a begining of the build step.
+#   Writes a beginning of the build step.
 #---------------------------------------------------------------------------
 #   $step_name
 #       Name of the step that shall be used to fold the log.
@@ -533,6 +507,32 @@ function end_step() {
     fi
 
     printf "%b\n" "$preamble${color_green:-}Success${color_reset:-}" >&3
+}
+
+
+#===========================================================================
+#   Writes an execution warning.
+#---------------------------------------------------------------------------
+#   $message
+#       Warning message.
+#===========================================================================
+function write_warning() {
+    local message=$1
+
+    printf "%b\n" "${color_yellow:-}WARNING: $message${color_reset:-}" >&3
+}
+
+
+#===========================================================================
+#   Writes an execution error.
+#---------------------------------------------------------------------------
+#   $message
+#       Error message.
+#===========================================================================
+function write_error() {
+    local message=$1
+
+    printf "%b\n" "${color_red:-}ERROR: $message${color_reset:-}" >&2
 }
 
 

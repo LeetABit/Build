@@ -2,7 +2,7 @@
 using namespace System.Diagnostics.CodeAnalysis
 using namespace System.Management.Automation
 
-Set-StrictMode -Version 2
+Set-StrictMode -Version 3.0
 Import-LocalizedData -BindingVariable LocalizedData -FileName LeetABit.Build.Logging.Resources.psd1
 
 $EscapeSequence = [char]0x001b + '['
@@ -206,7 +206,7 @@ function Write-Step {
     [CmdletBinding(PositionalBinding = $False)]
 
     param (
-        # Name of the step that shall be writen as a message preamble.
+        # Name of the step that shall be written as a message preamble.
         [Parameter(HelpMessage = 'Enter a name of the step being reported.',
                    Position = 0,
                    Mandatory = $True,
@@ -251,7 +251,7 @@ function Write-StepFinished {
     [CmdletBinding(PositionalBinding = $False)]
 
     param (
-        # Name of the step that shall be writen as a message preamble.
+        # Name of the step that shall be written as a message preamble.
         [Parameter(Position = 0,
                    Mandatory = $False,
                    ValueFromPipeline = $False,

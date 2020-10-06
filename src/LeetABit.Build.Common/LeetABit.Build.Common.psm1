@@ -2,7 +2,7 @@
 using namespace System.Management.Automation
 using namespace System.Collections
 
-Set-StrictMode -Version 2
+Set-StrictMode -Version 3.0
 Import-LocalizedData -BindingVariable LocalizedData -FileName LeetABit.Build.Common.Resources.psd1
 
 
@@ -14,7 +14,7 @@ Import-LocalizedData -BindingVariable LocalizedData -FileName LeetABit.Build.Com
 function Convert-DictionaryToPSObject {
     <#
     .SYNOPSIS
-        Convets a hashtable to a PSObject using keys as property names with associated values.
+        Converts a hashtable to a PSObject using keys as property names with associated values.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([String])]
@@ -396,7 +396,7 @@ class ValidateIdentifierOrEmptyAttribute : ValidateArgumentsAttribute
 
 
 <#
-    Validates specified argument as a path to a leaf or non-existant entry.
+    Validates specified argument as a path to a leaf or not existing entry.
 #>
 class ValidateNonContainerPathAttribute : ValidateArgumentsAttribute
 {
@@ -422,7 +422,7 @@ class ValidateNonContainerPathAttribute : ValidateArgumentsAttribute
 
 
 <#
-    Validates specified argument as a path to a container or non-existant entry.
+    Validates specified argument as a path to a container or not existing entry.
 #>
 class ValidateNonLeafPathAttribute : ValidateArgumentsAttribute
 {

@@ -2,7 +2,7 @@
 using namespace System.Collections
 using namespace System.Collections.Generic
 
-Set-StrictMode -Version 2
+Set-StrictMode -Version 3.0
 Import-LocalizedData -BindingVariable LocalizedData -FileName LeetABit.Build.Extensibility.Resources.psd1
 
 $Extensions = @{}
@@ -63,7 +63,7 @@ function Get-BuildExtension {
 function Invoke-BuildTask {
     <#
     .SYNOPSIS
-        Invokes a specified build task on the specfied project.
+        Invokes a specified build task on the specified project.
     #>
     [CmdletBinding(PositionalBinding = $False,
                    SupportsShouldProcess = $True,
@@ -116,7 +116,7 @@ function Invoke-BuildTask {
     process {
         if (-not $script:Extensions.ContainsKey($ExtensionName)) {
             throw $LocalizedData.Error_InvokeBuildTask_Reason -f
-                ($LocalizedData.Exception_ExtensioNotFound_ExtensionName -f $ExtensionName)
+                ($LocalizedData.Exception_ExtensionNotFound_ExtensionName -f $ExtensionName)
         }
 
         $extension = $script:Extensions[$ExtensionName]
@@ -347,7 +347,7 @@ function Register-BuildTask {
 function Resolve-Project {
     <#
     .SYNOPSIS
-        Resolves paths to the projects found in the speicified location.
+        Resolves paths to the projects found in the specified location.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([String],[String[]])]
@@ -515,7 +515,7 @@ function Unregister-BuildExtension {
         [String[]]
         $ExtensionName,
 
-        # Indicates that this cmdlet ignores build extensions that are not refistered.
+        # Indicates that this cmdlet ignores build extensions that are not registered.
         [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False)]
@@ -531,7 +531,7 @@ function Unregister-BuildExtension {
         $ExtensionName | ForEach-Object {
             if (!$script:Extensions.ContainsKey($_)) {
                 throw $LocalizedData.Error_UnregisterBuildExtension_Reason -f
-                    ($LocalizedData.Exception_ExtensioNotFound_ExtensionName -f $_)
+                    ($LocalizedData.Exception_ExtensionNotFound_ExtensionName -f $_)
             }
         }
 
@@ -564,7 +564,7 @@ function Unregister-BuildTask {
         [String]
         $ExtensionName,
 
-        # Name of the tasks that shall be unrefistered.
+        # Name of the tasks that shall be unregistered.
         [Parameter(Position = 1,
                    Mandatory = $False,
                    ValueFromPipeline = $False,
@@ -585,12 +585,12 @@ function Unregister-BuildTask {
     }
 
     process {
-        if (!$script:Extensions.ContainsKey($ExtenstionName)) {
+        if (!$script:Extensions.ContainsKey($ExtensionName)) {
             throw $LocalizedData.Error_UnregisterBuildTask_Reason -f
-                ($LocalizedData.Exception_ExtensioNotFound_ExtensionName -f $ExtensionName)
+                ($LocalizedData.Exception_ExtensionNotFound_ExtensionName -f $ExtensionName)
         }
 
-        $extension = $script:Extensions[$ExtenstionName]
+        $extension = $script:Extensions[$ExtensionName]
         if ($TaskName) {
             $TaskName | ForEach-Object {
                 if ($extension.Tasks.ContainsKey($_)) {
@@ -779,8 +779,8 @@ function Invoke-ScriptBlock {
         [ScriptBlock]
         $ScriptBlock,
 
-        # Prefix that may be used in parameters machting.
-        [Parameter(HelpMessage = "Provide a string that may be used in parameters machting.",
+        # Prefix that may be used in parameters matching.
+        [Parameter(HelpMessage = "Provide a string that may be used in parameters matching.",
                    Position = 1,
                    Mandatory = $True,
                    ValueFromPipeline = $False,
@@ -800,8 +800,8 @@ function Invoke-ScriptBlock {
     )
 
     process {
-        $namedParameters, $positionlParameters = LeetABit.Build.Arguments\Select-CommandArgumentSet $ScriptBlock $ParameterPrefix $AdditionalArguments
-        . $ScriptBlock @namedParameters @positionlParameters
+        $namedParameters, $positionalParameters = LeetABit.Build.Arguments\Select-CommandArgumentSet $ScriptBlock $ParameterPrefix $AdditionalArguments
+        . $ScriptBlock @namedParameters @positionalParameters
     }
 }
 
@@ -864,12 +864,12 @@ class TaskDefinition
     [String] $Name
 
     <#
-    ##  Array of names of the tasks before execution of wihich the current shall be executed.
+    ##  Array of names of the tasks before execution of which the current shall be executed.
     #>
     [String[]] $Before
 
     <#
-    ##  Array of names of the task after execution of wihich the current shall be executed.
+    ##  Array of names of the task after execution of which the current shall be executed.
     #>
     [String[]] $After
 

@@ -4,7 +4,7 @@ using namespace System.Collections.Generic
 using module LeetABit.Build.Common
 using module LeetABit.Build.Extensibility
 
-Set-StrictMode -Version 2
+Set-StrictMode -Version 3.0
 Import-LocalizedData -BindingVariable LocalizedData -FileName LeetABit.Build.Resources.psd1
 
 $MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {

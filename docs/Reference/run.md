@@ -10,12 +10,12 @@ Command execution proxy for LeetABit.Build system that performs all the necessar
 This script is responsible for carrying over any build command to the registered modules through LeetABit.Build\Build-Repository cmdlet. To make this possible the script is also responsible for finding and installing required version of the LeetABit.Build modules in the system.
 The script may be instructed in two ways:
 First one by specifying version of the required LeetABit.Build module. This orders this script to download requested version of LeetABit.Build module from available PSRepositories when it is missing in the system.
-Second one by providing path to the directory that contains required LeetABit.Build module files. This path will be added to process $env:PSModulePath variable if not alreade present there.
+Second one by providing path to the directory that contains required LeetABit.Build module files. This path will be added to process $env:PSModulePath variable if not already present there.
 
 ## Examples
 ### Example 1:
 ```PS > ./run.ps1 help```
-Use this command to display available build commands and learn about available parameters when the required LeetABit.Build modules configuration is available in the JSON configuration file or in environmental varaible.
+Use this command to display available build commands and learn about available parameters when the required LeetABit.Build modules configuration is available in the JSON configuration file or in environmental variable.
 
 ### Example 2:
 ```PS > ./run.ps1 help -ToolsetVersion 1.0.0```
@@ -27,12 +27,12 @@ Use this command to display available build commands and learn about available p
 
 ### Example 4:
 ```PS > ./run.ps1 -TaskName test -RepositoryRoot ~\Repository```
-Use this command to execute 'test' command against repository located at ~\Repository location using LeetABit.Build configured in JSON file or via envirnmental variable.
+Use this command to execute 'test' command against repository located at ~\Repository location using LeetABit.Build configured in JSON file or via environmental variable.
 Configuration LeetABit.Build.json file need to be located under 'build' subfolder of the repository ~\Repository location.
 
 ### Example 5:
 ```PS > ./run.ps1 build -LogFilePath ~\LeetABit.Build.log```
-Use this command to execute 'build' command against repository located at current location using LeetABit.Build configured in JSON file or via envirnmental variable and store execution log in ~\LeetABit.Build.log file.
+Use this command to execute 'build' command against repository located at current location using LeetABit.Build configured in JSON file or via environmental variable and store execution log in ~\LeetABit.Build.log file.
 
 ### Example 6:
 ```PS > ./run.ps1 build -PreservePreferences```
@@ -137,7 +137,7 @@ Use this command to execute 'build' command and unloads all LeetABit.Build modul
 
 ### ```-Arguments```
 
-*Arguments to be passed to the LeetABit.Build toolchain.*
+*Arguments to be passed to the LeetABit.Build toolset.*
 
 <table>
   <tr><td>Type:</td><td>String[]</td></tr>
@@ -177,9 +177,9 @@ None
 None
 
 ## Notes
-Any parameter for LeetABit.Build ssytem may be provided in three ways:
-1. Explicitely via PowerShell command arguments.
-2. JSON property in 'LeetABit.Build.json' file stored under 'build' subdirectory of the spcified repository root.
+Any parameter for LeetABit.Build system may be provided in three ways:
+1. Explicitly via PowerShell command arguments.
+2. JSON property in 'LeetABit.Build.json' file stored under 'build' subdirectory of the specified repository root.
 3. Environmental variable with a 'LeetABit_Build_' prefix before parameter name.
 
 The list above also defines precedence order of the importance.

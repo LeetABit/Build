@@ -14,7 +14,7 @@ SETLOCAL EnableDelayedExpansion EnableExtensions
 ::##########################################################################
 ::  Configuration.
 ::##########################################################################
-SET "PowerShellVersion=7.0.2"
+SET "PowerShellVersion=7.0.3"
 SET "PowerShellFileName=pwsh.exe"
 
 
@@ -520,7 +520,7 @@ EXIT /B 0
 
 
 ::==========================================================================
-::  Writes a verbose message without any additional formating applied.
+::  Writes a verbose message without any additional formatting applied.
 ::--------------------------------------------------------------------------
 ::  PARAMETERS:
 ::      Message
@@ -538,25 +538,7 @@ EXIT /B 0
 
 
 ::==========================================================================
-::  Writes a verbose message with a content of the specified file.
-::--------------------------------------------------------------------------
-::  PARAMETERS:
-::      %FilePath%
-::          File which contant shall be logged.
-::==========================================================================
-:WriteVerboseFileContent
-SETLOCAL EnableDelayedExpansion EnableExtensions
-SET "FilePath=%~1"
-
-    IF "!Verbose!"=="1" (
-        TYPE "!FilePath!"
-    )
-
-EXIT /B 0
-
-
-::==========================================================================
-::  Writes an execution error.
+::  Writes a beginning of the build step.
 ::--------------------------------------------------------------------------
 ::  PARAMETERS:
 ::      Message

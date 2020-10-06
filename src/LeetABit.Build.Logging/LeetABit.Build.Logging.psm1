@@ -28,7 +28,13 @@ $LastStepFailed = $False
 function Write-Diagnostic {
     <#
     .SYNOPSIS
-    Writes a diagnostic message that informs about less relevant script progress.
+        Writes a diagnostic message that informs about less relevant script progress.
+    .DESCRIPTION
+        Write-Diagnostic cmdlet writes a less relevant diagnostic build message to the information stream.
+    .EXAMPLE
+        Write-Diagnostic "Checking optional features finished."
+
+        Writes a diagnostic message to the information stream.
     #>
     [CmdletBinding(PositionalBinding = $False)]
 
@@ -56,7 +62,19 @@ function Write-Diagnostic {
 function Write-Failure {
     <#
     .SYNOPSIS
-    Writes a message that informs about build failure.
+        Writes a message that informs about build failure.
+    .DESCRIPTION
+        Write-Failure cmdlet writes a failure message to the information stream. It also emits a message in error stream if $ErrorActionPreference is set to 'Stop'.
+    .EXAMPLE
+        Write-Failure -Message "Could not execute build step." -ErrorAction 'Stop'
+
+        Writes a build step failure message to the information stream and emits a message in the error stream.
+    .NOTES
+        This cmdlet marks most recent build step started as failed.
+    .LINK
+        Write-Step
+    .LINK
+        Write-StepFinished
     #>
     [CmdletBinding(PositionalBinding = $False)]
 
@@ -89,7 +107,13 @@ function Write-Failure {
 function Write-Invocation {
     <#
     .SYNOPSIS
-    Writes to the host information about the specified invocation.
+        Writes a verbose message about the specified invocation.
+    .DESCRIPTION
+        Write-Invocation cmdlet writes a message to a verbose stream that contains information about executing function invocation.
+    .EXAMPLE
+        Write-Invocation $MyInvocation
+
+        Writes a verbose information about current function invocation.
     #>
     [CmdletBinding(PositionalBinding = $False)]
 
@@ -125,7 +149,15 @@ function Write-Invocation {
 function Write-Message {
     <#
     .SYNOPSIS
-    Writes a specified message string to the shell host with optional indentation and line wraps.
+        Writes a specified message string to the information stream with optional preamble and ANSI color escape sequence.
+    .DESCRIPTION
+        Write-Message cmdlet writes a message to the information stream. An optional preamble is also written on the first line before the actual message. Caller may also specify a color of the message using one of the specified variables: $BlackColor, $RedColor, $GreenColor, $MagentaColor, $CyanColor perpended by an optional $LightPrefix.
+    .EXAMPLE
+        Write-Message -Message "Working on updates..." -Preamble "{step:updates}" -Color "$LightPrefix$RedColor"
+
+        Writes an information in light green color perpended with a preamble.
+    .NOTES
+        Preamble may be used to decorate a message with a text consumed by the presentation layer. This feature is used by Travis CI for log folding.
     #>
 
     param (
@@ -172,7 +204,13 @@ function Write-Message {
 function Write-Modification {
     <#
     .SYNOPSIS
-    Writes a message that informs about state change in the current system.
+        Writes a message that informs about state change in the current system.
+    .DESCRIPTION
+        Write-Modification cmdlet writes a message that informs the user about a change that is going to be made to the current system. The message is written to the information stream. This cmdlet shall be used to inform the user about any change that is made to the system in order to give an opportunity to manually revert the changes in case of failure.
+    .EXAMPLE
+        Write-Modification "Downloading 'archive.zip' file to the repository directory."
+
+        Writes an information message about the file download with the information where it is going to be stored.
     #>
     [CmdletBinding(PositionalBinding = $False)]
 
@@ -201,7 +239,17 @@ function Write-Modification {
 function Write-Step {
     <#
     .SYNOPSIS
-    Writes a specified build step message string to the host.
+        Writes a specified build step message to the information stream with step name folding when run in Travis CI environment.
+    .DESCRIPTION
+        Write-Step cmdlet writes a message about a new build step that is about to be started. The message is written to the information stream. This cmdlet also emits a log folding preamble when run in Travis CI environment.
+    .EXAMPLE
+        Write-Step -StepName "prerequisites" -Message "Installing prerequisites."
+
+        Writes an information message about the build step with a folding preamble when run in Travis CI environment.
+    .NOTES
+        This cmdlet does not support nested steps. To start a new build step the Write-StepFinished cmdlet shall be called. Otherwise folding and error handling for the outer step will not work correctly.
+    .LINK
+        Write-StepFinished
     #>
     [CmdletBinding(PositionalBinding = $False)]
 
@@ -246,20 +294,21 @@ function Write-Step {
 function Write-StepFinished {
     <#
     .SYNOPSIS
-    Writes a specified build step success message string to the host.
+        Writes a message about the result of the most recent build step and closes folding when run in Travis CI environment.
+    .DESCRIPTION
+        Write-StepFinished cmdlet writes a message about build step failure when Write-Failure cmdlet was called since last Write-Step. Otherwise a success message is being written to the information stream.
+    .EXAMPLE
+        Write-StepFinished
+
+        Writes an information about most recent build step result.
+    .LINK
+        Write-Step
+    .LINK
+        Write-Failure
     #>
     [CmdletBinding(PositionalBinding = $False)]
 
-    param (
-        # Name of the step that shall be written as a message preamble.
-        [Parameter(Position = 0,
-                   Mandatory = $False,
-                   ValueFromPipeline = $False,
-                   ValueFromPipelineByPropertyName = $False)]
-        [ValidatePattern('^[a-z0-9_]+$')]
-        [String]
-        $StepName = $script:LastStepName
-    )
+    param ()
 
     begin {
         LeetABit.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
@@ -268,15 +317,15 @@ function Write-StepFinished {
     }
 
     process {
-        if (-not $StepName) {
+        if (-not $script:LastStepName) {
             throw $LocalizedData.Write_StepFinished_NoStepStarted
         }
 
         if ($script:LastStepFailed) {
-            throw $LocalizedData.Write_StepFinished_BuildStepFailed_StepName -f $StepName
+            throw $LocalizedData.Write_StepFinished_BuildStepFailed_StepName -f $script:LastStepName
         }
 
-        $preamble = if ($env:TRAVIS -and $StepName) { "travis_fold:end:$StepName`r" } else { '' }
+        $preamble = if ($env:TRAVIS -and $script:LastStepName) { "travis_fold:end:$script:LastStepName`r" } else { '' }
 
         Write-Message -Preamble $preamble -Color $color -Message $message
         Write-Message

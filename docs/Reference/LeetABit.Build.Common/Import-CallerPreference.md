@@ -51,4 +51,4 @@ even if that caller is in a different script module.*
 ```[None. This function does not produce pipeline output.]```
 
 ## Related Links
-[about_Preference_Variables](about_Preference_Variables)
+[about_Preference_Variables](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_preference_variables)

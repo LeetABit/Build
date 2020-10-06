@@ -188,4 +188,4 @@ LeetABit.Build.json configuration file should be a simple JSON object with prope
 A JSON schema for the configuration file is available at https://raw.githubusercontent.com/LeetABit/Build/master/schema/LeetABit.Build.schema.json
 
 ## Related Links
-[LeetABit.Build\Build-Repository](LeetABit.Build/Build-Repository)
+[LeetABit.Build\Build-Repository](LeetABit.Build/Build-Repository.md)

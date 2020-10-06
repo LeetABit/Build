@@ -9,7 +9,7 @@
 ## ```[ValidateIdentifierAttribute()]```
 *Validates specified argument as a string of consecutive alphanumeric characters.*
 
-## ```[ValidateIdentifierOrEmptyAttribute()]``
+## ```[ValidateIdentifierOrEmptyAttribute()]```
 *Validates specified argument as an empty string or string of consecutive alphanumeric characters.*
 
 ## ```[ValidateNonContainerPathAttribute()]```

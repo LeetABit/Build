@@ -12,35 +12,35 @@ are converted to array literal expression format.
 
 ## Examples
 ### Example 1:
-```PS >  ConvertTo-ExpressionString -Obj $Null, $True, $False```
+```PS >  ConvertTo-ExpressionString -Obj $Null, $True, $False
 $Null
 $True
-$False
+$False```
 
 Converts PowerShell literals expression string.
 
 ### Example 2:
-```PS >  ConvertTo-ExpressionString -Obj @{Name = "Custom object instance"}```
+```PS >  ConvertTo-ExpressionString -Obj @{Name = "Custom object instance"}
 @{
   'Name' = 'Custom object instance'
-}
+}```
 
 Converts hashtable to PowerShell hash literal expression string.
 
 ### Example 3:
-```PS >  ConvertTo-ExpressionString -Obj @( $Name )```
+```PS >  ConvertTo-ExpressionString -Obj @( $Name )
 @(
   $Null
-)
+)```
 
 Converts array to PowerShell array literal expression string.
 
 ### Example 4:
-```PS >  ConvertTo-ExpressionString -Obj (New-PSObject "SampleType" @{Name = "Custom object instance"})```
-<# SampleType #`>
+```PS >  ConvertTo-ExpressionString -Obj (New-PSObject "SampleType" @{Name = "Custom object instance"})
+<# SampleType #>
 @{
   'Name' = 'Custom object instance'
-}
+}```
 
 Converts custom PSObject to PowerShell hash literal expression string with a custom type name in the comment block.
 

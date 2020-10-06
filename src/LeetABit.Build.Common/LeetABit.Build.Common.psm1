@@ -14,8 +14,7 @@ Import-LocalizedData -BindingVariable LocalizedData -FileName LeetABit.Build.Com
 function ConvertTo-ExpressionString {
     <#
     .SYNOPSIS
-    Converts an object to a PowerShell expression string.
-    
+        Converts an object to a PowerShell expression string.
     .DESCRIPTION
         The ConvertTo-ExpressionString cmdlet converts any .NET object to a object type's defined string representation.
         Dictionaries and PSObjects are converted to hash literal expression format. The field and properties are converted to key expressions,
@@ -89,10 +88,6 @@ function Import-CallerPreference {
         Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
 
         Imports the default PowerShell preference variables from the caller into the local scope.
-    .INPUTS
-        None. This function does not take any input.
-    .OUTPUTS
-        None. This function does not produce pipeline output.
     .LINK
         about_Preference_Variables
     #>

@@ -3,16 +3,16 @@
 
 <#
 .SYNOPSIS
-Buildstrapper script for passing local Leet.Build tools feed to the buildstrapper.
+Buildstrapper script for passing local LeetABit.Build toolset location to the general buildstrapper.
 
 .DESCRIPTION
-This buildstrapper is responsible for configuring local Leet.Build feed for general buildstrapper.
+This buildstrapper is responsible for configuring local LeetABit.Build toolset location to the general buildstrapper.
 #>
 
 Set-StrictMode -Version 2
 
-$localLeetBuild             = Join-Path $PSScriptRoot               'src'
-$buildstrapperDirectoryPath = Join-Path $localLeetBuild             'Leet.Buildstrapper'
+$localToolsetDirectoryPath  = Join-Path $PSScriptRoot               'src'
+$buildstrapperDirectoryPath = Join-Path $localToolsetDirectoryPath  'LeetABit.Buildstrapper'
 $buildstrapperPath          = Join-Path $buildstrapperDirectoryPath 'run.ps1'
 
-& "$buildstrapperPath" -RepositoryRoot "$PSScriptRoot" -LeetBuildLocation "$localLeetBuild" @args
+& "$buildstrapperPath" -RepositoryRoot "$PSScriptRoot" -ToolsetLocation "$localToolsetDirectoryPath" @args

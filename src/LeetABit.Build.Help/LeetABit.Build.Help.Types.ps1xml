@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Types>
+
+  <Type>
+    <Name>LeetABit.Build.Extension</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>TaskListString</Name>
+        <GetScriptBlock>
+          $this.Tasks.Name -join ", "
+        </GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+
+
+  <Type>
+    <Name>LeetABit.Build.Task</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>BeforeListString</Name>
+        <GetScriptBlock>
+          if ($this.Before) {
+            $this.Before.Name -join ", "
+          }
+          else {
+            "(None)"
+          }
+        </GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>AfterListString</Name>
+        <GetScriptBlock>
+          if ($this.After) {
+            $this.After.Name -join ", "
+          }
+          else {
+            "(None)"
+          }
+        </GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>JobListString</Name>
+        <GetScriptBlock>
+          ($this.Jobs | ForEach-Object {
+            if ($_ -is [String]) {
+              $_
+            }
+            else {
+              "[ScriptBlock]"
+            }
+          }) -join ", "
+        </GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>ParametersString</Name>
+        <GetScriptBlock>
+          ($this.Parameters | ForEach-Object { $_.DecoratedName }) -join ", "
+        </GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>DecoratedName</Name>
+        <GetScriptBlock>
+          if ($this.IsDefault) {
+            "`($($this.Name)`)"
+          }
+          else {
+            $this.Name
+          }
+        </GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+
+  <Type>
+    <Name>LeetABit.Build.Parameter</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>DecoratedName</Name>
+        <GetScriptBlock>
+          if ($this.Mandatory) {
+            $this.Name
+          }
+          else {
+            "$($this.Name)`?"
+          }
+        </GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+</Types>

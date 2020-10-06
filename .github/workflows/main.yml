@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  LeetBuild_Verbose: 1
+  LeetABit_Build_Verbose: 1
 
 jobs:
   build:

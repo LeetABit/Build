@@ -1,0 +1,11 @@
+{
+  "title": "Configuration file for LeetABit.Build toolset.",
+  "$schema": "https://json-schema.org/draft/2019-09/hyper-schema",
+  "type": "object",
+  "properties": {
+    "ToolsetVersion": {
+      "description": "Version of the LeetABit.Build toolset to for this repository.",
+      "type": "string"
+    }
+  }
+}

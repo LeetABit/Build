@@ -115,7 +115,7 @@ function Write-Invocation {
         Write-Verbose $message
 
         $Invocation.BoundParameters.Keys | ForEach-Object {
-            $value = LeetABit.Build.Common\Format-String $Invocation.BoundParameters[$_]
+            $value = LeetABit.Build.Common\ConvertTo-ExpressionString $Invocation.BoundParameters[$_]
             Write-Verbose "  -$_ = `'$value`'"
         }
     }

@@ -280,7 +280,7 @@ function Convert-DictionaryToHelpObject {
     }
 
     process {
-        LeetABit.Build.Common\Convert-DictionaryToPSObject $Properties (($typeNameNamespace + $HelpObjectName + ".$HelpView"), ($typeNameNamespace + $HelpObjectName))
+        LeetABit.Build.Common\New-PSObject (($typeNameNamespace + $HelpObjectName + ".$HelpView"), ($typeNameNamespace + $HelpObjectName)) $Properties
     }
 }
 

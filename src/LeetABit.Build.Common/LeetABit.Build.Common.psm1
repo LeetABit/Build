@@ -11,59 +11,56 @@ Import-LocalizedData -BindingVariable LocalizedData -FileName LeetABit.Build.Com
 ##################################################################################################################
 
 
-function Convert-DictionaryToPSObject {
+function ConvertTo-ExpressionString {
     <#
     .SYNOPSIS
-        Converts a hashtable to a PSObject using keys as property names with associated values.
-    #>
-    [CmdletBinding(PositionalBinding = $False)]
-    [OutputType([String])]
+    Converts an object to a PowerShell expression string.
+    
+    .DESCRIPTION
+        The ConvertTo-ExpressionString cmdlet converts any .NET object to a object type's defined string representation.
+        Dictionaries and PSObjects are converted to hash literal expression format. The field and properties are converted to key expressions,
+        the field and properties values are converted to property values, and the methods are removed. Objects that implements IEnumerable
+        are converted to array literal expression format.
+    .EXAMPLE
+        ConvertTo-ExpressionString -Obj $Null, $True, $False
 
-    param (
-        # A hashtable with desired object's properties.
-        [Parameter(Position = 0,
-                   Mandatory = $False,
-                   ValueFromPipeline = $True,
-                   ValueFromPipelineByPropertyName = $True)]
-        [IDictionary]
-        $Properties,
+        $Null
+        $True
+        $False
 
-        # An optional array of type names to be added to the custom object.
-        [Parameter(Position = 1,
-                   Mandatory = $False,
-                   ValueFromPipeline = $False,
-                   ValueFromPipelineByPropertyName = $True)]
-        [String[]]
-        $TypeName
-    )
+        Converts PowerShell literals expression string.
+    .EXAMPLE
+        ConvertTo-ExpressionString -Obj @{Name = "Custom object instance"}
 
-    begin {
-        Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
-    }
-
-    process {
-        $result = New-Object PSObject -Property $Properties
-        if ($TypeName) {
-            foreach ($currentTypeName in $TypeName) {
-                $result.PSObject.TypeNames.Add($currentTypeName)
-            }
+        @{
+          'Name' = 'Custom object instance'
         }
 
-        $result
-    }
-}
+        Converts hashtable to PowerShell hash literal expression string.
+    .EXAMPLE
+        ConvertTo-ExpressionString -Obj @( $Name )
 
+        @(
+          $Null
+        )
 
-function Format-String {
-    <#
-    .SYNOPSIS
-        Formats the specified object as a plain string.
+        Converts array to PowerShell array literal expression string.
+    .EXAMPLE
+        ConvertTo-ExpressionString -Obj (New-PSObject "SampleType" @{Name = "Custom object instance"})
+
+        <# SampleType #`>
+        @{
+          'Name' = 'Custom object instance'
+        }
+
+        Converts custom PSObject to PowerShell hash literal expression string with a custom type name in the comment block.
     #>
     [CmdletBinding(PositionalBinding = $False)]
+    [OutputType([String[]])]
 
     param (
-        # Object to format.
-        [Parameter(HelpMessage = 'Provide an object to format.',
+        # Object to convert.
+        [Parameter(HelpMessage = 'Provide an object to convert.',
                    Position = 0,
                    Mandatory = $True,
                    ValueFromPipeline = $True,
@@ -74,7 +71,7 @@ function Format-String {
     )
 
     process {
-        Format-StringWithIndentation $Obj 0
+        ConvertTo-ExpressionStringWithIndentation $Obj 0
     }
 }
 
@@ -184,41 +181,101 @@ function Import-CallerPreference {
 }
 
 
+function New-PSObject {
+    <#
+    .SYNOPSIS
+        Creates an instance of a System.Management.Automation.PSObject object.
+    .DESCRIPTION
+        The New-PSObject cmdlet creates an instance of a System.Management.Automation.PSObject object.
+    .EXAMPLE
+        New-PSObject -TypeName "CustomType" -Property @{InstanceName = "Sample instance"}
+
+        Creates a new custom PSObject with custom type [SampleType] and one property "InstanceName" with value equal to Sample instance".
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
+    [OutputType([PSObject])]
+
+    param (
+        # Specifies a custom type name for the object.
+        # Enter a hash table in which the keys are the names of properties or methods and the values are property values or method arguments. New-Object creates the object and sets each property value and invokes each method in the order that they appear in the hash table.
+        # If you specify a property that does not exist on the object, New-PSObject adds the specified property to the object as a NoteProperty.
+        [Parameter(Position = 0,
+                   Mandatory = $False,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $True)]
+        [String[]]
+        $TypeName,
+
+        # Sets property values and invokes methods of the new object.
+        [Parameter(Position = 1,
+                   Mandatory = $False,
+                   ValueFromPipeline = $True,
+                   ValueFromPipelineByPropertyName = $True)]
+        [IDictionary]
+        $Property
+    )
+
+    begin {
+        Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
+    }
+
+    process {
+        $result = New-Object PSObject -Property $Property
+        if ($PSBoundParameters.ContainsKey('TypeName') -and $TypeName) {
+            foreach ($currentTypeName in $TypeName) {
+                $result.PSObject.TypeNames.Add($currentTypeName)
+            }
+        }
+
+        $result
+    }
+}
+
+
 ##################################################################################################################
 # Private Commands
 ##################################################################################################################
 
 
-function Format-StringWithIndentation {
+function ConvertTo-ExpressionStringWithIndentation {
     <#
     .SYNOPSIS
-        Formats the specified object as a plain string.
+        Converts an object to a PowerShell expression string with a specified indentation.
+    .DESCRIPTION
+        The ConvertTo-ExpressionStringWithIndentation cmdlet converts any .NET object to a object type's defined string representation.
+        Dictionaries and PSObjects are converted to hash literal expression format. The field and properties are converted to key expressions,
+        the field and properties values are converted to property values, and the methods are removed. Objects that implements IEnumerable
+        are converted to array literal expression format.
+        Each line of the resulting string is indented by the specified number of spaces.
     #>
     [CmdletBinding(PositionalBinding = $False)]
+    [OutputType([String[]])]
 
     param (
-        # Object to format.
-        [Parameter(HelpMessage = 'Provide an object to format.',
+        # Object to convert.
+        [Parameter(HelpMessage = 'Provide an object to convert.',
                    Position = 0,
                    Mandatory = $True,
                    ValueFromPipeline = $True,
                    ValueFromPipelineByPropertyName = $True)]
         [AllowNull()]
+        [AllowEmptyCollection()]
         [Object]
         $Obj,
 
-        # Indentation level.
+        # Number of spaces to perpend to each line of the resulting string.
         [Parameter(HelpMessage = 'Provide an indentation level.',
                    Position = 1,
                    Mandatory = $False,
                    ValueFromPipeline = $True,
                    ValueFromPipelineByPropertyName = $True)]
+        [ValidateRange([ValidateRangeKind]::NonNegative)]
         [Int32]
-        $IndentationLevel
+        $IndentationLevel = 0
     )
 
     process {
-        $prefix = "  " * $IndentationLevel
+        $prefix = " " * $IndentationLevel
 
         if ($Null -eq $Obj) {
             '$Null'
@@ -232,7 +289,7 @@ function Format-StringWithIndentation {
         elseif ($Obj -is [IDictionary]) {
             $result = "@{"
             $Obj.Keys | ForEach-Object {
-                $value = Format-StringWithIndentation $Obj[$_] ($IndentationLevel + 1)
+                $value = ConvertTo-ExpressionStringWithIndentation $Obj[$_] ($IndentationLevel + 2)
                 $result += [Environment]::NewLine + "$prefix  '$_' = $value; "
             }
 
@@ -254,13 +311,14 @@ function Format-StringWithIndentation {
                 }
 
                 $result = $result.Substring(0, $result.Length - 2)
-                $result += " #> "
+                $result += " #>"
+                $result += [Environment]::NewLine
             }
 
             $result += "@{"
             Get-Member -InputObject $Obj -MemberType NoteProperty | ForEach-Object {
                 $value = $Obj | Select-Object -ExpandProperty $_.Name
-                $value = Format-StringWithIndentation $value ($IndentationLevel + 1)
+                $value = ConvertTo-ExpressionStringWithIndentation $value ($IndentationLevel + 1)
                 $result += [Environment]::NewLine + "$prefix  '$($_.Name)' = $value; "
             }
 
@@ -271,7 +329,7 @@ function Format-StringWithIndentation {
         elseif ($Obj -is [IEnumerable]) {
             $result = "("
             $Obj | ForEach-Object {
-                $value = Format-StringWithIndentation $_ ($IndentationLevel + 1)
+                $value = ConvertTo-ExpressionStringWithIndentation $_ ($IndentationLevel + 1)
                 $result += [Environment]::NewLine + "$prefix  $value, "
             }
 

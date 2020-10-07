@@ -9,8 +9,6 @@ image:
   - Ubuntu2004
   - macos
   - macos-mojave
-nuget:
-  disable_publish_on_pr: true
 install:
 build_script:
   - cmd: run.cmd help

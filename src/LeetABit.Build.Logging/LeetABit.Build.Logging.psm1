@@ -5,17 +5,6 @@ using namespace System.Management.Automation
 Set-StrictMode -Version 3.0
 Import-LocalizedData -BindingVariable LocalizedData -FileName LeetABit.Build.Logging.Resources.psd1
 
-$EscapeSequence = [char]0x001b + '['
-
-$LightPrefix = if ($env:APPVEYOR) { '1;9' } else { '1;3' }
-
-$BlackColor   = '0m'
-$RedColor     = '1m'
-$GreenColor   = '2m'
-$MagentaColor = '5m'
-$CyanColor    = '6m'
-$ResetColor   = '0m'
-
 $LastStepName   = ""
 $LastStepFailed = $False
 
@@ -50,11 +39,10 @@ function Write-Diagnostic {
 
     begin {
         LeetABit.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
-        $color = "$script:LightPrefix$script:BlackColor"
     }
 
     process {
-        Write-Message -Color $color -Message $Message
+        Write-Message -Message $Message -Color 'DarkGrey'
     }
 }
 
@@ -90,12 +78,11 @@ function Write-Failure {
 
     begin {
         LeetABit.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
-        $color = "$script:LightPrefix$script:RedColor"
     }
 
     process {
         $script:LastStepFailed = $True
-        Write-Message -Color $color -Message $Message
+        Write-Message -Message $Message -Color 'Red'
 
         if ($ErrorActionPreference -eq 'Stop') {
             Write-Error $LocalizedData.BreakingError
@@ -151,11 +138,15 @@ function Write-Message {
     .SYNOPSIS
         Writes a specified message string to the information stream with optional preamble and ANSI color escape sequence.
     .DESCRIPTION
-        Write-Message cmdlet writes a message to the information stream. An optional preamble is also written on the first line before the actual message. Caller may also specify a color of the message using one of the specified variables: $BlackColor, $RedColor, $GreenColor, $MagentaColor, $CyanColor perpended by an optional $LightPrefix.
+        Write-Message cmdlet writes a message to the information stream. An optional preamble is also written on the first line before the actual message. Caller may also specify a color of the message using one of the [System.ConsoleColor] members.
     .EXAMPLE
-        Write-Message -Message "Working on updates..." -Preamble "{step:updates}" -Color "$LightPrefix$RedColor"
+        Write-Message -Message "Working on updates..." -Preamble "{step:updates}" -Color "Red"
 
-        Writes an information in light green color perpended with a preamble.
+        Writes an information in red color perpended with a preamble.
+    .EXAMPLE
+        Write-Message -Message "Working on updates..."
+
+        Writes an information in default foreground color with no preamble.
     .NOTES
         Preamble may be used to decorate a message with a text consumed by the presentation layer. This feature is used by Travis CI for log folding.
     #>
@@ -180,8 +171,8 @@ function Write-Message {
         [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $True)]
-        [String]
-        $Color = ''
+        [System.ConsoleColor]
+        $Color
     )
 
     begin {
@@ -190,11 +181,18 @@ function Write-Message {
 
     process {
         $preambleToWrite = $Preamble
-        $colorToWrite = if ($Color) { "$EscapeSequence$Color" } else { '' }
-        $resetColorToWrite = if ($Color) { "$EscapeSequence$ResetColor" } else { '' }
+        $colorToWrite = ""
+        $resetToWrite = ""
+
+        if ($Color) {
+            $colorToWrite = [char]0x001b + '['
+            $colorToWrite += if ($Color -ge [System.ConsoleColor]::DarkGray) { if ($env:APPVEYOR) { '1;9' } else { '1;3' } } else { '3' }
+            $colorToWrite += ($Color % 8) + 'm'
+            $resetToWrite = [char]0x001b + '[0m'
+        }
 
         foreach ($messagePart in $Message) {
-            Write-Information "$preambleToWrite$colorToWrite$messagePart$resetColorToWrite"
+            Write-Information "$preambleToWrite$colorToWrite$messagePart$resetToWrite"
             $preambleToWrite = ''
         }
     }
@@ -227,11 +225,10 @@ function Write-Modification {
 
     begin {
         LeetABit.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
-        $color = "$script:LightPrefix$script:MagentaColor"
     }
 
     process {
-        Write-Message -Color $color -Message $Message
+        Write-Message -Message $Message -Color 'Magenta'
     }
 }
 
@@ -276,14 +273,13 @@ function Write-Step {
 
     begin {
         LeetABit.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
-        $color = "$script:LightPrefix$script:CyanColor"
     }
 
     process {
         $preamble = if ($env:TRAVIS -and $StepName) { "travis_fold:start:$StepName`r" }
                     else                            { '' }
 
-        Write-Message -Preamble $preamble -Color $color -Message "$([System.Environment]::NewLine)$Message"
+        Write-Message -Message "$([System.Environment]::NewLine)$Message" -Preamble $preamble -Color 'Cyan'
 
         $script:LastStepName   = $StepName
         $script:LastStepFailed = $False
@@ -313,7 +309,6 @@ function Write-StepFinished {
     begin {
         LeetABit.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
         $message  = "  " + $LocalizedData.Write_StepFinished_Success
-        $color    = "$script:LightPrefix$script:GreenColor"
     }
 
     process {
@@ -327,7 +322,7 @@ function Write-StepFinished {
 
         $preamble = if ($env:TRAVIS -and $script:LastStepName) { "travis_fold:end:$script:LastStepName`r" } else { '' }
 
-        Write-Message -Preamble $preamble -Color $color -Message $message
+        Write-Message -Message $message -Preamble $preamble -Color 'Green'
         Write-Message
     }
 }

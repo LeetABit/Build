@@ -22,7 +22,32 @@ $AllParameterSets = '__AllParameterSets'
 function Find-CommandArgument {
     <#
     .SYNOPSIS
-    Locates an argument for a specified named parameter.
+        Locates an argument for a specified named parameter.
+    .DESCRIPTION
+        Find-CommandArgument cmdlet tries to find argument for the specified parameter. The cmdlet is looking for a variable which name matches one of the following case-insensitive patterns: `LeetABitBuild_$ExtensionName_$ParameterName`, `$ExtensionName_$ParameterName`, `LeetABitBuild_$ParameterName`, `{ParameterName}`. Any dots in the name are ignored. There are four different argument sources, listed below in a precedence order:
+        1. Dictionary of arguments specified as value for AdditionalArguments parameter. 
+        2. Arguments provided via Set-CommandArgumentSet and Add-CommandArgument cmdlets.
+        3. Values stored in 'LeetABit.Build.json' file located in the repository root directory provided via Set-CommandArgumentSet cmdlet or on of its subdirectories.
+        4. Environment variables. In addition to the two variable name patterns the cmdlet is looking for environment variable may also be perpended by 'LEETABIT_' prefix.
+    .EXAMPLE
+        PS> Find-CommandArgument "TaskName" "LeetABit.Build" "help" -AdditionalArguments $arguments
+
+        Tries to find a value for a parameter "TaskName" or "LeetABit_Build_TaskName". At the beginning specified arguments dictionary is being checked. If the value is not found the cmdlet checks all the arguments previously specified via Initialize-CommandArgument, Add-CommandArgument and Set-CommandArgumentSet cmdlets. If there was no value provided for any of the parameters a default value "help" is returned.
+    .EXAMPLE
+        PS> Find-CommandArgument "ProducePackages" -IsSwitch
+
+        Tries to find a value for a parameter "ProducePackages" and gives a hint that the parameter is a switch which may be specified without providing a value for it via argument list.
+    .NOTES
+        This cmdlet is using module's internal state that could be modified by Initialize-CommandArgument, Reset-CommandArgumentSet, Add-CommandArgument, Set-CommandArgumentSet cmdlets.
+        When an argument is found in the unknown arguments specified by Set-CommandArgumentSet cmdlet it is being moved from unknown arguments list to a named arguments collection.
+    .LINK
+        Initialize-CommandArgument
+    .LINK
+        Reset-CommandArgumentSet
+    .LINK
+        Add-CommandArgument
+    .LINK
+        Set-CommandArgumentSet
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([Object])]
@@ -75,10 +100,12 @@ function Find-CommandArgument {
     process {
         $parameterNames = @()
         if ($ExtensionName) {
-            $parameterNames += "$($ExtensionName.Replace('.', [String]::Empty))`_$ParameterName"
+            $trimmedExtensionName = "$($ExtensionName.Replace('.', [String]::Empty))"
+            $parameterNames += "LeetABitBuild_$trimmedExtensionName`_$ParameterName"
+            $parameterNames += "$trimmedExtensionName`_$ParameterName"
         }
 
-        $parameterNames += "LeetABit_Build_$ParameterName"
+        $parameterNames += "LeetABitBuild_$ParameterName"
         $parameterNames += $ParameterName
 
         foreach ($parameterNameToFind in $parameterNames) {
@@ -117,7 +144,19 @@ function Find-CommandArgument {
 function Reset-CommandArgumentSet {
     <#
     .SYNOPSIS
-    Removes all command arguments set by Set-CommandArgumentSet command.
+        Removes all command arguments set in the module command.
+    .DESCRIPTION
+        Reset-CommandArgumentSet cmdlet clears all the module internal state that has been set via any of the previous calls to Initialize-CommandArgument, Add-CommandArgument and Set-CommandArgumentSet cmdlets.
+    .EXAMPLE
+        PS> Reset-CommandArgumentSet
+
+        Removes all arguments stored in the LeetABit.Build.Arguments module.
+    .LINK
+        Initialize-CommandArgument
+    .LINK
+        Add-CommandArgument
+    .LINK
+        Set-CommandArgumentSet
     #>
     [CmdletBinding(PositionalBinding = $False,
                    SupportsShouldProcess = $True,
@@ -130,7 +169,7 @@ function Reset-CommandArgumentSet {
     }
 
     process {
-        if ($pscmdlet.ShouldProcess($LocalizedData.Resource_CurrentCommandArgumentSet,
+        if ($PSCmdlet.ShouldProcess($LocalizedData.Resource_CurrentCommandArgumentSet,
                                     $LocalizedData.Operation_Clear)) {
             $script:ConfigurationJson = $Null
             $script:NamedArguments = @{}
@@ -144,7 +183,34 @@ function Reset-CommandArgumentSet {
 function Select-CommandArgumentSet {
     <#
     .SYNOPSIS
-    Selects a collection of arguments that match specified command parameters.
+        Selects a collection of arguments that match specified command parameters.
+    .DESCRIPTION
+        Select-CommandArgumentSet cmdlet tries to find parameters for the specified command, script block or parameter collection. The cmdlet is looking for a variables which name matches one of the following case-insensitive patterns: `LeetABitBuild_$ExtensionName_$ParameterName`, `$ExtensionName_$ParameterName`, `LeetABitBuild_$ParameterName`, `{ParameterName}`. Any dots in the name are ignored. There are four different argument sources, listed below in a precedence order:
+        1. Dictionary of arguments specified as value for AdditionalArguments parameter. 
+        2. Arguments provided via Set-CommandArgumentSet and Add-CommandArgument cmdlets.
+        3. Values stored in 'LeetABit.Build.json' file located in the repository root directory provided via Set-CommandArgumentSet cmdlet or on of its subdirectories.
+        4. Environment variables. In addition to the two variable name patterns the cmdlet is looking for environment variable may also be perpended by 'LEETABIT_' prefix.
+    .EXAMPLE
+        PS> Select-CommandArgumentSet -Command (Get-Command LeetABit.Build.PowerShell\Deploy-Project)
+
+        Tries to selects arguments for a Get-Command LeetABit.Build.PowerShell\Deploy-Project command.
+    .EXAMPLE
+        PS> Select-CommandArgumentSet -ScriptBlock $script -ExtensionName "LeetABit.Build.PowerShell" -AdditionalArguments $arguments
+
+        Tries to selects arguments for a script block defined in "LeetABit.Build.PowerShell" module with an additional arguments specified as a parameter.
+    .EXAMPLE
+        PS> Select-CommandArgumentSet -ParameterSets (Get-Command LeetABit.Build.PowerShell\Deploy-Project).ParameterSets
+
+        Tries to selects arguments for a Get-Command LeetABit.Build.PowerShell\Deploy-Project command via its parameter sets.
+    .NOTES
+        Select-CommandArgumentSet cmdlet tries to match each of the command's parameter set till it finds the first satisfied completely.
+        If no parameter set is satisfied with the current arguments provided to the module this cmdlet emits an error message.
+    .LINK
+        Initialize-CommandArgument
+    .LINK
+        Add-CommandArgument
+    .LINK
+        Set-CommandArgumentSet
     #>
     [CmdletBinding(PositionalBinding = $False,
                    DefaultParameterSetName = "Command")]
@@ -299,10 +365,24 @@ function Select-CommandArgumentSet {
 }
 
 
-function Set-CommandArgument {
+function Add-CommandArgument {
     <#
     .SYNOPSIS
-    Sets a value for the specified parameter.
+        Adds a value for the specified parameter.
+    .DESCRIPTION
+        Add-CommandArgument cmdlet stores a specified value for the parameter in internal module state for later usage. This value may be further selected by Find-CommandArgument or Select-CommandArgumentSet cmdlets.
+    .EXAMPLE
+        PS> Add-CommandArgument -ParameterName "TaskName" -ParameterValue "help"
+
+        Checks whether an argument for parameter "TaskName" has been already set. If not the cmdlet assigns a "help" value for it.
+    .EXAMPLE
+        PS> Add-CommandArgument -ParameterName "TaskName" -ParameterValue "help" -Force
+
+        Sets "help" value for parameter "TaskName" regardless it was already set or not.
+    .LINK
+        Find-CommandArgument
+    .LINK
+        Select-CommandArgumentSet
     #>
     [CmdletBinding(PositionalBinding = $False)]
 
@@ -353,7 +433,17 @@ function Set-CommandArgument {
 function Set-CommandArgumentSet {
     <#
     .SYNOPSIS
-    Sets a collection of arguments that shall be used for command execution.
+        Sets a collection of arguments that shall be used for command execution.
+    .DESCRIPTION
+        Set-CommandArgumentSet cmdlet clears all arguments previously set and stores a new values for the parameters in internal module state for later usage. These values may be further selected by Find-CommandArgument or Select-CommandArgumentSet cmdlets.
+    .EXAMPLE
+        PS> Set-CommandArgumentSet -RepositoryRoot "." -NamedArguments @{ "TaskName" = "help" } -UnknownArguments $args
+
+        Clears all arguments previously set in the module and initializes internal module data with values from the specified parameters.
+    .NOTES
+        This cmdlet searches for repository configuration file called 'LeetABit.Build.json' inside repository root directory. Values from this file are used as one of the arguments source.
+        This file shall contain one JSON object with properties which names match parameter name and which values shall be used as arguments for these parameters.
+        A schema for this file is located at https://raw.githubusercontent.com/LeetABit/Build/master/schema/LeetABit.Build.schema.json
     #>
     [CmdletBinding(PositionalBinding = $False,
                    SupportsShouldProcess = $True,
@@ -419,7 +509,7 @@ function Set-CommandArgumentSet {
 function Convert-ArgumentString {
     <#
     .SYNOPSIS
-    Conditionally converts a specified string argument to a [Switch] type.
+        Conditionally converts a specified string argument to a [Switch] type.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([Object[]])]
@@ -463,7 +553,7 @@ function Convert-ArgumentString {
 function Convert-ArgumentValue {
     <#
     .SYNOPSIS
-    Conditionally converts a specified argument to a [Switch] type.
+        Conditionally converts a specified argument to a [Switch] type.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([Object[]])]
@@ -506,7 +596,7 @@ function Convert-ArgumentValue {
 function Find-CommandArgumentInCommandLine {
     <#
     .SYNOPSIS
-    Examines command line arguments for presence of a specified named parameter's value.
+        Examines command line arguments for presence of a specified named parameter's value.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([Object])]
@@ -547,7 +637,7 @@ function Find-CommandArgumentInCommandLine {
 function Find-CommandArgumentInConfiguration {
     <#
     .SYNOPSIS
-    Examines JSON configuration file for presence of a specified named parameter's value.
+        Examines JSON configuration file for presence of a specified named parameter's value.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([Object])]
@@ -574,7 +664,7 @@ function Find-CommandArgumentInConfiguration {
 function Find-CommandArgumentInDictionary {
     <#
     .SYNOPSIS
-    Examines specified arguments dictionary for presence of a specified named parameter's value.
+        Examines specified arguments dictionary for presence of a specified named parameter's value.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([Object])]
@@ -615,7 +705,7 @@ function Find-CommandArgumentInDictionary {
 function Find-CommandArgumentInEnvironment {
     <#
     .SYNOPSIS
-    Examines environmental variables for presence of a specified named parameter's value.
+        Examines environmental variables for presence of a specified named parameter's value.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([Object])]
@@ -647,7 +737,7 @@ function Find-CommandArgumentInEnvironment {
 function Find-CommandArgumentInUnknownArguments {
     <#
     .SYNOPSIS
-    Examines a collection of arguments which kind has not yet been determined for presence of a specified named parameter's value.
+        Examines a collection of arguments which kind has not yet been determined for presence of a specified named parameter's value.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([Object])]
@@ -715,7 +805,7 @@ function Find-CommandArgumentInUnknownArguments {
 function Pop-PositionalArguments {
     <#
     .SYNOPSIS
-    Locates a positional argument in a head of the collection of arguments which kind has not yet been determined.
+        Locates a positional argument in a head of the collection of arguments which kind has not yet been determined.
     #>
     [CmdletBinding(PositionalBinding = $False)]
 
@@ -738,7 +828,7 @@ function Pop-PositionalArguments {
 function Initialize-ConfigurationFromFile {
     <#
     .SYNOPSIS
-    Initializes a script configuration values from LeetABit.Build.json configuration file.
+        Initializes a script configuration values from LeetABit.Build.json configuration file.
     #>
     [CmdletBinding(PositionalBinding = $False)]
 
@@ -780,7 +870,7 @@ function Initialize-ConfigurationFromFile {
 function Select-CommandArgumentSetCore {
     <#
     .SYNOPSIS
-    Selects a collection of arguments that match specified command parameter set.
+        Selects a collection of arguments that match specified command parameter set.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([IDictionary],[Object[]])]
@@ -882,7 +972,7 @@ function Select-CommandArgumentSetCore {
 function Select-ParameterName {
     <#
     .SYNOPSIS
-    Obtains a parameter name from the specified argument if it matches an parameter name pattern.
+        Obtains a parameter name from the specified argument if it matches an parameter name pattern.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([String])]
@@ -911,7 +1001,7 @@ function Select-ParameterName {
 function Test-ParameterName {
     <#
     .SYNOPSIS
-    Checks whether the specified argument represents a name of the parameter specifier.
+        Checks whether the specified argument represents a name of the parameter specifier.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([System.Boolean])]

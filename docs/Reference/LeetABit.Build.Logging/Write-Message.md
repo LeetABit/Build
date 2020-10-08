@@ -1,7 +1,7 @@
 # Write-Message
 Writes a specified message string to the information stream with optional preamble and ANSI color escape sequence.
 
-```Write-Message [[-Message] <String[]>] [-Preamble <String>] [-Color <String>]```
+```Write-Message [[-Message] <String[]>] [-Preamble <String>] [-Color <String>] [-LightColor]```
 
 ## Description
 
@@ -9,9 +9,12 @@ Write-Message cmdlet writes a message to the information stream. An optional pre
 
 ## Examples
 ### Example 1:
-```PS >  Write-Message -Message "Working on updates..." -Preamble "{step:updates}" -Color "$LightPrefix$RedColor"```
+```PS >  Write-Message -Message "Working on updates..." -Preamble "{step:updates}" -Color "Red" -LightColor```
+Writes an information in light reg color perpended with a preamble.
 
-Writes an information in light green color perpended with a preamble.
+### Example 2:
+```PS >  Write-Message -Message "Working on updates..."```
+Writes an information in default foreground color with no preamble.
 
 ## Parameters
 ### ```-Message```
@@ -49,6 +52,19 @@ Writes an information in light green color perpended with a preamble.
   <tr><td>Required:</td><td>false</td></tr>
   <tr><td>Position:</td><td>Named</td></tr>
   <tr><td>Default value:</td><td></td></tr>
+  <tr><td>Accept pipeline input:</td><td>true (ByPropertyName)</td></tr>
+  <tr><td>Accept wildcard characters:</td><td>false</td></tr>
+</table>
+
+### ```-LightColor```
+
+*Specifies whether the color shall be displayed using light palette.*
+
+<table>
+  <tr><td>Type:</td><td>SwitchParameter</td></tr>
+  <tr><td>Required:</td><td>false</td></tr>
+  <tr><td>Position:</td><td>Named</td></tr>
+  <tr><td>Default value:</td><td>False</td></tr>
   <tr><td>Accept pipeline input:</td><td>true (ByPropertyName)</td></tr>
   <tr><td>Accept wildcard characters:</td><td>false</td></tr>
 </table>

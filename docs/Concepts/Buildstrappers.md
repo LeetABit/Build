@@ -1,4 +1,4 @@
-# LeetABit.Buildstrapper
+# Buildstrappers
 
 Buildstrapper scripts are the entry points to LeetABit.Build system. They are designed to be put in the root directory of the repository. The main job of the buildstrapping scripts is to make sure that the PowerShell is available in the system. Determine LeetABit.Build version required by the repository, install it and pass all the provided parameters to LeetABit.Build module for further execution. This process is divided into two phases.
 

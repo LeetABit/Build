@@ -47,4 +47,4 @@ None
 None
 
 ## Related Links
-[Write-StepFinished](../Write-StepFinished.md)
+[Write-StepFinished](Write-StepFinished.md)

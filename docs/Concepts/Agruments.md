@@ -2,7 +2,7 @@
 
 Arguments for the build toolset commands may be provided by three different means. Following list presents them in order of importance:
 1. Command line arguments specified during buildstrapper invocation.
-1. Values stored in `'LeetABit.Build.json'` file located in the repository root directory provided via `Set-CommandArgumentSet` cmdlet or on of its subdirectories.
+1. Values stored in [Repository Configuration File](RepositoryConfigurationFile.md) file located in the repository root directory provided via `Set-CommandArgumentSet` cmdlet or on of its subdirectories.
 1. Environment variables.
 
 There are four patterns for parameter name matching. Following list presents them in order of precendence:

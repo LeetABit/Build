@@ -10,6 +10,7 @@ Reset-CommandArgumentSet cmdlet clears all the module internal state that has be
 ## Examples
 ### Example 1:
 ```PS> Reset-CommandArgumentSet```
+
 Removes all arguments stored in the `LeetABit.Build.Arguments` module.
 
 ## Parameters
@@ -42,6 +43,6 @@ None
 None
 
 ## Related Links
-[Initialize-CommandArgument](../Initialize-CommandArgument.md)
-[Add-CommandArgument](../Add-CommandArgument.md)
-[Set-CommandArgumentSet](../Set-CommandArgumentSet.md)
+[Initialize-CommandArgument](Initialize-CommandArgument.md)
+[Add-CommandArgument](Add-CommandArgument.md)
+[Set-CommandArgumentSet](Set-CommandArgumentSet.md)

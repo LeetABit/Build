@@ -34,5 +34,5 @@ None
 None
 
 ## Related Links
-[Write-Step](..\Write-Step.md)
-[Write-StepFinished](..\Write-StepFinished.md)
+[Write-Step](Write-Step.md)
+[Write-StepFinished](Write-StepFinished.md)

@@ -15,32 +15,39 @@ Second one by providing path to the directory that contains required LeetABit.Bu
 ## Examples
 ### Example 1:
 ```PS > ./run.ps1 help```
+
 Use this command to display available build commands and learn about available parameters when the required LeetABit.Build modules configuration is available in the JSON configuration file or in environmental variable.
 
 ### Example 2:
 ```PS > ./run.ps1 help -ToolsetVersion 1.0.0```
+
 Use this command to display available build commands and learn about available parameters when a specific version of LeetABit.Build module is expected.
 
 ### Example 3:
 ```PS > ./run.ps1 help -ToolsetLocation ~\LeetABit.Build```
+
 Use this command to display available build commands and learn about available parameters for a LeetABit.Build stored in the specified location.
 
 ### Example 4:
 ```PS > ./run.ps1 -TaskName test -RepositoryRoot ~\Repository```
+
 Use this command to execute 'test' command against repository located at ~\Repository location using LeetABit.Build configured in JSON file or via environmental variable.
 Configuration LeetABit.Build.json file need to be located under 'build' subfolder of the repository ~\Repository location.
 
 ### Example 5:
 ```PS > ./run.ps1 build -LogFilePath ~\LeetABit.Build.log```
+
 Use this command to execute 'build' command against repository located at current location using LeetABit.Build configured in JSON file or via environmental variable and store execution log in ~\LeetABit.Build.log file.
 
 ### Example 6:
 ```PS > ./run.ps1 build -PreservePreferences```
+
 Use this command to execute 'build' command without modification of PowerShell preference variables.
 By default this scripts modifies some of the preference variables bo values better suited for build script, i.e. error shall break execution, etc. All the preference variables are restored after each command execution.
 
 ### Example 7:
 ```PS > ./run.ps1 build -UnloadModules```
+
 Use this command to execute 'build' command and unloads all LeetABit.Build modules from PowerShell before executing the command.
 
 ## Parameters

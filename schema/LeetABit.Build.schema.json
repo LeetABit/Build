@@ -1,32 +1,31 @@
 {
+  "$id": "https://raw.githubusercontent.com/LeetABit/Build/master/schema/LeetABit.Build.schema.json",
   "title": "Configuration file for LeetABit.Build toolset.",
   "$schema": "https://json-schema.org/draft/2019-09/hyper-schema",
-  "anyOf": [
-    {
-      "anyOf": [
-        {
-          "type": "object",
-          "properties": {
+  "type": "object",
+  
+    "anyOf": [
+      {
+        "oneOf": [
+          {
+            "properties": {
             "ToolsetVersion": {
               "description": "Version of the LeetABit.Build toolset to for this repository.",
               "type": "string"
             }
-          }
-        },
-        {
-          "type": "object",
-          "properties": {
+            }
+          },
+          {
+            "properties": {
             "ToolsetLocation": {
               "description": "Location of a LeetABit.Build toolset to use for the build.",
               "type": "string"
             }
+           }
           }
-        }
-      ]
-    },
-    {
-      "type": "object",
-      "properties": {
+        ],
+
+        "properties": {
         "ExtensionModule": {
           "description": "Collection of information items about extension modules to be imported during task execution.",
           "type": "array",
@@ -43,6 +42,18 @@
               }
             }
           }
+        },
+        "ArtifactsRoot": {
+          "description": "Location of the repository artifacts directory.",
+          "type": "string"
+        },
+        "SourceRoot": {
+          "description": "Location of the repository source directory.",
+          "type": "string"
+        },
+        "TestRoot": {
+          "description": "Location of the repository tests directory.",
+          "type": "string"
         }
       }
     }

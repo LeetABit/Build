@@ -96,7 +96,7 @@ None
 ```[System.Object]```
 
 ## Related Links
-[Initialize-CommandArgument](../Initialize-CommandArgument.md)
-[Reset-CommandArgumentSet](../Reset-CommandArgumentSet.md)
-[Add-CommandArgument](../Add-CommandArgument.md)
-[Set-CommandArgumentSet](../Set-CommandArgumentSet.md)
+[Initialize-CommandArgument](Initialize-CommandArgument.md)
+[Reset-CommandArgumentSet](Reset-CommandArgumentSet.md)
+[Add-CommandArgument](Add-CommandArgument.md)
+[Set-CommandArgumentSet](Set-CommandArgumentSet.md)

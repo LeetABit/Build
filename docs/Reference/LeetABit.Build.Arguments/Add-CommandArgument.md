@@ -65,5 +65,5 @@ None
 None
 
 ## Related Links
-[Find-CommandArgument](../Find-CommandArgument.md)
-[Select-CommandArgumentSet](../Select-CommandArgumentSet.md)
+[Find-CommandArgument](Find-CommandArgument.md)
+[Select-CommandArgumentSet](Select-CommandArgumentSet.md)

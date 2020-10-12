@@ -45,10 +45,10 @@ even if that caller is in a different script module.*
 </table>
 
 ## Input
-```[None. This function does not take any input.]```
+None
 
 ## Output
-```[None. This function does not produce pipeline output.]```
+None
 
 ## Related Links
 [about_Preference_Variables](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_preference_variables)

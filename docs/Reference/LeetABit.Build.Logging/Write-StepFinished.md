@@ -32,5 +32,5 @@ None
 None
 
 ## Related Links
-[Write-Step](../Write-Step.md)
-[Write-Failure](../Write-Failure.md)
+[Write-Step](Write-Step.md)
+[Write-Failure](Write-Failure.md)

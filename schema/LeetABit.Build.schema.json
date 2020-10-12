@@ -1,11 +1,50 @@
 {
   "title": "Configuration file for LeetABit.Build toolset.",
   "$schema": "https://json-schema.org/draft/2019-09/hyper-schema",
-  "type": "object",
-  "properties": {
-    "ToolsetVersion": {
-      "description": "Version of the LeetABit.Build toolset to for this repository.",
-      "type": "string"
+  "anyOf": [
+    {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "ToolsetVersion": {
+              "description": "Version of the LeetABit.Build toolset to for this repository.",
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ToolsetLocation": {
+              "description": "Location of a LeetABit.Build toolset to use for the build.",
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "ExtensionModule": {
+          "description": "Collection of information items about extension modules to be imported during task execution.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "ModuleName": {
+                "description": "Name of the module to import.",
+                "type": "string"
+              },
+              "ModuleVersion": {
+                "description": "Version of the module to import.",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
     }
-  }
+  ]
 }

@@ -1,6 +1,7 @@
 #requires -version 6
 using namespace System.Collections
 using namespace System.Collections.Generic
+using namespace Microsoft.PowerShell.Commands
 using module LeetABit.Build.Common
 using module LeetABit.Build.Extensibility
 
@@ -20,7 +21,21 @@ $MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {
 function Build-Repository {
     <#
     .SYNOPSIS
-    Performs a build operation on all projects located in the specified repository.
+        Performs a build operation on all projects located in the specified repository.
+    .DESCRIPTION
+        Build-Repository cmdlet runs project resolution for all registered extensions against specified repository root directory. And then run specified task for all projects and its extensions.
+    .EXAMPLE
+        PS> Build-Repository '~/repository' 'help'
+
+        Runs a help task for all extensions that supports it using no additional arguments.
+    .EXAMPLE
+        PS> Build-Repository '~/repository' 'build' -ExtensionModule @{ModuleName = "PowerShell"; ModuleVersion = "1.0.0"}
+
+        Loads "PowerShell" extension and runs a build task for all extensions that supports it using no additional arguments.
+    .EXAMPLE
+        PS> Build-Repository '~/repository' -NamedArguments @{ 'CompilerVersion' = '1.0.0' } -UnknownArguments ("-Debug")
+
+        Runs a default build task for all extensions that supports it using specified additional arguments.
     #>
     [CmdletBinding(PositionalBinding = $False)]
 
@@ -45,17 +60,24 @@ function Build-Repository {
         [String]
         $TaskName,
 
+        # Extension modules to import.
+        [Parameter(Mandatory = $False,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $True)]
+        [AllowNull()]
+        [AllowEmptyCollection()]
+        [ModuleSpecification[]]
+        $ExtensionModule,
+
         # Dictionary of buildstrapper arguments (including dynamic ones) that have been successfully bound.
-        [Parameter(Position = 2,
-                   Mandatory = $False,
+        [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $True)]
         [IDictionary]
         $NamedArguments,
 
         # Arguments to be passed to the target.
-        [Parameter(Position = 3,
-                   Mandatory = $False,
+        [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $True)]
         [String[]]
@@ -68,13 +90,26 @@ function Build-Repository {
     process {
         LeetABit.Build.Logging\Write-Invocation -Invocation $MyInvocation
         LeetABit.Build.Arguments\Set-CommandArgumentSet -RepositoryRoot $RepositoryRoot -NamedArguments $NamedArguments -UnknownArguments $UnknownArguments
-        Initialize-WellKnownParameters -RepositoryRoot $RepositoryRoot
+        Initialize-WellKnownParameters -RepositoryRoot $RepositoryRoot -ExtensionModule $ExtensionModule
+
+        $ExtensionModule = LeetABit.Build.Arguments\Find-CommandArgument -ParameterName 'ExtensionModule'
+        if ($ExtensionModule) {
+            $ExtensionModule | ForEach-Object {
+                if (-not (Get-Module -FullyQualifiedName @{ ModuleName="$($_.Name)"; ModuleVersion=$_.RequiredVersion } -ListAvailable)) {
+                    Write-Verbose "Installing $($_.Name) v$($_.RequiredVersion) from the available PowerShell repositories..."
+                    Install-Module -Name $_.Name -RequiredVersion $_.RequiredVersion -Scope CurrentUser -AllowPrerelease -Force
+                }
+            }
+
+            Import-Module -FullyQualifiedName $ExtensionModule
+        }
+
         Import-RepositoryExtension -RepositoryRoot $RepositoryRoot
 
-        $TaskName = LeetABit.Build.Arguments\Find-CommandArgument -ParameterName TaskName -DefaultValue $TaskName
-        $projectPath = LeetABit.Build.Arguments\Find-CommandArgument -ParameterName SourceRoot
+        $TaskName = LeetABit.Build.Arguments\Find-CommandArgument -ParameterName 'TaskName' -DefaultValue $TaskName
+        $projectPath = LeetABit.Build.Arguments\Find-CommandArgument -ParameterName 'SourceRoot'
 
-        LeetABit.Build.Extensibility\Resolve-Project $projectPath 'LeetABit.Build.Repository' $TaskName | ForEach-Object {
+        LeetABit.Build.Extensibility\Resolve-Project $projectPath 'LeetABit.Build.Repository' $TaskName | Select-Object -Unique | ForEach-Object {
             $projectPath, $extensionName = $_
             LeetABit.Build.Extensibility\Invoke-BuildTask $extensionName $TaskName $projectPath
         }
@@ -90,7 +125,7 @@ function Build-Repository {
 function Initialize-WellKnownParameters {
     <#
     .SYNOPSIS
-    Initializes a set of well known parameters with its default values.
+        Initializes a set of well known parameters with its default values.
     #>
     [CmdletBinding(PositionalBinding = $False)]
 
@@ -102,12 +137,24 @@ function Initialize-WellKnownParameters {
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False)]
         [String]
-        $RepositoryRoot)
+        $RepositoryRoot,
+        
+        # Collection fo extension modules to import.
+        [Parameter(Mandatory = $False,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $False)]
+        [AllowNull()]
+        [AllowEmptyCollection()]
+        [ModuleSpecification[]]
+        $ExtensionModule)
 
     process {
         LeetABit.Build.Arguments\Add-CommandArgument 'ArtifactsRoot' (Join-Path $RepositoryRoot 'artifacts') -ErrorAction SilentlyContinue
         LeetABit.Build.Arguments\Add-CommandArgument 'SourceRoot' (Join-Path $RepositoryRoot 'src') -ErrorAction SilentlyContinue
         LeetABit.Build.Arguments\Add-CommandArgument 'TestRoot' (Join-Path $RepositoryRoot 'test') -ErrorAction SilentlyContinue
+        [ModuleSpecification[]]$existingExtensionModule = LeetABit.Build.Arguments\Find-CommandArgument -ParameterName 'ExtensionModule'
+        [ModuleSpecification[]]$uniqueExtensionModule = (($existingExtensionModule + $ExtensionModule) | Select-Object -Unique)
+        LeetABit.Build.Arguments\Add-CommandArgument 'ExtensionModule' $uniqueExtensionModule -ErrorAction SilentlyContinue
     }
 }
 
@@ -115,7 +162,7 @@ function Initialize-WellKnownParameters {
 function Import-RepositoryExtension {
     <#
     .SYNOPSIS
-    Executes LeetABit.Build.Repository scripts from the specified repository.
+        Executes LeetABit.Build.Repository scripts from the specified repository.
     #>
     [CmdletBinding(PositionalBinding = $False)]
 

@@ -123,7 +123,7 @@ function Find-CommandArgument {
 
             $result = Find-CommandArgumentInConfiguration $parameterNameToFind
             if ($result) {
-                Convert-ArgumentString $result -IsSwitch:$IsSwitch
+                Convert-ArgumentValue $result -IsSwitch:$IsSwitch
                 return
             }
 
@@ -403,7 +403,8 @@ function Add-CommandArgument {
                    Mandatory=$True,
                    ValueFromPipeline=$True,
                    ValueFromPipelineByPropertyName=$True)]
-        [String]
+        [AllowNull()]
+        [Object]
         $ParameterValue,
 
         # Indicates that this cmdlet overwrites value already set to the parameter.
@@ -653,8 +654,8 @@ function Find-CommandArgumentInConfiguration {
         $ParameterName)
 
     process {
-        if ($script:ConfigurationJson -and (Get-Member -Name $ParameterName -InputObject $script:ConfigurationJson)) {
-            $script:ConfigurationJson.$ParameterName
+        if ($script:ConfigurationJson -and $script:ConfigurationJson.ContainsKey($ParameterName)) {
+            $script:ConfigurationJson[$ParameterName]
             return
         }
     }
@@ -764,8 +765,8 @@ function Find-CommandArgumentInUnknownArguments {
     process {
         for ($i = 0; $i -lt $script:UnknownArguments.Count; ++$i) {
             $unknownCandidate = $script:UnknownArguments[$i]
-            $hasNaxtArgument = ($i + 1) -lt $script:UnknownArguments.Count
-            if ($hasNaxtArgument) {
+            $hasNextArgument = ($i + 1) -lt $script:UnknownArguments.Count
+            if ($hasNextArgument) {
                 $nextCandidate = $script:UnknownArguments[$i + 1]
             } elseif (-Not ($IsSwitch)) {
                 break
@@ -777,7 +778,7 @@ function Find-CommandArgumentInUnknownArguments {
 
                 if ($IsSwitch) {
                     if ($unknownCandidate.EndsWith(':')) {
-                        if ($hasNaxtArgument) {
+                        if ($hasNextArgument) {
                             if (($nextCandidate -eq 'True') -or ($nextCandidate -eq 'False')) {
                                 $result = [Switch][System.Boolean]$nextCandidate
                             }
@@ -853,15 +854,52 @@ function Initialize-ConfigurationFromFile {
             if (Test-Path $configFilePath -PathType Leaf) {
                 try {
                     $configFileContent = Get-Content -Raw -Encoding UTF8 -Path $configFilePath
-                    $configJson = ConvertFrom-Json $configFileContent
-                    $configJson.psobject.Properties | ForEach-Object {
-                        $script:ConfigurationJson | Add-Member -MemberType $_.MemberType -Name $_.Name -Value $_.Value -Force
-                    }
+                    $script:ConfigurationJson = ConvertFrom-Json $configFileContent | ConvertTo-Hashtable
                 }
                 catch {
                     throw [System.IO.FileFormatException]::new([Uri]::new($configFilePath), $LocalizedData.Exception_IncorrectJsonFileFormat, $_)
                 }
             }
+        }
+    }
+}
+
+
+function ConvertTo-Hashtable {
+    <#
+    .SYNOPSIS
+        Converts an input object to a HAshtable.
+    #>
+    [CmdletBinding(PositionalBinding = $False)]
+    [OutputType([Hashtable])]
+    param (
+        # Object to convert.
+        [Parameter(Position = 0,
+                   Mandatory = $False,
+                   ValueFromPipeline = $True,
+                   ValueFromPipelineByPropertyName = $True)]
+        [Object]
+        [AllowNull()]
+        $InputObject
+    )
+ 
+    process {
+        if ($Null -eq $InputObject -or $InputObject -is [IDictionary]) {
+            $InputObject
+        }
+        elseif ($InputObject -is [IEnumerable] -and $InputObject -isnot [string]) {
+            $InputObject | ForEach-Object {
+                ConvertTo-Hashtable -InputObject $_
+            }
+        } elseif ($InputObject -is [PSObject]) {
+            $hash = @{}
+            foreach ($property in $InputObject.PSObject.Properties) {
+                $hash[$property.Name] = ConvertTo-Hashtable -InputObject $property.Value
+            }
+
+            $hash
+        } else {
+            $InputObject
         }
     }
 }

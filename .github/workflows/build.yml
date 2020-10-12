@@ -9,6 +9,7 @@ on:
 
 env:
   LeetABit_Build_Verbose: 1
+  LeetABit_Build_ForceInstallPowerShell: 1
 
 jobs:
   build:

@@ -29,7 +29,23 @@ powershell_file_name="pwsh"
 ############################################################################
 function initialize {
     local platform="linux" && [[ "$(uname)" = "Darwin" ]] && platform="osx"
-    local powershell_archive_file_name="powershell-$powershell_version-$platform-x64.tar.gz"
+    if [[ -f "/etc/alpine-release" ]]; then
+        platform="linux-alpine"
+    fi
+
+    local architecture="x64"
+    if [[ "$platform" = "linux" ]]; then
+        case $(uname -m) in
+            arm|armv71)
+                architecture="arm32"
+                ;;
+            aarch64_be|aarch64|armv8b|armv8l|arm64)
+                architecture="arm64"
+                ;;
+        esac
+    fi
+
+    local powershell_archive_file_name="powershell-$powershell_version-$platform-$architecture.tar.gz"
 
     installation_directory_path="$HOME/opt/local/microsoft/powershell/$powershell_version"
     installation_pwsh_path="$installation_directory_path/$powershell_file_name"
@@ -39,6 +55,7 @@ function initialize {
     current_folder="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
     initialize_verbose_logging "$@"
+    initialize_force_install_powershell "$@"
     initialize_console_colors
 }
 
@@ -47,10 +64,20 @@ function initialize {
 #   Main script procedure.
 ############################################################################
 function main {
-    pwsh_path=$(find_powershell $powershell_version "$powershell_file_name" "$installation_pwsh_path")
+    install_powershell=0
+    if [[ $force_install_power_shell == "1" ]]; then
+        write_verbose "Forced PowerShell $powershell_version installation is requested."
+        install_powershell=1
+    else
+        pwsh_path=$(find_powershell $powershell_version "$powershell_file_name" "$installation_pwsh_path")
 
-    if [[ -z "$pwsh_path" ]]; then
-        write_verbose "No PowerShell $powershell_version has been found in the current environment."
+        if [[ -z "$pwsh_path" ]]; then
+            install_powershell=1
+            write_verbose "No PowerShell $powershell_version has been found in the current environment."
+        fi
+    fi
+
+    if [[ $install_powershell == "1" ]]; then
         begin_step "install_powershell" "Installing PowerShell Core $powershell_version..."
 
         download_file "$powershell_download_link" "$powershell_archive_destination_path" || {
@@ -122,6 +149,42 @@ function initialize_verbose_logging() {
     done
 
     verbose=0
+}
+
+
+#===========================================================================
+#   Checks whether the forced PowerShell installation is requested.
+#---------------------------------------------------------------------------
+#   PARAMETERS:
+#       $#
+#           All the parameters sent to the script.
+#---------------------------------------------------------------------------
+#   SETS:
+#       force_install_power_shell
+#           Sets to value 1 if forced PowerShell installation has been
+#           requested; to 0 otherwise.
+#===========================================================================
+function initialize_force_install_powershell() {
+    if [[ "${LeetABit_Build_ForceInstallPowerShell:-}" == "1" ]]; then
+        force_install_power_shell=1
+        write_verbose "Forced PowerShell installation enabled: 'LeetABit_Build_ForceInstallPowerShell' environmental variable with value '1' found."
+        return
+    fi
+
+    local i=1
+    while [[ "$i" -le "$#" ]]; do
+        local parameter=${@:$i:1}
+        parameter="$( echo "$parameter" | tr '[:upper:]' '[:lower:]' )"
+        if [[ $parameter =~ ^-(forceinstallpowershell)(:(\$true)|(true)|([0-9]*[1-9][0-9]*)|(0x[0-9a-f]*[1-9a-f][0-9a-f]*))?$ ]] ; then
+            force_install_power_shell=1
+            write_verbose "Forced PowerShell installation enabled: '$parameter' parameter found."
+            return
+        fi
+
+        ((i++))
+    done
+
+    force_install_power_shell=0
 }
 
 

@@ -1,3 +1,6 @@
+env:
+  - LeetABit_Build_Verbose=1 LeetABit_Build_ForceInstallPowerShell=1
+
 jobs:
   include:
   - os: windows
@@ -18,6 +21,10 @@ jobs:
   - os: linux
     language: shell
     dist: trusty
+    script: ./run.sh help
+  - os: linux
+    language: shell
+    arch: arm64
     script: ./run.sh help
   - os: osx
     language: shell

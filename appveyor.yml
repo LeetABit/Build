@@ -9,6 +9,42 @@ image:
   - Ubuntu2004
   - macos
   - macos-mojave
+
+environment:
+  LeetABit_Build_Verbose: 1
+  LeetABit_Build_ForceInstallPowerShell: 1
+  matrix:
+    - ARCH: arm
+    - ARCH: arm64
+    - ARCH: amd64
+
+matrix:
+  exclude:
+    - image: Visual Studio 2013
+      ARCH: arm
+    - image: Visual Studio 2013
+      ARCH: arm64
+    - image: Visual Studio 2015
+      ARCH: arm
+    - image: Visual Studio 2015
+      ARCH: arm64
+    - image: Visual Studio 2017
+      ARCH: arm
+    - image: Visual Studio 2017
+      ARCH: arm64
+    - image: Visual Studio 2019
+      ARCH: arm
+    - image: Visual Studio 2019
+      ARCH: arm64
+    - image: macos
+      ARCH: arm
+    - image: macos
+      ARCH: arm64
+    - image: macos-mojave
+      ARCH: arm
+    - image: macos-mojave
+      ARCH: arm64
+
 install:
 build_script:
   - cmd: run.cmd help

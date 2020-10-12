@@ -23,6 +23,7 @@ SET "PowerShellFileName=pwsh.exe"
 ::##########################################################################
 SET "Architecture=%PROCESSOR_ARCHITECTURE%"
 IF "!Architecture!"=="AMD64" SET "Architecture=x64"
+IF "!Architecture!"=="ARM" SET "Architecture=ARM32"
 SET "PowerShellArchiveFileName=PowerShell-!PowerShellVersion!-win-!Architecture!.zip"
 
 SET "InstallationDirectoryPath=!LOCALAPPDATA!\Microsoft\PowerShell\!PowerShellVersion!"
@@ -33,17 +34,27 @@ SET "PowersShellArchiveDestinationPath=!TEMP!\!PowerShellArchiveFileName!"
 SET "CurrentFolder=%~dp0"
 
 CALL :InitializeVerboseLogging %*
+CALL :InitializeForceInstallPowerShell %*
 CALL :InitializeConsoleColors
 
 
 ::##########################################################################
 ::  Main script procedure.
 ::##########################################################################
-CALL :FindPowerShell !PowerShellVersion! "!PowerShellFileName!" "!InstallationPwshPath!"
-SET "pwshPath=!result!"
+SET "installPowerShell=0"
+IF "!ForceInstallPowerShell!"=="1" (
+    CALL :WriteVerbose "Forced PowerShell !PowerShellVersion! installation is requested."
+    SET "installPowerShell=1"
+) ELSE (
+    CALL :FindPowerShell !PowerShellVersion! "!PowerShellFileName!" "!InstallationPwshPath!"
+    SET "pwshPath=!result!"
+    IF "!pwshPath!" EQU "" (
+        SET "installPowerShell=1"
+        CALL :WriteVerbose "No PowerShell !PowerShellVersion! has been found in the current environment."
+    )
+)
 
-IF "!pwshPath!" EQU "" (
-    CALL :WriteVerbose "No PowerShell !PowerShellVersion! has been found in the current environment."
+IF "!installPowerShell!"=="1" (
     CALL :BeginStep "Installing PowerShell Core !PowerShellVersion!..."
 
     CALL :DownloadFile "!PowerShellDownloadLink!" "!PowersShellArchiveDestinationPath!" || (
@@ -144,6 +155,58 @@ SETLOCAL EnableDelayedExpansion EnableExtensions
     )
 
 ENDLOCAL & SET "Verbose=0"
+GOTO :EOF
+
+
+::==========================================================================
+::  Checks whether the forced PowerShell installation is requested.
+::--------------------------------------------------------------------------
+::  PARAMETERS:
+::      %*
+::          All parameters sent to the script.
+::--------------------------------------------------------------------------
+::  SETS:
+::      ForceInstallPowerShell
+::          Sets to value 1 if forced PowerShell installation has been
+::          requested; to 0 otherwise.
+::==========================================================================
+:InitializeForceInstallPowerShell
+SETLOCAL EnableDelayedExpansion EnableExtensions
+
+    IF "!LeetABit_Build_ForceInstallPowerShell!"=="1" (
+        ENDLOCAL & SET "ForceInstallPowerShell=1"
+        CALL :WriteVerbose "Forced PowerShell installation enabled: 'LeetABit_Build_ForceInstallPowerShell' environmental variable with value '1' found."
+        GOTO :EOF
+    )
+
+    FOR %%P IN (%*) DO (
+        SET "ForceInstallPowerShell=0"
+        SET "Parameter=%%P"
+        IF /I "!Parameter!"=="-ForceInstallPowerShell" SET "ForceInstallPowerShell=1"
+        IF /I "!Parameter!"=="-ForceInstallPowerShell:$True" SET "ForceInstallPowerShell=1"
+
+        SET "Argument="
+
+        ECHO !Parameter! | FINDSTR /I /R /C:"^-ForceInstallPowerShell:" > NUL
+        IF !ERRORLEVEL! == 0 (
+            SET "Argument=!Parameter:-ForceInstallPowerShell:=!"
+        )
+
+        IF "!Argument!" NEQ "" (
+            ECHO !Argument! | FINDSTR /I /R /C:"^[0-9]*[1-9][0-9]*\>" > NUL
+            IF !ERRORLEVEL! == 0 SET "ForceInstallPowerShell=1"
+            ECHO !Argument! | FINDSTR /I /R /C:"^0x[0-9a-f]*[1-9a-f][0-9a-f]*\>" > NUL
+            IF !ERRORLEVEL! == 0 SET "ForceInstallPowerShell=1"
+        )
+
+        IF "!ForceInstallPowerShell!" == "1" (
+            CALL :WriteVerbose "Forced PowerShell installation enabled: '!Parameter!' parameter found."
+            ENDLOCAL & SET "ForceInstallPowerShell=1"
+            GOTO :EOF
+        )
+    )
+
+ENDLOCAL & SET "ForceInstallPowerShell=0"
 GOTO :EOF
 
 

@@ -32,12 +32,20 @@ function Get-BuildExtension {
     <#
     .SYNOPSIS
         Gets information about all registered build extensions.
+    .DESCRIPTION
+        Get-BuildExtension cmdlet retrieves an information about all registered build extensions which names contains specified $Name parameter. To register a build extensions use Register-BuildExtension cmdlet.
+    .EXAMPLE
+        PS> Get-BuildExtension -Name "PowerShell"
+
+        Retrieves all registered build extensions that have a "PowerShell" term in its registered name.
+    .NOTES
+        Register-BuildExtension
     #>
     [CmdletBinding(PositionalBinding = $False)]
-    [OutputType([ExtensionDefinition])]
+    [OutputType([ExtensionDefinition[]])]
 
     param (
-        # Name of the extensions to get.
+        # Name of the extensions or part of it.
         [Parameter(Position = 0,
                    Mandatory = $False,
                    ValueFromPipeline = $True,
@@ -64,6 +72,16 @@ function Invoke-BuildTask {
     <#
     .SYNOPSIS
         Invokes a specified build task on the specified project.
+    .DESCRIPTION
+        Invoke-BuildTask cmdlet executes a specified extension's task against specified project.
+    .EXAMPLE
+        PS> Invoke-BuildTask "PowerShell" "test"
+
+        Invokes "test" task from "PowerShell" extension on a configured SourceRoot directory.
+    .EXAMPLE
+        PS> Invoke-BuildTask "PowerShell" "test" "~/repository/src/Script.ps1" -ArgumentList @{ "ToolVersion" = "1.0.0" }
+
+        Invokes "test" task from "PowerShell" extension on "~/repository/src/Script.ps1" script file with additional parameter "ToolVersion".
     #>
     [CmdletBinding(PositionalBinding = $False,
                    SupportsShouldProcess = $True,
@@ -155,7 +173,24 @@ function Invoke-BuildTask {
 function Register-BuildExtension {
     <#
     .SYNOPSIS
-        Registers build extension in the LeetABit.Build system.
+        Registers build extension in the module.
+    .DESCRIPTION
+        Register-BuildExtension cmdlet stores specified information about LeetABit.Build extension.
+        Extension may define a project resolver script block. It is used to search for all project
+        files within the repository that are supported by the extension. Resolver script block may
+        define parameters. Values for the parameters will be provided by the means of `LeetABit.Build.Arguments` module.
+        The job of the resolver is to return a path to the project file or directory.
+        If no resolver is specified a default resolver will be used that returns path to the repository root.
+    .EXAMPLE
+        PS> Register-BuildExtension -ExtensionName "PowerShell"
+
+        Register a default resolver for a "PowerShell" extension if it is not already registered.
+    .EXAMPLE
+        PS> Register-BuildExtension { "./Project.sln" } -Force
+
+        Tries to evaluate name of the module that called Register-BuildExtension cmdlet and in case of success register a specified resolver for the extension with the name of the evaluated module regardless the extension is already registered or not.
+    .NOTES
+        When an extension has already registered a resolver of task and a -Force switch is used any registered resolver and all registered tasks are removed during execution of this cmdlet.
     #>
     [CmdletBinding(PositionalBinding = $False)]
 
@@ -165,18 +200,27 @@ function Register-BuildExtension {
                    Position = 0,
                    Mandatory = $False,
                    ValueFromPipeline = $False,
-                   ValueFromPipelineByPropertyName = $False)]
+                   ValueFromPipelineByPropertyName = $False,
+                   ParameterSetName = "Resolver")]
         [ScriptBlock]
         $Resolver = $DefaultResolver,
 
         # Name of the extension for which the registration shall be performed.
-        [Parameter(Mandatory = $False,
+        [Parameter(HelpMessage = 'Provide a name for the registered extension.',
+                   Position = 0,
+                   Mandatory = $True,
                    ValueFromPipeline = $False,
-                   ValueFromPipelineByPropertyName = $False)]
+                   ValueFromPipelineByPropertyName = $False,
+                   ParameterSetName = "Default")]
+        [Parameter(Position = 1,
+                   Mandatory = $False,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $False,
+                   ParameterSetName = "Resolver")]
         [String]
         $ExtensionName,
 
-        # Indicates that this cmdlet overwrites already registered extension removing all registered tasks.
+        # Indicates that this cmdlet overwrites already registered extension removing all registered tasks and resolver.
         [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False)]
@@ -220,6 +264,28 @@ function Register-BuildTask {
     <#
     .SYNOPSIS
         Registers a specified build task for the specified build extension.
+    .DESCRIPTION
+        Register-BuildTask cmdlet registers specified information about build task for the specified extension. Name of the extension for which the registration is being performed may be inferred from the script block which is a part of task jobs. If no extension name is provided and cmdlet cannot infer it from job script block an error is emitted.
+    .EXAMPLE
+        PS> Register-BuildTask "build" ("generate", "compile", "test") -ExtensionName "PowerShell"
+
+        Registers a build task for "build" command that is realized by executing a sequence of the specified tasks. The registration is performed for "PowerShell" extension.
+    .EXAMPLE
+        PS> Register-BuildTask "generate" ({ param ($RepositoryRoot) begin { New-Resources $RepositoryRoot } })
+
+        Registers a build task for "generate" command that is realized by executing a specified script block. The registration is performed for extension that is named after a module in which the specified script block is defined.
+    .EXAMPLE
+        PS> Register-BuildTask "test" ("test_scripts", "test_modules") -ExtensionName "PowerShell" -Condition { Text-Command "PSTest" }
+
+        Registers a build task for "test" command that is realized by executing a sequence of "test_scripts" and "test_modules" tasks. The registration is performed for "PowerShell" extension. Execution of the task is conditional on the result of the specified script block execution.
+    .EXAMPLE
+        PS> Register-BuildTask "test" ("test_scripts", "test_modules") -ExtensionName "PowerShell" -IsDefault
+
+        Registers a build task for "test" command that is realized by executing a sequence of "test_scripts" and "test_modules" tasks. The task is being registered as a default task for the extension - it will be executed when no task nem is specified.
+    .EXAMPLE
+        PS> Register-BuildTask "test" ("test_scripts", "test_modules") -ExtensionName "PowerShell" -PassThru -Force
+
+        Registers a build task for "test" command that is realized by executing a sequence of "test_scripts" and "test_modules" tasks. The operation returns an information about registered task. The registration is being performed regardless the extension is already registered or not.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([TaskDefinition])]
@@ -252,28 +318,14 @@ function Register-BuildTask {
         [String]
         $ExtensionName,
 
-        # Collection of the task names that shall be executed before execution of the task being registered.
-        [Parameter(Mandatory = $False,
-                   ValueFromPipeline = $False,
-                   ValueFromPipelineByPropertyName = $False)]
-        [String[]]
-        $Before,
-
-        # Collection of the task names that shall be executed after execution of the task being registered.
-        [Parameter(Mandatory = $False,
-                   ValueFromPipeline = $False,
-                   ValueFromPipelineByPropertyName = $False)]
-        [String[]]
-        $After,
-
-        # Decorates the task being registered as a task that will be executed when no task name will be specified.
+        # Marks the task being registered as a task that will be executed when no task name for the execution will be specified.
         [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False)]
         [Switch]
         $IsDefault,
 
-        # Defines condition that shall be meet to execute the task being defined.
+        # Defines condition that shall be meet to execute the task being defined. This condition may be a script block that will be evaluated during task execution. Parameters for the script block are provided by means of LeetABit.Build.Arguments module. To execute the task the script block need to return a $True value.
         [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False)]
@@ -334,7 +386,7 @@ function Register-BuildTask {
             }
         }
 
-        $task = [TaskDefinition]::new($TaskName, $Before, $After, $IsDefault, $Condition, $Jobs)
+        $task = [TaskDefinition]::new($TaskName, $IsDefault, $Condition, $Jobs)
         $extension.Tasks.Add($TaskName, $task)
 
         if ($PassThru) {
@@ -348,9 +400,35 @@ function Resolve-Project {
     <#
     .SYNOPSIS
         Resolves paths to the projects found in the specified location.
+    .DESCRIPTION
+        Resolve-Project cmdlet tries to resolve projects inside specified directory using particular specified extension or all registered extensions.
+    .EXAMPLE
+        PS> Resolve-Project
+
+        Tries to resolve all projects in the source directory inside repository root for all registered extensions.
+    .EXAMPLE
+        PS> Resolve-Project
+
+        Tries to resolve all projects in the source directory inside repository root for all registered extensions.
+    .EXAMPLE
+        PS> Resolve-Project -ExtensionName "PowerShell"
+
+        Tries to resolve all projects in the source directory inside repository root for "PowerShell" extension.
+    .EXAMPLE
+        PS> Resolve-Project -ExtensionName "PowerShell" -TaskName "test"
+
+        Tries to resolve all projects in the source directory inside repository root for "PowerShell" extension only if it supports "test" task.
+    .EXAMPLE
+        PS> Resolve-Project -TaskName "test"
+
+        Tries to resolve all projects in the source directory inside repository root for all extensions that support "test" task.
+    .EXAMPLE
+        PS> Resolve-Project -Path "~/repository/source"
+
+        Tries to resolve all projects in the "~/repository/source" directory for all extensions.
     #>
     [CmdletBinding(PositionalBinding = $False)]
-    [OutputType([String],[String[]])]
+    [OutputType([String[]])]
 
     param (
         # Path to location from which the project shall be resolved.
@@ -369,7 +447,7 @@ function Resolve-Project {
         [String]
         $ExtensionName,
 
-        # Name of the task that the extension shall provide.
+        # Name of the task that the extension shall provide. Extensions that do not support this task are not evaluated during the execution.
         [Parameter(Position = 2,
                    Mandatory = $False,
                    ValueFromPipeline = $False,
@@ -500,6 +578,16 @@ function Unregister-BuildExtension {
     <#
     .SYNOPSIS
         Unregisters specified build extension.
+    .DESCRIPTION
+        Unregister-BuildExtension removes all registered information for a specified extension name. If the specified extension is not registered this cmdlet behaves according to -IgnoreMissing switch.
+    .EXAMPLE
+        PS> Unregister-BuildExtension "PowerShell"
+
+        Tries to unregister a "PowerShell" extension and emits an error if the extension is not registered yet.
+    .EXAMPLE
+        PS> Unregister-BuildExtension ("PowerShell", "Dotnet") -IgnoreMissing
+
+        Tries to unregister a "PowerShell" and "Dotnet" extensions. The command continues execution without error if an extension to be removed is not registered.
     #>
     [CmdletBinding(PositionalBinding = $False,
                    SupportsShouldProcess = $True,
@@ -520,7 +608,7 @@ function Unregister-BuildExtension {
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False)]
         [Switch]
-        $IgnoreMissingExtensions
+        $IgnoreMissing
     )
 
     begin {
@@ -529,7 +617,7 @@ function Unregister-BuildExtension {
 
     process {
         $ExtensionName | ForEach-Object {
-            if (!$script:Extensions.ContainsKey($_)) {
+            if (!$script:Extensions.ContainsKey($_) -and -not $IgnoreMissing) {
                 throw $LocalizedData.Error_UnregisterBuildExtension_Reason -f
                     ($LocalizedData.Exception_ExtensionNotFound_ExtensionName -f $_)
             }
@@ -550,6 +638,16 @@ function Unregister-BuildTask {
     <#
     .SYNOPSIS
         Unregisters specified build task.
+    .DESCRIPTION
+        Unregister-BuildTask cmdlet tries to unregister specified tasks from the specified extension. If the specified extension or task is not registered this cmdlet behaves according to -IgnoreMissing switch.
+    .EXAMPLE
+        PS> Unregister-BuildTask "PowerShell"
+
+        Tries to unregister all tasks from "PowerShell" extension and emits an error if the extension is not registered yet.
+    .EXAMPLE
+        PS> Unregister-BuildTask "PowerShell" -TaskName "help" -IgnoreMissing
+
+        Tries to unregister "help" task from "PowerShell" extension and continues execution if the extension nor task is not registered yet.
     #>
     [CmdletBinding(PositionalBinding = $False,
                    SupportsShouldProcess = $True,
@@ -557,8 +655,9 @@ function Unregister-BuildTask {
 
     param (
         # Name of the extension for which the build task shall be unregistered.
-        [Parameter(Position = 0,
-                   Mandatory = $False,
+        [Parameter(HelpMessage = 'Provide name of the extension which task shall be unregistered.',
+                   Position = 0,
+                   Mandatory = $True,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $True)]
         [String]
@@ -577,7 +676,7 @@ function Unregister-BuildTask {
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False)]
         [Switch]
-        $IgnoreMissingTasks
+        $IgnoreMissing
     )
 
     begin {
@@ -585,7 +684,7 @@ function Unregister-BuildTask {
     }
 
     process {
-        if (!$script:Extensions.ContainsKey($ExtensionName)) {
+        if (!$script:Extensions.ContainsKey($ExtensionName) -and -not $IgnoreMissing) {
             throw $LocalizedData.Error_UnregisterBuildTask_Reason -f
                 ($LocalizedData.Exception_ExtensionNotFound_ExtensionName -f $ExtensionName)
         }
@@ -600,7 +699,7 @@ function Unregister-BuildTask {
                         $extension.Tasks.Remove($_)
                     }
                 }
-                elseif (-not $IgnoreMissingTasks) {
+                elseif (-not $IgnoreMissing) {
                     throw $LocalizedData.Error_UnregisterBuildTask_Reason -f
                         ($LocalizedData.Exception_TaskNotFound_ExtensionName_TaskName -f $ExtensionName, $_)
                 }
@@ -734,12 +833,6 @@ function Invoke-BuildTaskCore {
             $TasksAlreadyRun += $currentTaskName
 
             foreach ($task in $Extension.Tasks.Values) {
-                if ($task.Before -contains $currentTaskName) {
-                    Invoke-BuildTaskCore $Extension $task.Name $ProjectPath $AdditionalArguments $TasksAlreadyRun
-                }
-            }
-
-            foreach ($task in $Extension.Tasks.Values) {
                 if ($task.Name -eq $currentTaskName) {
                     foreach ($job in $task.Jobs) {
                         if ($job -is [String]) {
@@ -749,12 +842,6 @@ function Invoke-BuildTaskCore {
                             Invoke-ScriptBlock $job $Extension.Name $AdditionalArguments
                         }
                     }
-                }
-            }
-
-            foreach ($task in $Extension.Tasks.Values) {
-                if ($task.After -contains $currentTaskName) {
-                    Invoke-BuildTaskCore $Extension $task.Name $ProjectPath $AdditionalArguments $TasksAlreadyRun
                 }
             }
         }
@@ -840,6 +927,9 @@ class ExtensionDefinition {
         $this.Tasks = [Dictionary[String,TaskDefinition]]::new([StringComparer]::OrdinalIgnoreCase)
     }
 
+    <#
+    ##  Creates a new instance of the ExtensionDefinition class with all the data copied from this instance.
+     #>
     [ExtensionDefinition] Clone() {
         $result = [ExtensionDefinition]::new($this.Name)
         $result.Resolver = $this.Resolver
@@ -864,16 +954,6 @@ class TaskDefinition
     [String] $Name
 
     <#
-    ##  Array of names of the tasks before execution of which the current shall be executed.
-    #>
-    [String[]] $Before
-
-    <#
-    ##  Array of names of the task after execution of which the current shall be executed.
-    #>
-    [String[]] $After
-
-    <#
     ##  Describes whether the task represented by the current object is the default task or not.
     #>
     [Boolean] $IsDefault
@@ -891,28 +971,19 @@ class TaskDefinition
     <#
     ##  Initializes a new instance of the TaskDefinition class.
     #>
-    TaskDefinition([String] $name, [String[]] $before, [String[]] $after,
-                          [Boolean] $isDefault, [Object] $condition, [Object[]] $jobs) {
+    TaskDefinition([String] $name, [Boolean] $isDefault, [Object] $condition, [Object[]] $jobs) {
         $this.Name = $name
-        $this.Before = @()
-        if ($before) {
-            $this.Before += $before
-        }
-
-        $this.After = @()
-        if ($after) {
-            $this.After += $after
-        }
-
         $this.IsDefault = $isDefault
         $this.Condition = $condition
         $this.Jobs = $jobs
     }
 
+
+    <#
+    ##  Creates a new instance of the TaskDefinition class with all the data copied from this instance.
+     #>
     [TaskDefinition] Clone() {
         return [TaskDefinition]::new($this.Name,
-            $this.Before.Clone(),
-            $this.After.Clone(),
             $this.IsDefault,
             $this.Condition,
             $this.Jobs.Clone())

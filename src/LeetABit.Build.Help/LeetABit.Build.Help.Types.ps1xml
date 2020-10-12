@@ -18,28 +18,6 @@
     <Name>LeetABit.Build.Task</Name>
     <Members>
       <ScriptProperty>
-        <Name>BeforeListString</Name>
-        <GetScriptBlock>
-          if ($this.Before) {
-            $this.Before.Name -join ", "
-          }
-          else {
-            "(None)"
-          }
-        </GetScriptBlock>
-      </ScriptProperty>
-      <ScriptProperty>
-        <Name>AfterListString</Name>
-        <GetScriptBlock>
-          if ($this.After) {
-            $this.After.Name -join ", "
-          }
-          else {
-            "(None)"
-          }
-        </GetScriptBlock>
-      </ScriptProperty>
-      <ScriptProperty>
         <Name>JobListString</Name>
         <GetScriptBlock>
           ($this.Jobs | ForEach-Object {

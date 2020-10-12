@@ -124,8 +124,6 @@ function Get-BuildHelp {
 
                 $task = @{}
                 $task.Name = $currentTask.Name
-                $task.Before = $currentTask.Before.Clone()
-                $task.After = $currentTask.After.Clone()
                 $task.IsDefault = $currentTask.IsDefault
                 $task.Jobs = @()
                 $task.Description = @()

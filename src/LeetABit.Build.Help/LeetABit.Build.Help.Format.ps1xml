@@ -145,14 +145,6 @@
                                       </ExpressionBinding>
                                       <NewLine/>
                                       <ExpressionBinding>
-                                        <ScriptBlock>"BEFORE:        $($_.BeforeListString)"</ScriptBlock>
-                                      </ExpressionBinding>
-                                      <NewLine/>
-                                      <ExpressionBinding>
-                                        <ScriptBlock>"AFTER:         $($_.AfterListString)"</ScriptBlock>
-                                      </ExpressionBinding>
-                                      <NewLine/>
-                                      <ExpressionBinding>
                                         <ScriptBlock>"JOBS:          $($_.JobListString)"</ScriptBlock>
                                       </ExpressionBinding>
                                       <NewLine/>
@@ -311,30 +303,6 @@
                                     <CustomItem>
                                       <ExpressionBinding>
                                         <PropertyName>Description</PropertyName>
-                                      </ExpressionBinding>
-                                      <NewLine/>
-                                    </CustomItem>
-                                  </Frame>
-                                  <NewLine/>
-                                  <Text>BEFORE</Text>
-                                  <NewLine/>
-                                  <Frame>
-                                    <LeftIndent>4</LeftIndent>
-                                    <CustomItem>
-                                      <ExpressionBinding>
-                                        <PropertyName>BeforeListString</PropertyName>
-                                      </ExpressionBinding>
-                                      <NewLine/>
-                                    </CustomItem>
-                                  </Frame>
-                                  <NewLine/>
-                                  <Text>AFTER</Text>
-                                  <NewLine/>
-                                  <Frame>
-                                    <LeftIndent>4</LeftIndent>
-                                    <CustomItem>
-                                      <ExpressionBinding>
-                                        <PropertyName>AfterListString</PropertyName>
                                       </ExpressionBinding>
                                       <NewLine/>
                                     </CustomItem>

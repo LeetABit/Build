@@ -20,7 +20,7 @@ $Regex_ScriptBlockSyntax_FunctionName = '(?<={0})(.+?)(?=\[(-WhatIf|-Confirm|\<C
 Register-BuildTask "help" -Jobs {
     <#
     .SYNOPSIS
-    Gets help for the build script or one of its targets.
+        Gets help for the build script or one of its targets.
     #>
     [CmdletBinding(PositionalBinding = $False)]
 
@@ -60,7 +60,25 @@ Register-BuildTask "help" -Jobs {
 function Get-BuildHelp {
     <#
     .SYNOPSIS
-    Writes help message about build scripts usage.
+        Gets help about build scripts usage.
+    .DESCRIPTION
+        Get-BuildHelp cmdlet provides a concise documentation about each of the loaded extensions and build tasks.
+    .EXAMPLE
+        PC> Get-BuildHelp
+
+        Gets help about all registered build extensions and tasks.
+    .EXAMPLE
+        PC> Get-BuildHelp -ExtensionTopic "PowerShell"
+
+        Gets a detailed help about all tasks provided by "PowerShell" extension.
+    .EXAMPLE
+        PC> Get-BuildHelp -TaskTopic "build"
+
+        Gets a detailed help about all build commands provided by different extensions.
+    .EXAMPLE
+        PC> Get-BuildHelp -ExtensionTopic "PowerShell" -TaskTopic "build"
+
+        Gets a detailed help about "build" task provided by "PowerShell" extension.
     #>
     [CmdletBinding(PositionalBinding = $False)]
 
@@ -242,7 +260,7 @@ function Get-BuildHelp {
 function Convert-DictionaryToHelpObject {
     <#
     .SYNOPSIS
-    Converts a hashtable to a PSObject using keys as property names with associated values.
+        Converts a hashtable to a PSObject using keys as property names with associated values.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([String])]

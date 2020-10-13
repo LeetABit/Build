@@ -364,6 +364,10 @@ DynamicParam {
         }
     }
 
+    if (-not $PSBoundParameters.ContainsKey('RepositoryRoot')) {
+        $RepositoryRoot = $PSScriptRoot
+    }
+
     Initialize-ScriptConfiguration
     Install-BuildToolset
     Import-BuildToolsetModules

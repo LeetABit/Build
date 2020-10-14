@@ -104,7 +104,7 @@
         PSData = @{
 
             # Tags applied to this module. These help with module discovery in online galleries.
-            Tags = @('Leet a Bit', 'LeetABit', 'Build', 'Argument')
+            Tags = @('LeetABit', 'Build', 'Argument')
 
             # A URL to the license for this module.
             LicenseUri = 'https://raw.githubusercontent.com/LeetABit/Build/master/LICENSE.txt'
@@ -117,9 +117,14 @@
 
             # ReleaseNotes of this module
             ReleaseNotes = @"
-0.0.0
-  - Initial release
+- Initial release
 "@
+
+            # Prerelease string of this module
+            # Prerelease = ''
+
+            # Flag to indicate whether the module requires explicit user acceptance for install/update/save
+            # RequireLicenseAcceptance = $false
 
             # External dependencies.
             ExternalModuleDependencies = @(

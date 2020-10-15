@@ -23,7 +23,7 @@ Content of the LeetABit.Build.json file is following:
 ```json
 {
     "$schema": "https://raw.githubusercontent.com/LeetABit/Build/master/schema/LeetABit.Build.schema.json",
-    "ToolsetVersion": "0.0.0",
+    "ToolsetVersion": "0.0.1",
     "CompilerFlags": "optimize"
 }
 ```

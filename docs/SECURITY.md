@@ -6,7 +6,7 @@ Currently LeetABit.Build is in a pre-release development.
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.0.0   | :white_check_mark: |
+| 0.0.1   | :white_check_mark: |
 
 ## Reporting a Vulnerability
 

@@ -1,5 +1,5 @@
 #########################################################################################
-# Copyright (c) Leet a Bit. All rights reserved.
+# Copyright (c) Hubert Bukowski. All rights reserved.
 # Licensed under the MIT License.
 # See License.txt in the project root for full license information.
 #
@@ -12,7 +12,7 @@
     RootModule = 'LeetABit.Build.Extensibility.psm1'
 
     # Version number of this module.
-    ModuleVersion = '0.0.0'
+    ModuleVersion = '0.0.1'
 
     # Supported PSEditions
     # CompatiblePSEditions = @()
@@ -27,7 +27,7 @@
     CompanyName = 'Leet a Bit'
 
     # Copyright statement for this module
-    Copyright = 'Copyright (c) Leet a Bit. All rights reserved.'
+    Copyright = 'Copyright (c) Hubert Bukowski. All rights reserved.'
 
     # Description of the functionality provided by this module
     Description = 'Provides extensibility mechanism for modules that shall be available for LeetABit.Build.'
@@ -52,8 +52,8 @@
 
     # Modules that must be imported into the global environment prior to importing this module
     RequiredModules = @(
-        @{ModuleName = 'LeetABit.Build.Common'; ModuleVersion = '0.0.0'; },
-        @{ModuleName = 'LeetABit.Build.Logging'; ModuleVersion = '0.0.0'; }
+        @{ModuleName = 'LeetABit.Build.Common'; ModuleVersion = '0.0.1'; },
+        @{ModuleName = 'LeetABit.Build.Logging'; ModuleVersion = '0.0.1'; }
     )
 
     # Assemblies that must be loaded prior to importing this module

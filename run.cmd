@@ -1,6 +1,6 @@
 @ECHO OFF
 REM ==========================================================================
-REM   Copyright (c) Leet a Bit. All rights reserved.
+REM   Copyright (c) Hubert Bukowski. All rights reserved.
 REM   Licensed under the MIT License.
 REM   See License.txt in the project root for full license information.
 REM --------------------------------------------------------------------------

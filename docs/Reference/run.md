@@ -187,7 +187,7 @@ None
 Any parameter for LeetABit.Build system may be provided in three ways:
 1. Explicitly via PowerShell command arguments.
 2. JSON property in 'LeetABit.Build.json' file stored under 'build' subdirectory of the specified repository root.
-3. Environmental variable with a 'LeetABit_Build_' prefix before parameter name.
+3. Environmental variable with a 'LeetABitBuild_' prefix before parameter name.
 
 The list above also defines precedence order of the importance.
 

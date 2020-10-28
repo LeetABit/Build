@@ -2,6 +2,7 @@
 using namespace System.Collections
 using namespace System.Collections.Generic
 using namespace System.Management.Automation
+using namespace System.Diagnostics.CodeAnalysis
 using module LeetABit.Build.Common
 
 Set-StrictMode -Version 2
@@ -25,14 +26,14 @@ function Find-CommandArgument {
         Locates an argument for a specified named parameter.
     .DESCRIPTION
         Find-CommandArgument cmdlet tries to find argument for the specified parameter. The cmdlet is looking for a variable which name matches one of the following case-insensitive patterns: `LeetABitBuild_$ExtensionName_$ParameterName`, `$ExtensionName_$ParameterName`, `LeetABitBuild_$ParameterName`, `{ParameterName}`. Any dots in the name are ignored. There are four different argument sources, listed below in a precedence order:
-        1. Dictionary of arguments specified as value for AdditionalArguments parameter. 
+        1. Dictionary of arguments specified as value for AdditionalArguments parameter.
         2. Arguments provided via Set-CommandArgumentSet and Add-CommandArgument cmdlets.
         3. Values stored in 'LeetABit.Build.json' file located in the repository root directory provided via Set-CommandArgumentSet cmdlet or on of its subdirectories.
-        4. Environment variables. In addition to the two variable name patterns the cmdlet is looking for environment variable may also be perpended by 'LEETABIT_' prefix.
+        4. Environment variables.
     .EXAMPLE
         PS> Find-CommandArgument "TaskName" "LeetABit.Build" "help" -AdditionalArguments $arguments
 
-        Tries to find a value for a parameter "TaskName" or "LeetABit_Build_TaskName". At the beginning specified arguments dictionary is being checked. If the value is not found the cmdlet checks all the arguments previously specified via Initialize-CommandArgument, Add-CommandArgument and Set-CommandArgumentSet cmdlets. If there was no value provided for any of the parameters a default value "help" is returned.
+        Tries to find a value for a parameter "TaskName" or "LeetABitBuild_TaskName". At the beginning specified arguments dictionary is being checked. If the value is not found the cmdlet checks all the arguments previously specified via Initialize-CommandArgument, Add-CommandArgument and Set-CommandArgumentSet cmdlets. If there was no value provided for any of the parameters a default value "help" is returned.
     .EXAMPLE
         PS> Find-CommandArgument "ProducePackages" -IsSwitch
 
@@ -100,9 +101,17 @@ function Find-CommandArgument {
     process {
         $parameterNames = @()
         if ($ExtensionName) {
-            $trimmedExtensionName = "$($ExtensionName.Replace('.', [String]::Empty))"
-            $parameterNames += "LeetABitBuild_$trimmedExtensionName`_$ParameterName"
-            $parameterNames += "$trimmedExtensionName`_$ParameterName"
+            $sanitizedExtensionName = "$($ExtensionName.Replace('.', [String]::Empty))"
+            $parameterNames += "LeetABitBuild_$sanitizedExtensionName`_$ParameterName"
+            
+            if ($sanitizedExtensionName.StartsWith("LeetABitBuild")) {
+                $trimmedExtensionName = $sanitizedExtensionName.Substring("LeetABitBuild".Length)
+                if ($trimmedExtensionName) {
+                    $parameterNames += "LeetABitBuild_$trimmedExtensionName`_$ParameterName"
+                }
+            }
+            
+            $parameterNames += "$sanitizedExtensionName`_$ParameterName"
         }
 
         $parameterNames += "LeetABitBuild_$ParameterName"
@@ -186,10 +195,10 @@ function Select-CommandArgumentSet {
         Selects a collection of arguments that match specified command parameters.
     .DESCRIPTION
         Select-CommandArgumentSet cmdlet tries to find parameters for the specified command, script block or parameter collection. The cmdlet is looking for a variables which name matches one of the following case-insensitive patterns: `LeetABitBuild_$ExtensionName_$ParameterName`, `$ExtensionName_$ParameterName`, `LeetABitBuild_$ParameterName`, `{ParameterName}`. Any dots in the name are ignored. There are four different argument sources, listed below in a precedence order:
-        1. Dictionary of arguments specified as value for AdditionalArguments parameter. 
+        1. Dictionary of arguments specified as value for AdditionalArguments parameter.
         2. Arguments provided via Set-CommandArgumentSet and Add-CommandArgument cmdlets.
         3. Values stored in 'LeetABit.Build.json' file located in the repository root directory provided via Set-CommandArgumentSet cmdlet or on of its subdirectories.
-        4. Environment variables. In addition to the two variable name patterns the cmdlet is looking for environment variable may also be perpended by 'LEETABIT_' prefix.
+        4. Environment variables.
     .EXAMPLE
         PS> Select-CommandArgumentSet -Command (Get-Command LeetABit.Build.PowerShell\Deploy-Project)
 
@@ -360,7 +369,7 @@ function Select-CommandArgumentSet {
         }
 
         $namedArguments
-        Write-Output -NoEnumerate $positionalArguments
+        Write-Output -InputObject $positionalArguments -NoEnumerate
     }
 }
 
@@ -484,7 +493,7 @@ function Set-CommandArgumentSet {
     process {
         if ($PSCmdlet.ShouldProcess($LocalizedData.Resource_CurrentCommandArgumentSet,
                                     $LocalizedData.Operation_Overwrite)) {
-            Initialize-ConfigurationFromFile $RepositoryRoot
+            $script:ConfigurationJson = Read-ConfigurationFromFile $RepositoryRoot
             $script:NamedArguments = @{}
             $script:PositionalArguments = @()
             $script:UnknownArguments.Clear()
@@ -515,6 +524,10 @@ function Convert-ArgumentString {
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([Object[]])]
 
+    [SuppressMessage(
+        'PSReviewUnusedParameter',
+        'IsSwitch',
+        Justification = 'False positive as rule does not scan child scopes: https://github.com/PowerShell/PSScriptAnalyzer/issues/1472')]
     param (
         # Argument string to convert.
         [Parameter(HelpMessage = 'Provide argument string value.',
@@ -559,6 +572,10 @@ function Convert-ArgumentValue {
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([Object[]])]
 
+    [SuppressMessage(
+        'PSReviewUnusedParameter',
+        'IsSwitch',
+        Justification = 'False positive as rule does not scan child scopes: https://github.com/PowerShell/PSScriptAnalyzer/issues/1472')]
     param (
         # Argument to convert.
         [Parameter(HelpMessage = 'Provide argument value.',
@@ -723,13 +740,8 @@ function Find-CommandArgumentInEnvironment {
     )
 
     process {
-        $localParameterName = $ParameterName
-        if ($localParameterName -notmatch '^LeetABit_Build_') {
-            $localParameterName = "LeetABit_Build_$localParameterName"
-        }
-
-        if (Test-Path "env:\$localParameterName") {
-            Get-Content "env:\$localParameterName"
+        if (Test-Path "env:\$ParameterName") {
+            Get-Content "env:\$ParameterName"
         }
     }
 }
@@ -826,7 +838,7 @@ function Pop-PositionalArguments {
 }
 
 
-function Initialize-ConfigurationFromFile {
+function Read-ConfigurationFromFile {
     <#
     .SYNOPSIS
         Initializes a script configuration values from LeetABit.Build.json configuration file.
@@ -846,7 +858,7 @@ function Initialize-ConfigurationFromFile {
     )
 
     process {
-        $script:ConfigurationJson = @{}
+        $result = @{}
         Get-ChildItem -Path $RepositoryRoot -Filter 'LeetABit.Build.json' -Recurse | Foreach-Object {
             $configFilePath = $_.FullName
             Write-Verbose ($LocalizedData.Message_InitializingConfigurationFromFile_FilePath -f $configFilePath)
@@ -854,13 +866,19 @@ function Initialize-ConfigurationFromFile {
             if (Test-Path $configFilePath -PathType Leaf) {
                 try {
                     $configFileContent = Get-Content -Raw -Encoding UTF8 -Path $configFilePath
-                    $script:ConfigurationJson = ConvertFrom-Json $configFileContent | ConvertTo-Hashtable
+                    ConvertFrom-Json $configFileContent | ConvertTo-Hashtable | ForEach-Object {
+                        foreach ($key in $_.Keys) {
+                            $result[$key] = $_[$key]
+                        }
+                    }
                 }
                 catch {
                     throw [System.IO.FileFormatException]::new([Uri]::new($configFilePath), $LocalizedData.Exception_IncorrectJsonFileFormat, $_)
                 }
             }
         }
+
+        $result
     }
 }
 
@@ -882,7 +900,7 @@ function ConvertTo-Hashtable {
         [AllowNull()]
         $InputObject
     )
- 
+
     process {
         if ($Null -eq $InputObject -or $InputObject -is [IDictionary]) {
             $InputObject

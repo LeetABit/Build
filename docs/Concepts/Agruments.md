@@ -2,16 +2,17 @@
 
 Arguments for the build toolset commands may be provided by three different means. Following list presents them in order of importance:
 1. Command line arguments specified during buildstrapper invocation.
-1. Values stored in [Repository Configuration File](RepositoryConfigurationFile.md) file located in the repository root directory provided via `Set-CommandArgumentSet` cmdlet or on of its subdirectories.
+1. Values stored in [Repository Configuration File](RepositoryConfigurationFile.md) file located in the repository root directory provided via Set-CommandArgumentSet cmdlet or on of its subdirectories.
 1. Environment variables.
 
-There are four patterns for parameter name matching. Following list presents them in order of precendence:
+There are four patterns for parameter name matching. Following list presents them in order of precedence:
 1. `LeetABitBuild_{ExtensionName}_{ParameterName}`
+1. `LeetABitBuild_{TrimmedExtensionName}_{ParameterName}`
 1. `{ExtensionName}_{ParameterName}`
 1. `LeetABitBuild_{ParameterName}`
 1. `{ParameterName}`
 
-`{ExtensionName}` is the name of the extension for which the build command is defined with all dots removed. Patterns with extension name may be used to override more general value specified only by `{ParameterName}` just for one extension. `LeetABit.Build_` prefix gives one more level of specificity to avoid situation where environment variable name in form `{ExtensionName}_{ParameterName}` is already defined in the system and is used by different tools.
+`{ExtensionName}` is the name of the extension for which the build command is defined with all dots removed. `{TrimmedExtensionName}` is an `{ExtensionName}` with a `"LeetABitBuild"` prefix removed if present. Patterns with extension name may be used to override more general value specified only by `{ParameterName}` just for one extension. `LeetABit.Build_` prefix gives one more level of specificity to avoid situation where environment variable name in form `{ExtensionName}_{ParameterName}` is already defined in the system and is used by different tools.
 
 ## Example
 

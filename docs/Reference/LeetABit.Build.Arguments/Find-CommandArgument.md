@@ -10,13 +10,13 @@ Find-CommandArgument cmdlet tries to find argument for the specified parameter. 
 1. Dictionary of arguments specified as value for AdditionalArguments parameter.
 2. Arguments provided via Set-CommandArgumentSet and Add-CommandArgument cmdlets.
 3. Values stored in 'LeetABit.Build.json' file located in the repository root directory provided via Set-CommandArgumentSet cmdlet or on of its subdirectories.
-4. Environment variables. In addition to the two variable name patterns the cmdlet is looking for environment variable may also be perpended by 'LEETABIT_' prefix.
+4. Environment variables.
 
 ## Examples
 ### Example 1:
 ```PS> Find-CommandArgument "TaskName" "LeetABit.Build" "help" -AdditionalArguments $arguments```
 
-Tries to find a value for a parameter "TaskName" or "LeetABit_Build_TaskName". At the beginning specified arguments dictionary is being checked. If the value is not found the cmdlet checks all the arguments previously specified via Initialize-CommandArgument, Add-CommandArgument and Set-CommandArgumentSet cmdlets. If there was no value provided for any of the parameters a default value "help" is returned.
+Tries to find a value for a parameter "TaskName" or "LeetABitBuild_TaskName". At the beginning specified arguments dictionary is being checked. If the value is not found the cmdlet checks all the arguments previously specified via Initialize-CommandArgument, Add-CommandArgument and Set-CommandArgumentSet cmdlets. If there was no value provided for any of the parameters a default value "help" is returned.
 
 ### Example 2:
 ```PS> Find-CommandArgument "ProducePackages" -IsSwitch```

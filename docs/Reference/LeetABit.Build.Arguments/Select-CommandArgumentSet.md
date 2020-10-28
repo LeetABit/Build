@@ -13,7 +13,7 @@ Select-CommandArgumentSet cmdlet tries to find parameters for the specified comm
 1. Dictionary of arguments specified as value for AdditionalArguments parameter.
 2. Arguments provided via Set-CommandArgumentSet and Add-CommandArgument cmdlets.
 3. Values stored in 'LeetABit.Build.json' file located in the repository root directory provided via Set-CommandArgumentSet cmdlet or on of its subdirectories.
-4. Environment variables. In addition to the two variable name patterns the cmdlet is looking for environment variable may also be perpended by 'LEETABIT_' prefix.
+4. Environment variables.
 
 ## Examples
 ### Example 1:

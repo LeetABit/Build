@@ -8,6 +8,6 @@
 
 ConvertFrom-StringData @'
 ###PSLOC
-Get_BuildHelp_Buildstrapper_Synopsis = Provides buildstrapping for LeetABit.Build scripts. Use -ExtensionTopic, -TaskTopic or both to get more information about specified topic.
+Get_BuildHelp_Buildstrapper_Synopsis = Provides buildstrapping for LeetABit.Build scripts. Use "help" task with parameter -ExtensionTopic or -TaskTopic or both to get more information about specified topic.
 ###PSLOC
 '@

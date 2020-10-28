@@ -47,7 +47,7 @@ Register-BuildTask "help" -Jobs {
     }
 
     process {
-        Get-BuildHelp $ExtensionTopic $TaskTopic | Out-Default
+        Get-BuildHelp $ExtensionTopic $TaskTopic | Out-String | Write-Information -InformationAction Continue
     }
 }
 
@@ -193,60 +193,73 @@ function Get-BuildHelp {
 
                         if ($helpObject.parameters.PSObject.Properties.Name -contains 'parameter') {
                             foreach ($parameterObject in $helpObject.parameters.parameter) {
-                                if (Get-Member -InputObject $parameterObject -Name "description" -ErrorAction SilentlyContinue) {
-                                    $parameter = @{}
-                                    $parameter.Name = $parameterObject.Name
+                                $parameter = @{}
+                                $parameter.Name = $parameterObject.Name
+                                if ($parameterObject.PSObject.Properties.Name -contains "type") {
                                     $parameter.Type = $parameterObject.type.name
-                                    $parameter.Description = $parameterObject.description.Text
-                                    $parameter.Mandatory = [System.Convert]::ToBoolean($parameterObject.required)
-                                    $parameterObject = Convert-DictionaryToHelpObject $parameter 'Parameter' $typeNameSuffix
-                                    $task.Parameters += $parameterObject
-                                    $job.Parameters += $parameterObject
                                 }
+
+                                if ($parameterObject.PSObject.Properties.Name -contains "description") {
+                                    if ($parameterObject.description -is [String]) {
+                                        $parameter.Description = $parameterObject.description
+                                    }
+                                    else {
+                                        $parameter.Description = $parameterObject.description.Text
+                                    }
+                                }
+                                else {
+                                    $parameter.Description = ""
+                                }
+
+                                $parameter.Mandatory = [System.Convert]::ToBoolean($parameterObject.required)
+                                $parameterObject = Convert-DictionaryToHelpObject -Properties $parameter -HelpObjectName 'Parameter' -HelpView $typeNameSuffix
+                                $task.Parameters += $parameterObject
+                                $job.Parameters += $parameterObject
                             }
                         }
 
-                        $task.Jobs += Convert-DictionaryToHelpObject $job 'Job' $typeNameSuffix
+                        $task.Jobs += Convert-DictionaryToHelpObject -Properties $job -HelpObjectName 'Job' -HelpView $typeNameSuffix
                     }
                 }
 
                 $parametersDictionary = @{}
 
-                $task.Parameters | ForEach-Object {
-                    if ($parametersDictionary.ContainsKey($_.Name)) {
-                        $alreadyStored = $parametersDictionary[$_.Name]
-                        $parametersDictionary.Remove($_.Name)
+                if ($task.Parameters) {
+                    $task.Parameters | ForEach-Object {
+                        if ($parametersDictionary.ContainsKey($_.Name)) {
+                            $alreadyStored = $parametersDictionary[$_.Name]
+                            $parametersDictionary.Remove($_.Name)
 
-                        if ($alreadyStored.Type -ne $_.Type) {
-                            $alreadyStored.Type = "String"
+                            if ($alreadyStored.Type -ne $_.Type) {
+                                $alreadyStored.Type = "String"
+                            }
+
+                            if ($alreadyStored.Description -notcontains $_.Description) {
+                                $alreadyStored.Description += $_.Description
+                            }
+
+                            $alreadyStored.Mandatory = $alreadyStored.Mandatory -or $_.Mandatory
+                            $parametersDictionary.Add($alreadyStored.Name, $alreadyStored)
                         }
-
-                        if ($alreadyStored.Description -notcontains $_.Description) {
-                            $alreadyStored.Description += $_.Description
+                        else {
+                            $_.Description = @($_.Description)
+                            $parametersDictionary.Add($_.Name, $_)
                         }
-
-                        $alreadyStored.Mandatory = $alreadyStored.Mandatory -or $_.Mandatory
-                        $parametersDictionary.Add($alreadyStored.Name, $alreadyStored)
-                    }
-                    else {
-                        $_.Description = @($_.Description)
-                        $parametersDictionary.Add($_.Name, $_)
                     }
                 }
 
-                $task.Description = ($task.Description | Get-Unique) -join " "
+                $task.Description = (($task.Description | Get-Unique) -join " ").Trim()
                 $task.Parameters = $parametersDictionary.Values | Sort-Object -Property Name
-
-                $extension.Tasks.Add($task.Name, (Convert-DictionaryToHelpObject $task 'Task' $typeNameSuffix))
+                $extension.Tasks.Add($task.Name, (Convert-DictionaryToHelpObject -Properties $task -HelpObjectName 'Task' -HelpView $typeNameSuffix))
             }
 
             if (-not $TaskTopic -or $extension.Tasks) {
                 $extension.Tasks = $extension.Tasks.Values;
-                $helpInfo.Extensions += Convert-DictionaryToHelpObject $extension 'Extension' $typeNameSuffix
+                $helpInfo.Extensions += Convert-DictionaryToHelpObject -Properties $extension -HelpObjectName 'Extension' -HelpView $typeNameSuffix
             }
         }
 
-        Convert-DictionaryToHelpObject $helpInfo 'HelpInfo' $typeNameSuffix
+        Convert-DictionaryToHelpObject -Properties $helpInfo -HelpObjectName 'HelpInfo' -HelpView $typeNameSuffix
     }
 }
 

@@ -11,8 +11,8 @@ To programmatically control loaded extensions and project resolution the Reposit
 ## Repository Extension Script
 
 Repository Extension Script is any file inside repository root directory hierarchy with a name 'LeetABit.Build.Repository.ps1'.
-LeetABit.Build module executes these script files before each build command. Repository Extension Script may contain any PowerShell
+LeetABit.Build module executes these script files before build command. Repository Extension Script may contain any PowerShell
 code but most common use case is to define custom project resolver. In addition repository maintainer may override any build tasks
 defined by toolset extensions and provide tasks that are better suited for their projects. To learn more about Extensibility
-mechanism of LeetABit.Build toolset see [Extensions](Extensions.md) page. See [Build Tasks](BuildTasks.md) page to learn more about
+mechanism of LeetABit.Build toolset see [Extensibility](Extensibility.md) page. See [Build Tasks](BuildTasks.md) page to learn more about
 build tasks.

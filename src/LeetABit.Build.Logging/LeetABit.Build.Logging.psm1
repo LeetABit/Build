@@ -1,12 +1,13 @@
 #requires -version 6
+using namespace System.Collections
 using namespace System.Diagnostics.CodeAnalysis
 using namespace System.Management.Automation
 
 Set-StrictMode -Version 3.0
 Import-LocalizedData -BindingVariable LocalizedData -FileName LeetABit.Build.Logging.Resources.psd1
 
-$LastStepName   = ""
-$LastStepFailed = $False
+[Queue]$LastStep       = [Queue]::new()
+[Queue]$LastStepResult = [Queue]::new()
 
 
 ##################################################################################################################
@@ -42,7 +43,7 @@ function Write-Diagnostic {
     }
 
     process {
-        Write-Message -Message $Message -Color 'DarkGrey'
+        Write-Message -Message $Message -Color 'DarkGray'
     }
 }
 
@@ -73,7 +74,7 @@ function Write-Failure {
                    Mandatory = $True,
                    ValueFromPipeline = $True,
                    ValueFromPipelineByPropertyName = $True)]
-        [String[]]
+        [String]
         $Message)
 
     begin {
@@ -81,12 +82,10 @@ function Write-Failure {
     }
 
     process {
-        $script:LastStepFailed = $True
-        Write-Message -Message $Message -Color 'Red'
+        [Void]$script:LastStepResult.Dequeue()
+        $script:LastStepResult.Enqueue($False)
 
-        if ($ErrorActionPreference -eq 'Stop') {
-            Write-Error $LocalizedData.BreakingError
-        }
+        Write-Message -Message $Message -Color 'Red'
     }
 }
 
@@ -127,7 +126,7 @@ function Write-Invocation {
 
         $Invocation.BoundParameters.Keys | ForEach-Object {
             $value = LeetABit.Build.Common\ConvertTo-ExpressionString $Invocation.BoundParameters[$_]
-            Write-Verbose "  -$_ = `'$value`'"
+            Write-Verbose "  -$_ = $value"
         }
     }
 }
@@ -177,6 +176,7 @@ function Write-Message {
 
     begin {
         LeetABit.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
+        $colors = (0, 4, 2, 6, 1, 5, 3, 7)
     }
 
     process {
@@ -187,12 +187,15 @@ function Write-Message {
         if ($Color) {
             $colorToWrite = [char]0x001b + '['
             $colorToWrite += if ($Color -ge [System.ConsoleColor]::DarkGray) { if ($env:APPVEYOR) { '1;9' } else { '1;3' } } else { '3' }
-            $colorToWrite += ($Color % 8) + 'm'
+
+            $colorToWrite += [String]($colors[[Int]$Color % 8]) + 'm'
             $resetToWrite = [char]0x001b + '[0m'
         }
 
+        $indentation = "  " * ($script:LastStep.Count)
+
         foreach ($messagePart in $Message) {
-            Write-Information "$preambleToWrite$colorToWrite$messagePart$resetToWrite"
+            Write-Information "$preambleToWrite$indentation$colorToWrite$messagePart$resetToWrite"
             $preambleToWrite = ''
         }
     }
@@ -243,8 +246,6 @@ function Write-Step {
         Write-Step -StepName "prerequisites" -Message "Installing prerequisites."
 
         Writes an information message about the build step with a folding preamble when run in Travis CI environment.
-    .NOTES
-        This cmdlet does not support nested steps. To start a new build step the Write-StepFinished cmdlet shall be called. Otherwise folding and error handling for the outer step will not work correctly.
     .LINK
         Write-StepFinished
     #>
@@ -279,10 +280,23 @@ function Write-Step {
         $preamble = if ($env:TRAVIS -and $StepName) { "travis_fold:start:$StepName`r" }
                     else                            { '' }
 
-        Write-Message -Message "$([System.Environment]::NewLine)$Message" -Preamble $preamble -Color 'Cyan'
+        $color = if ($script:LastStep.Count -gt 0) {
+            'DarkCyan'
+        }
+        else {
+            'Cyan'
+        }
 
-        $script:LastStepName   = $StepName
-        $script:LastStepFailed = $False
+        if ($script:LastStep.Count -eq 0) {
+            Write-Message -Message "" -Preamble $preamble
+            Write-Message -Message "$Message" -Color $color
+        }
+        else {
+            Write-Message -Message "$Message" -Preamble $preamble -Color $color
+        }
+
+        $script:LastStep.Enqueue($StepName)
+        $script:LastStepResult.Enqueue($True)
     }
 }
 
@@ -308,22 +322,30 @@ function Write-StepFinished {
 
     begin {
         LeetABit.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
-        $message  = "  " + $LocalizedData.Write_StepFinished_Success
+        $message  = $LocalizedData.Write_StepFinished_Success
     }
 
     process {
-        if (-not $script:LastStepName) {
+        if ($script:LastStep.Count -eq 0) {
             throw $LocalizedData.Write_StepFinished_NoStepStarted
         }
 
-        if ($script:LastStepFailed) {
-            throw $LocalizedData.Write_StepFinished_BuildStepFailed_StepName -f $script:LastStepName
+        $stepName = $script:LastStep.Dequeue()
+        $stepResult = $script:LastStepResult.Dequeue()
+
+        if (-not $stepResult) {
+            throw $LocalizedData.Write_StepFinished_BuildFailed
         }
 
-        $preamble = if ($env:TRAVIS -and $script:LastStepName) { "travis_fold:end:$script:LastStepName`r" } else { '' }
+        $preamble = if ($env:TRAVIS -and $stepName) { "travis_fold:end:$stepName`r" } else { '' }
+        $color = if ($script:LastStep.Count -gt 0) {
+            'DarkGreen'
+        }
+        else {
+            'Green'
+        }
 
-        Write-Message -Message $message -Preamble $preamble -Color 'Green'
-        Write-Message
+        Write-Message -Message "$message$([System.Environment]::NewLine)" -Preamble $preamble -Color $color
     }
 }
 

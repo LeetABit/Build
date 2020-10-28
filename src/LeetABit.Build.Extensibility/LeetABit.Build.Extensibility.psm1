@@ -1,6 +1,7 @@
 #requires -version 6
 using namespace System.Collections
 using namespace System.Collections.Generic
+using namespace System.Diagnostics.CodeAnalysis
 
 Set-StrictMode -Version 3.0
 Import-LocalizedData -BindingVariable LocalizedData -FileName LeetABit.Build.Extensibility.Resources.psd1
@@ -14,12 +15,12 @@ $DefaultResolver = {
         Provides a default mechanism of project resolution for build extension.
     #>
     param (
-        # Path to the source directory.
+        # Path to the project.
         [String]
-        $SourceRoot
+        $ResolutionRoot
     )
 
-    $SourceRoot
+    $ResolutionRoot
 }
 
 
@@ -44,6 +45,10 @@ function Get-BuildExtension {
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([ExtensionDefinition[]])]
 
+    [SuppressMessage(
+        'PSReviewUnusedParameter',
+        'Name',
+        Justification = 'False positive as rule does not scan child scopes: https://github.com/PowerShell/PSScriptAnalyzer/issues/1472')]
     param (
         # Name of the extensions or part of it.
         [Parameter(Position = 0,
@@ -77,7 +82,7 @@ function Invoke-BuildTask {
     .EXAMPLE
         PS> Invoke-BuildTask "PowerShell" "test"
 
-        Invokes "test" task from "PowerShell" extension on a configured SourceRoot directory.
+        Invokes "test" task from "PowerShell" extension on a repository root directory.
     .EXAMPLE
         PS> Invoke-BuildTask "PowerShell" "test" "~/repository/src/Script.ps1" -ArgumentList @{ "ToolVersion" = "1.0.0" }
 
@@ -114,11 +119,19 @@ function Invoke-BuildTask {
                    Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $True)]
+        [String[]]
+        $ProjectPath,
+
+        # Path to the repository's source directory.
+        [Parameter(Position = 3,
+                   Mandatory = $False,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $True)]
         [String]
-        $ProjectPath = (LeetABit.Build.Arguments\Find-CommandArgument 'SourceRoot'),
+        $SourceRoot,
 
         # Collection with additional arguments that may be used by the task implementation.
-        [Parameter(Position = 3,
+        [Parameter(Position = 4,
                    Mandatory = $False,
                    ValueFromPipeline = $True,
                    ValueFromPipelineByPropertyName = $True,
@@ -161,10 +174,10 @@ function Invoke-BuildTask {
                 ($LocalizedData.Exception_DefaultTaskNotFound_ExtensionName -f $ExtensionName)
         }
 
-        $target = $LocalizedData.BuildTask_ExtensionName_TaskName_ProjectPath -f $ExtensionName, ($TaskName -join ", "), $ProjectPath
+        $target = $LocalizedData.BuildTask_ExtensionName_TaskName_ProjectPath -f $ExtensionName, ($TaskName -join ", "), ($ProjectPath -join ", ")
         $action = $LocalizedData.Invoke
         if ($PSCmdlet.ShouldProcess($target, $action)) {
-            Invoke-BuildTaskCore $extension $TaskName $ProjectPath $ArgumentList
+            Invoke-BuildTaskCore -Extension $extension -TaskName $TaskName -ProjectPaths $ProjectPath -SourceRoot $SourceRoot -AdditionalArguments $ArgumentList
         }
     }
 }
@@ -490,7 +503,7 @@ function Resolve-Project {
                 $parameters = @{
                     ScriptBlock = $extension.Resolver
                     ParameterPrefix = $extension.Name
-                    AdditionalArguments = @{'ProjectPath' = $Path}
+                    AdditionalArguments = @{'ResolutionRoot' = $Path}
                 }
 
                 Invoke-ScriptBlock @parameters | ForEach-Object {
@@ -542,7 +555,7 @@ function Resolve-Project {
                     }
 
                     if ($extension.Name -eq $resolvedExtensionName) {
-                        Write-Output -NoEnumerate @($resolvedPath, $resolvedExtensionName)
+                        Write-Output -InputObject @($resolvedPath, $resolvedExtensionName) -NoEnumerate
                     }
                     else {
                         $queue.Enqueue(@($resolvedPath,$resolvedExtensionName))
@@ -556,7 +569,7 @@ function Resolve-Project {
                     $queue.Enqueue(@($Path,$ExtensionName))
                 }
                 elseif ($ExtensionName) {
-                    Write-Output -NoEnumerate @($Path,$ExtensionName)
+                    Write-Output -InputObject @($Path,$ExtensionName) -NoEnumerate
                 }
                 else {
                     if ($TaskName) {
@@ -593,6 +606,10 @@ function Unregister-BuildExtension {
                    SupportsShouldProcess = $True,
                    ConfirmImpact = 'Low')]
 
+    [SuppressMessage(
+        'PSReviewUnusedParameter',
+        'IgnoreMissing',
+        Justification = 'False positive as rule does not scan child scopes: https://github.com/PowerShell/PSScriptAnalyzer/issues/1472')]
     param (
         # Name of the extension that shall be unregistered.
         [Parameter(HelpMessage = 'Provide name of the extension that shall be unregistered.',
@@ -604,6 +621,10 @@ function Unregister-BuildExtension {
         $ExtensionName,
 
         # Indicates that this cmdlet ignores build extensions that are not registered.
+        [SuppressMessageAttribute(
+            'PSReviewUnusedParameter',
+            'ReplaceWithParameterName',
+            Justification = 'False positive as rule does not scan child scopes: https://github.com/PowerShell/PSScriptAnalyzer/issues/1472')]
         [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False)]
@@ -802,12 +823,21 @@ function Invoke-BuildTaskCore {
                    Mandatory = $True,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False)]
+        [String[]]
+        $ProjectPaths,
+
+        # PAth to the repository's source directory.
+        [Parameter(HelpMessage = "Provide path to the project on which the task shall invoked.",
+                   Position = 3,
+                   Mandatory = $True,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $False)]
         [String]
-        $ProjectPath,
+        $SourceRoot,
 
         # Dictionary with additional arguments that may be used by the task implementation.
         [Parameter(HelpMessage = "Provide path to the project on which the task shall invoked.",
-                   Position = 3,
+                   Position = 4,
                    Mandatory = $True,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False)]
@@ -816,7 +846,7 @@ function Invoke-BuildTaskCore {
         $AdditionalArguments,
 
         # Collection of the task names that has already been run.
-        [Parameter(Position = 4,
+        [Parameter(Position = 5,
                    Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False)]
@@ -836,10 +866,33 @@ function Invoke-BuildTaskCore {
                 if ($task.Name -eq $currentTaskName) {
                     foreach ($job in $task.Jobs) {
                         if ($job -is [String]) {
-                            Invoke-BuildTaskCore $Extension $job $ProjectPath $AdditionalArguments $TasksAlreadyRun
+                            Invoke-BuildTaskCore -Extension $Extension -TaskName $job -ProjectPaths $ProjectPaths -SourceRoot $SourceRoot -AdditionalArguments $AdditionalArguments -TasksAlreadyRun $TasksAlreadyRun
                         }
                         else {
-                            Invoke-ScriptBlock $job $Extension.Name $AdditionalArguments
+                            Write-Step -StepName (ConvertTo-Identifier "$($Extension.Name)_$($task.Name)") -Message "$($Extension.Name) -> $($task.Name)"
+                            $index = 0
+                            foreach ($ProjectPath in $ProjectPaths) {
+                                $index = $index + 1
+                                $additionalProjectArguments = @{}
+
+                                if ($AdditionalArguments) {
+                                    foreach ($key in $AdditionalArguments.Keys) {
+                                        $additionalProjectArguments[$key] = $AdditionalArguments[$key]
+                                    }
+                                }
+
+                                $additionalProjectArguments['ProjectPath'] = $ProjectPath
+
+                                $relativePath = Resolve-RelativePath $ProjectPath $SourceRoot
+
+                                if ($relativePath -ne '.') {
+                                    Write-Diagnostic -Message "$relativePath"
+                                }
+
+                                Invoke-ScriptBlock -ScriptBlock $job -ParameterPrefix $Extension.Name -AdditionalArguments $additionalProjectArguments -ErrorVariable +ev
+                            }
+
+                            Write-StepFinished
                         }
                     }
                 }

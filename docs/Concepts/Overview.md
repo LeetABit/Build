@@ -1,13 +1,13 @@
 # Overview
 
-LeetABit.Build is a multi-platform, extensible and automated build toolset written in PowerShell. Its main goal is to make project build tasks
+LeetABit.Build is a multi-platform, extensible and automated build toolset written in PowerShell. Its main goal is to make build tasks
 as simple as possible but with the possibility to manually tailor its workflow for many complex scenarios. The simplest way to start using it
-is to include any of the toolset [buildstrapper](Buildstrappers.md) scripts in the repository and list any language or platform specific
-extensions in a [repository configuration file](RepositoryConfigurationFile.md). This setup shall be sufficient for any single language
-project supported by available [extension plugins](Plugins.md). Each plugin extends the toolset via [extensibility points](Extensibility.md)
-defined in LeetABit.Build.Extensibility module. LeetABit.Build toolset comes with one extension plugin loaded by default. It is
-LeetABit.Build.Help plugin that provides one build task - the help task. To run this or any other available task simply specify its name as
-a parameter for the buildstrapper script.
+is to include any of the [buildstrapper](Buildstrappers.md) scripts in the repository and list any language or platform specific extensions
+in a [repository configuration file](RepositoryConfigurationFile.md). This setup shall be sufficient for any single language project supported
+by available [extension plugins](Plugins.md). Each plugin extends the toolset via [extensibility points](Extensibility.md) defined in
+LeetABit.Build.Extensibility module. LeetABit.Build toolset comes with one extension plugin loaded by default. It is LeetABit.Build.Help
+plugin that provides one build task - the help task. To run this or any other available task simply specify its name as a parameter for the
+buildstrapper script.
 
 For Linux:
 ```shell

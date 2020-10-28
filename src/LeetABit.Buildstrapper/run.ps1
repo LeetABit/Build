@@ -43,7 +43,7 @@
     Any parameter for LeetABit.Build system may be provided in three ways:
     1. Explicitly via PowerShell command arguments.
     2. JSON property in 'LeetABit.Build.json' file stored under 'build' subdirectory of the specified repository root.
-    3. Environmental variable with a 'LeetABit_' prefix before parameter name.
+    3. Environmental variable with a 'LeetABitBuild_' prefix before parameter name.
 
     The list above also defines precedence order of the importance.
 
@@ -53,13 +53,14 @@
     LeetABit.Build\Build-Repository
 #>
 
+using namespace System.Collections
 using namespace System.Diagnostics.CodeAnalysis
 using namespace System.Management.Automation
 
 [CmdletBinding(SupportsShouldProcess = $True,
                ConfirmImpact = 'Low',
                PositionalBinding = $False,
-               DefaultParameterSetName = 'Remote')]
+               DefaultParameterSetName = 'Local')]
 Param (
     # Name of the build task to invoke.
     [Parameter(Position = 0,
@@ -73,7 +74,7 @@ Param (
     # Version of the LeetABit.Build tools to use. If not specified the current script will try to read it from 'LeetABit.Build.json' file.
     [Parameter(HelpMessage = 'Enter version of the LeetABit.Build to be used to run build scripts.',
                ParameterSetName = 'Remote',
-               Mandatory = $False,
+               Mandatory = $True,
                ValueFromPipeline = $True,
                ValueFromPipelineByPropertyName = $False)]
     [ValidateScript({ [SemanticVersion]::Parse($_) })]
@@ -83,7 +84,7 @@ Param (
     # Location of a local LeetABit.Build version to use for the build.
     [Parameter(HelpMessage = 'Enter path to a LeetABit.Build directory to be used to run build scripts.',
                ParameterSetName = 'Local',
-               Mandatory = $True,
+               Mandatory = $False,
                ValueFromPipeline = $False,
                ValueFromPipelineByPropertyName = $False)]
     [ValidateScript({ Test-Path -Path $_ -PathType Container })]
@@ -142,8 +143,8 @@ DynamicParam {
         #>
 
         $configurationJson = Read-ConfigurationFromFile
-        Set-ParameterValue 'ToolsetVersion' $configurationJson
-        Set-ParameterValue 'ToolsetLocation' $configurationJson
+        $script:ToolsetVersion = Get-ParameterValue 'ToolsetVersion' $configurationJson
+        $script:ToolsetLocation = Get-ParameterValue 'ToolsetLocation' $configurationJson
     }
 
 
@@ -167,19 +168,60 @@ DynamicParam {
             if (Test-Path $configFilePath -PathType Leaf) {
                 try {
                     $configFileContent = Get-Content -Raw -Encoding UTF8 -Path $configFilePath
-                    $configJson = ConvertFrom-Json $configFileContent
-                    $configJson.PSObject.Properties | ForEach-Object {
-                        $result | Add-Member -MemberType $_.MemberType -Name $_.Name -Value $_.Value -Force
+                    ConvertFrom-Json $configFileContent | ConvertTo-Hashtable | ForEach-Object {
+                        foreach ($key in $_.Keys) {
+                            $result[$key] = $_[$key]
+                        }
                     }
                 }
                 catch {
                     Write-Error "'$configFilePath' file is not a correct JSON file."
-                    throw
+                    throw $_
                 }
             }
         }
 
         $result
+    }
+
+
+    function ConvertTo-Hashtable {
+        <#
+        .SYNOPSIS
+            Converts an input object to a HAshtable.
+        #>
+        [CmdletBinding(PositionalBinding = $False)]
+        [OutputType([Hashtable])]
+        param (
+            # Object to convert.
+            [Parameter(Position = 0,
+                       Mandatory = $False,
+                       ValueFromPipeline = $True,
+                       ValueFromPipelineByPropertyName = $True)]
+            [Object]
+            [AllowNull()]
+            $InputObject
+        )
+
+        process {
+            if ($Null -eq $InputObject -or $InputObject -is [IDictionary]) {
+                $InputObject
+            }
+            elseif ($InputObject -is [IEnumerable] -and $InputObject -isnot [string]) {
+                $InputObject | ForEach-Object {
+                    ConvertTo-Hashtable -InputObject $_
+                }
+            } elseif ($InputObject -is [PSObject]) {
+                $hash = @{}
+                foreach ($property in $InputObject.PSObject.Properties) {
+                    $hash[$property.Name] = ConvertTo-Hashtable -InputObject $property.Value
+                }
+
+                $hash
+            } else {
+                $InputObject
+            }
+        }
     }
 
 
@@ -254,11 +296,13 @@ DynamicParam {
             $UnloadModules
         )
 
-        if ($UnloadModules) {
-            Remove-Module 'LeetABit.*' -Force
-        }
+        process {
+            if ($UnloadModules) {
+                Remove-Module 'LeetABit.*' -Force
+            }
 
-        Import-Module 'LeetABit.Build' -Global -ErrorAction Stop
+            Import-Module 'LeetABit.Build' -Global -ErrorAction Stop
+        }
     }
 
 
@@ -299,10 +343,10 @@ DynamicParam {
     }
 
 
-    function Set-ParameterValue {
+    function Get-ParameterValue {
         <#
         .SYNOPSIS
-            Sets a value for the specified script's parameter if not specified via command line using environment variables or LeetABit.Build.json configuration file.
+            Gets a value for the specified script's parameter if not specified via command line using environment variables or LeetABit.Build.json configuration file.
         #>
 
         param (
@@ -315,29 +359,35 @@ DynamicParam {
             $ConfigurationJson
         )
 
-        if (Test-Path "variable:script:$ParameterName") {
-            return
+        $parameterNames = @("LeetABitBuild_$ParameterName", $ParameterName)
+
+        foreach ($currentParameterName in $parameterNames) {
+            if (Test-Path "variable:script:$currentParameterName") {
+                $result =  Get-Content "variable:script:$currentParameterName"
+                if ($result) {
+                    $result
+                    return
+                }
+            }
+
+            if ($ConfigurationJson -and $ConfigurationJson.ContainsKey($currentParameterName)) {
+                $result = $ConfigurationJson[$currentParameterName]
+                Write-Verbose "  -$ParameterName = `"$result`""
+                $result
+                return
+            }
+
+            if (Test-Path "env:\$currentParameterName") {
+                $result = Get-Content "env:\$currentParameterName"
+                if ($result) {
+                    Write-Verbose "  -$ParameterName = `"$result`""
+                    $result
+                    return
+                }
+            }
         }
 
-        $value = $null
-
-        $localParameterName = $ParameterName
-        if ($localParameterName -notmatch '^LeetABit_Build_') {
-            $localParameterName = "LeetABit_Build_$localParameterName"
-        }
-
-        if ($ConfigurationJson -and (Get-Member -Name $ParameterName -InputObject $ConfigurationJson)) {
-            $value = $ConfigurationJson.$ParameterName
-        }
-
-        if (Test-Path "env:\$localParameterName") {
-            $value = Get-Content "env:\$localParameterName"
-        }
-
-        if ($null -ne $value) {
-            Set-Variable -Scope "script" -Name $ParameterName -Value $value
-            Write-Verbose "  -$ParameterName = `"$value`""
-        }
+        $Null
     }
 
     function Import-RepositoryExtension {
@@ -359,7 +409,7 @@ DynamicParam {
 
         process {
             Get-ChildItem -Path $RepositoryRoot -Filter "LeetABit.Build.Repository.ps1" -Recurse | ForEach-Object {
-                . "$_"
+                [void](. "$_")
             }
         }
     }
@@ -369,64 +419,70 @@ DynamicParam {
     }
 
     Initialize-ScriptConfiguration
-    Install-BuildToolset
-    Import-BuildToolsetModules
-    Import-RepositoryExtension $RepositoryRoot
 
-    $parameterTypeName = 'System.Management.Automation.RuntimeDefinedParameter'
-    $attributes = New-Object -Type System.Management.Automation.ParameterAttribute
-    $attributes.Mandatory = $false
-    $result = New-Object -Type System.Management.Automation.RuntimeDefinedParameterDictionary
+    if ($script:ToolsetLocation -or ($script:ToolsetVersion -and (Get-Module -FullyQualifiedName @{ ModuleName='LeetABit.Build'; ModuleVersion=$script:ToolsetVersion } -ListAvailable))) {
+        if ($script:ToolsetLocation) {
+            Install-LocalBuildToolset
+        }
 
-    $buildExtensionCommand = Get-Command -Module 'LeetABit.Build.Extensibility' -Name 'Get-BuildExtension'
-    & $buildExtensionCommand | ForEach-Object {
-        $extensionPrefix = $($_.Name.Replace('.', [String]::Empty))
+        Import-BuildToolsetModules
+        Import-RepositoryExtension $RepositoryRoot
 
-        ForEach-Object { $_.Tasks.Values } |
-        ForEach-Object { $_.Jobs } |
-        ForEach-Object {
-            if ($_ -is [ScriptBlock]) {
-                if ($_.Ast.ParamBlock) {
-                    $_.Ast.ParamBlock.Parameters | ForEach-Object {
-                        $parameterAst = $_
-                        $parameterName = $_.Name.VariablePath.UserPath
+        $parameterTypeName = 'System.Management.Automation.RuntimeDefinedParameter'
+        $attributes = New-Object -Type System.Management.Automation.ParameterAttribute
+        $attributes.Mandatory = $false
+        $result = New-Object -Type System.Management.Automation.RuntimeDefinedParameterDictionary
 
-                        ($parameterName, "$($extensionPrefix)_$parameterName") | ForEach-Object {
-                            if (-not ($result.Keys -contains $_)) {
-                                $attributeCollection = New-Object -Type System.Collections.ObjectModel.Collection[System.Attribute]
-                                $attributeCollection.Add($attributes)
-                                $parameterAst.Attributes | ForEach-Object {
-                                    if ($_.TypeName.Name -eq "ArgumentCompleter" -or $_.TypeName.Name -eq "ArgumentCompleterAttribute") {
-                                        $commonArgument = if ($_.PositionalArguments.Count -gt 0) {
-                                            $_.PositionalArguments[0]
+        $buildExtensionCommand = Get-Command -Module 'LeetABit.Build.Extensibility' -Name 'Get-BuildExtension'
+        & $buildExtensionCommand | ForEach-Object {
+            $extensionPrefix = $($_.Name.Replace('.', [String]::Empty))
+
+            ForEach-Object { $_.Tasks.Values } |
+            ForEach-Object { $_.Jobs } |
+            ForEach-Object {
+                if ($_ -is [ScriptBlock]) {
+                    if ($_.Ast.ParamBlock) {
+                        $_.Ast.ParamBlock.Parameters | ForEach-Object {
+                            $parameterAst = $_
+                            $parameterName = $_.Name.VariablePath.UserPath
+
+                            ($parameterName, "$($extensionPrefix)_$parameterName") | ForEach-Object {
+                                if (-not ($result.Keys -contains $_)) {
+                                    $attributeCollection = New-Object -Type System.Collections.ObjectModel.Collection[System.Attribute]
+                                    $attributeCollection.Add($attributes)
+                                    $parameterAst.Attributes | ForEach-Object {
+                                        if ($_.TypeName.Name -eq "ArgumentCompleter" -or $_.TypeName.Name -eq "ArgumentCompleterAttribute") {
+                                            $commonArgument = if ($_.PositionalArguments.Count -gt 0) {
+                                                $_.PositionalArguments[0]
+                                            }
+                                            else {
+                                                $_.NamedArguments[0].Argument
+                                            }
+
+                                            $completerParameter = if ($commonArgument -is [System.Management.Automation.Language.ScriptBlockExpressionAst]) {
+                                                $commonArgument.ScriptBlock.GetScriptBlock()
+                                            }
+                                            else {
+                                                $commonArgument.StaticType
+                                            }
+
+                                            $autocompleterAttribute = New-Object -Type System.Management.Automation.ArgumentCompleterAttribute $completerParameter
+                                            $attributeCollection.Add($autocompleterAttribute)
                                         }
-                                        else {
-                                            $_.NamedArguments[0].Argument
-                                        }
-
-                                        $completerParameter = if ($commonArgument -is [System.Management.Automation.Language.ScriptBlockExpressionAst]) {
-                                            $commonArgument.ScriptBlock.GetScriptBlock()
-                                        }
-                                        else {
-                                            $commonArgument.StaticType
-                                        }
-
-                                        $autocompleterAttribute = New-Object -Type System.Management.Automation.ArgumentCompleterAttribute $completerParameter
-                                        $attributeCollection.Add($autocompleterAttribute)
                                     }
-                                }
 
-                                $dynamicParam = New-Object -Type $parameterTypeName ($_, $parameterAst.StaticType, $attributeCollection)
-                                $result.Add($dynamicParam.Name, $dynamicParam)
+                                    $dynamicParam = New-Object -Type $parameterTypeName ($_, $parameterAst.StaticType, $attributeCollection)
+                                    $result.Add($dynamicParam.Name, $dynamicParam)
+                                }
                             }
                         }
                     }
                 }
             }
         }
-    }
 
-    $result
+        $result
+    }
 }
 
 Begin {
@@ -435,15 +491,19 @@ Begin {
         .SYNOPSIS
             Starts logging build messages to a specified log file.
         #>
-
-        [SuppressMessage('PSUseShouldProcessForStateChangingFunctions',
-                         '',
-                         Justification = 'Functions called by this function will handle the confirmation.')]
+        [CmdletBinding(PositionalBinding = $False,
+                       SupportsShouldProcess = $True,
+                       ConfirmImpact = "Low")]
 
         param ()
 
-        if ($script:LogFilePath) {
-            Start-Transcript -Path $script:LogFilePath | Out-Null
+        process {
+            if ($script:LogFilePath) {
+                if ($PSCmdlet.ShouldProcess("Transcript to a file: '$script:LogFilePath'",
+                                            "Start")) {
+                    Start-Transcript -Path $script:LogFilePath | Out-Null
+                }
+            }
         }
     }
 
@@ -453,21 +513,21 @@ Begin {
         .SYNOPSIS
             Stops logging build messages to a specified log file.
         #>
-
-        [SuppressMessage('PSUseShouldProcessForStateChangingFunctions',
-                         '',
-                         Justification = 'Functions called by this function will handle the confirmation.')]
-        [SuppressMessage('PSAvoidUsingEmptyCatchBlock',
-                         '',
-                         Justification = 'Empty catch block is the only way to make Stop-Transcript work with -WhatIf applied to Start-Transcript.')]
+        [CmdletBinding(PositionalBinding = $False,
+                       SupportsShouldProcess = $True,
+                       ConfirmImpact = "Low")]
 
         param ()
 
         if ($script:LogFilePath) {
             try {
-                Stop-Transcript -ErrorAction 'SilentlyContinue' | Out-Null
+                if ($PSCmdlet.ShouldProcess("Transcript to a file: '$script:LogFilePath'", "Stop")) {
+                    Stop-Transcript -ErrorAction 'SilentlyContinue' | Out-Null
+                }
             }
-            catch { }
+            catch {
+                Write-Verbose "Could not stop transcript: $_"
+            }
         }
     }
 
@@ -481,46 +541,30 @@ Begin {
                        SupportsShouldProcess = $True,
                        ConfirmImpact = 'Low')]
 
-        param ()
+        param (
+            [Switch]
+            $PreservePreferences,
+            [Switch]
+            $OverrideErrorAction,
+            [Switch]
+            $OverrideInformationAction
+        )
 
         process {
-            if (-not $Script:PreservePreferences) {
+            if (-not $PreservePreferences) {
                 if ($PSCmdlet.ShouldProcess("Global preference variables.", "Modify with backup.")) {
-                    $global:ConfirmPreference     = $ConfirmPreference
-                    $global:DebugPreference       = $DebugPreference
-                    $global:ErrorActionPreference = if ($Env:CI -and $OverrideErrorAction) { 'Stop' } else { $ErrorActionPreference }
-                    $global:InformationPreference = if ($OverrideInformationAction) { 'Continue' } else { $InformationPreference }
-                    $global:ProgressPreference    = if ($Env:CI -and $OverrideProgressAction) { 'SilentlyContinue' } else { $ProgressPreference }
-                    $global:VerbosePreference     = if (('True', '1') -contains $env:LeetABit_Build_Verbose -and $OverrideVerbose) { 'Continue' } else { $VerbosePreference }
-                    $global:WarningPreference     = if ($Env:CI -and $OverrideWarningAction) { 'Continue' } else { $WarningPreference }
-                    $global:WhatIfPreference      = $WhatIfPreference
+                    if ($Env:CI -or $OverrideErrorAction) {
+                        $script:ErrorActionPreference = 'Stop'
+                    }
+
+                    if ($Env:CI -or $OverrideInformationAction) {
+                        $script:InformationPreference = 'Continue'
+                    }
+
+                    if ($Env:CI) {
+                        $script:VerbosePreference = 'Continue'
+                    }
                 }
-            }
-        }
-    }
-
-
-    function Reset-PreferenceVariables {
-        <#
-        .SYNOPSIS
-            Resets global preference variables to the values from before script run.
-        #>
-        [CmdletBinding(PositionalBinding = $False,
-                       SupportsShouldProcess = $True,
-                       ConfirmImpact = 'Low')]
-
-        param ()
-
-        if (-not $Script:PreservePreferences) {
-            if ($PSCmdlet.ShouldProcess("Global preference variables.", "Revert changes.")) {
-                $global:ConfirmPreference     = $script:ConfirmPreferenceBackup
-                $global:DebugPreference       = $script:DebugPreferenceBackup
-                $global:ErrorActionPreference = $script:ErrorActionPreferenceBackup
-                $global:InformationPreference = $script:InformationPreferenceBackup
-                $global:ProgressPreference    = $script:ProgressPreferenceBackup
-                $global:VerbosePreference     = $script:VerbosePreferenceBackup
-                $global:WarningPreference     = $script:WarningPreferenceBackup
-                $global:WhatIfPreference      = $script:WhatIfPreferenceBackup
             }
         }
     }
@@ -547,23 +591,13 @@ Begin {
     try {
         Set-StrictMode -Version 3.0
 
-        $ConfirmPreferenceBackup     = $global:ConfirmPreference
-        $DebugPreferenceBackup       = $global:DebugPreference
-        $ErrorActionPreferenceBackup = $global:ErrorActionPreference
-        $InformationPreferenceBackup = $global:InformationPreference
-        $ProgressPreferenceBackup    = $global:ProgressPreference
-        $VerbosePreferenceBackup     = $global:VerbosePreference
-        $WarningPreferenceBackup     = $global:WarningPreference
-        $WhatIfPreferenceBackup      = $global:WhatIfPreference
-
         $OverrideErrorAction       = -not $PSBoundParameters.ContainsKey('ErrorAction')
         $OverrideInformationAction = -not $PSBoundParameters.ContainsKey('InformationAction')
-        $OverrideProgressAction    = -not $PSBoundParameters.ContainsKey('ProgressAction')
-        $OverrideVerbose           = -not $PSBoundParameters.ContainsKey('Verbose')
-        $OverrideWarningAction     = -not $PSBoundParameters.ContainsKey('WarningAction')
 
         Start-Logging
-        Set-PreferenceVariables
+        Set-PreferenceVariables -PreservePreferences:$script:PreservePreferences `
+                                -OverrideErrorAction:$OverrideErrorAction `
+                                -OverrideInformationAction:$OverrideInformationAction
         Write-Invocation $MyInvocation
         Initialize-ScriptConfiguration
         Install-BuildToolset
@@ -571,7 +605,7 @@ Begin {
     }
     catch {
         Stop-Logging
-        throw
+        throw $_
     }
 }
 
@@ -580,11 +614,8 @@ Process {
         LeetABit.Build\Build-Repository -RepositoryRoot $script:RepositoryRoot -TaskName $script:TaskName -NamedArguments $PSBoundParameters -UnknownArguments $script:Arguments
     }
     catch {
-        throw
-    }
-    finally {
-        Reset-PreferenceVariables
         Stop-Logging
+        throw $_
     }
 }
 

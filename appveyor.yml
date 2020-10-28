@@ -11,8 +11,7 @@ image:
   - macos-mojave
 
 environment:
-  LeetABit_Build_Verbose: 1
-  LeetABit_Build_ForceInstallPowerShell: 1
+  LeetABitBuild_ForceInstallPowerShell: 1
   matrix:
     - ARCH: arm
     - ARCH: arm64

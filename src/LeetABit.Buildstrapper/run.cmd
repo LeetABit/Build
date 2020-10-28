@@ -107,9 +107,9 @@ EXIT /B 0
 :InitializeVerboseLogging
 SETLOCAL EnableDelayedExpansion EnableExtensions
 
-    IF "!LeetABit_Build_Verbose!"=="1" (
+    IF /I "!CI!"=="true" (
         ENDLOCAL & SET "Verbose=1"
-        CALL :WriteVerbose "Verbose logging enabled: 'LeetABit_Build_Verbose' environmental variable with value '1' found."
+        CALL :WriteVerbose "Verbose logging enabled: 'CI' environmental variable with value 'true' found."
         GOTO :EOF
     )
 
@@ -173,9 +173,9 @@ GOTO :EOF
 :InitializeForceInstallPowerShell
 SETLOCAL EnableDelayedExpansion EnableExtensions
 
-    IF "!LeetABit_Build_ForceInstallPowerShell!"=="1" (
+    IF "!LeetABitBuild_ForceInstallPowerShell!"=="1" (
         ENDLOCAL & SET "ForceInstallPowerShell=1"
-        CALL :WriteVerbose "Forced PowerShell installation enabled: 'LeetABit_Build_ForceInstallPowerShell' environmental variable with value '1' found."
+        CALL :WriteVerbose "Forced PowerShell installation enabled: 'LeetABitBuild_ForceInstallPowerShell' environmental variable with value '1' found."
         GOTO :EOF
     )
 

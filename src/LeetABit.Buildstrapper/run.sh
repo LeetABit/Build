@@ -129,9 +129,10 @@ function main {
 #           to 0 otherwise.
 #===========================================================================
 function initialize_verbose_logging() {
-    if [[ "${LeetABit_Build_Verbose:-}" == "1" ]]; then
+    ci="$( echo "${CI:-}" | tr '[:upper:]' '[:lower:]' )"
+    if [[ "$ci" == "true" ]]; then
         verbose=1
-        write_verbose "Verbose logging enabled: 'LeetABit_Build_Verbose' environmental variable with value '1' found."
+        write_verbose "Verbose logging enabled: 'CI' environmental variable with value 'true' found."
         return
     fi
 
@@ -165,9 +166,9 @@ function initialize_verbose_logging() {
 #           requested; to 0 otherwise.
 #===========================================================================
 function initialize_force_install_powershell() {
-    if [[ "${LeetABit_Build_ForceInstallPowerShell:-}" == "1" ]]; then
+    if [[ "${LeetABitBuild_ForceInstallPowerShell:-}" == "1" ]]; then
         force_install_power_shell=1
-        write_verbose "Forced PowerShell installation enabled: 'LeetABit_Build_ForceInstallPowerShell' environmental variable with value '1' found."
+        write_verbose "Forced PowerShell installation enabled: 'LeetABitBuild_ForceInstallPowerShell' environmental variable with value '1' found."
         return
     fi
 

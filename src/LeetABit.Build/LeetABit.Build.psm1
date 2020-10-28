@@ -107,11 +107,25 @@ function Build-Repository {
         Import-RepositoryExtension -RepositoryRoot $RepositoryRoot
 
         $TaskName = LeetABit.Build.Arguments\Find-CommandArgument -ParameterName 'TaskName' -DefaultValue $TaskName
-        $projectPath = LeetABit.Build.Arguments\Find-CommandArgument -ParameterName 'SourceRoot'
+        $SourceRoot = LeetABit.Build.Arguments\Find-CommandArgument -ParameterName 'SourceRoot'
+        $projectPath = $SourceRoot
+
+        $lastExtension = $Null
+        $aggregatedProjects = @()
 
         LeetABit.Build.Extensibility\Resolve-Project $projectPath 'LeetABit.Build.Repository' $TaskName | Select-Object -Unique | ForEach-Object {
             $projectPath, $extensionName = $_
-            LeetABit.Build.Extensibility\Invoke-BuildTask $extensionName $TaskName $projectPath
+            if ($lastExtension -and $lastExtension -ne $extensionName) {
+                LeetABit.Build.Extensibility\Invoke-BuildTask $lastExtension $TaskName $aggregatedProjects $SourceRoot
+                $aggregatedProjects = @()
+            }
+
+            $lastExtension = $extensionName
+            $aggregatedProjects += $projectPath
+        }
+
+        if ($lastExtension) {
+            LeetABit.Build.Extensibility\Invoke-BuildTask $lastExtension $TaskName $aggregatedProjects $SourceRoot
         }
     }
 }
@@ -138,7 +152,7 @@ function Initialize-WellKnownParameters {
                    ValueFromPipelineByPropertyName = $False)]
         [String]
         $RepositoryRoot,
-        
+
         # Collection fo extension modules to import.
         [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,

@@ -1,4 +1,4 @@
-﻿version: 0.0.1.{build}-{branch}
+﻿version: 0.0.2.{build}-{branch}
 image:
   - Visual Studio 2013
   - Visual Studio 2015

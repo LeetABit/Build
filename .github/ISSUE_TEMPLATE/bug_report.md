@@ -22,7 +22,7 @@ A clear and concise description of what you expected to happen.
 **Environment:**
  - OS: [e.g. ubuntu-18.04, windows-2019]
  - PowerShell: [e.g. Powershell 7.0.2]
- - LeetABit.Build version: [e.g. 0.0.1]
+ - LeetABit.Build version: [e.g. 0.0.2]
 
 **Additional information**
 Add any other context logs or gist with an additional information about the problem.

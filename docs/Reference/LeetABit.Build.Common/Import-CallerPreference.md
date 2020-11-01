@@ -1,4 +1,5 @@
 # Import-CallerPreference
+
 Fetches "Preference" variable values from the caller's scope.
 
 ```Import-CallerPreference [-Cmdlet] <PSCmdlet> [-SessionState] <SessionState>```
@@ -11,11 +12,15 @@ for any script module Advanced Function; by passing in the values of $PSCmdlet a
 $ExecutionContext.SessionState, Import-CallerPreference will set the caller's preference variables locally.
 
 ## Examples
+
 ### Example 1:
+
 ```PS >  Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState```
+
 Imports the default PowerShell preference variables from the caller into the local scope.
 
 ## Parameters
+
 ### ```-Cmdlet```
 
 *The $PSCmdlet object from a script module Advanced Function.*
@@ -45,10 +50,13 @@ even if that caller is in a different script module.*
 </table>
 
 ## Input
+
 None
 
 ## Output
+
 None
 
 ## Related Links
-[about_Preference_Variables](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_preference_variables)
+
+[about_Preference_Variables](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_Preference_Variables)

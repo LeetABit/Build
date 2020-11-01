@@ -1,4 +1,5 @@
 # Write-Diagnostic
+
 Writes a diagnostic message that informs about less relevant script progress.
 
 ```Write-Diagnostic [-Message] <String[]>```
@@ -8,12 +9,15 @@ Writes a diagnostic message that informs about less relevant script progress.
 Write-Diagnostic cmdlet writes a less relevant diagnostic build message to the information stream.
 
 ## Examples
+
 ### Example 1:
+
 ```PS >  Write-Diagnostic "Checking optional features finished."```
 
 Writes a diagnostic message to the information stream.
 
 ## Parameters
+
 ### ```-Message```
 
 *Diagnostic message to be written by the host.*
@@ -28,7 +32,9 @@ Writes a diagnostic message to the information stream.
 </table>
 
 ## Input
+
 None
 
 ## Output
+
 None

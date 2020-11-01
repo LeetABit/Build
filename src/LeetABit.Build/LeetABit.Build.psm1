@@ -57,7 +57,8 @@ function Build-Repository {
                    ValueFromPipelineByPropertyName = $True)]
         [ValidateIdentifierOrEmptyAttribute()]
         [AllowEmptyString()]
-        [String]
+        [AllowEmptyCollection()]
+        [String[]]
         $TaskName,
 
         # Extension modules to import.
@@ -166,6 +167,7 @@ function Initialize-WellKnownParameters {
         LeetABit.Build.Arguments\Add-CommandArgument 'ArtifactsRoot' (Join-Path $RepositoryRoot 'artifacts') -ErrorAction SilentlyContinue
         LeetABit.Build.Arguments\Add-CommandArgument 'SourceRoot' (Join-Path $RepositoryRoot 'src') -ErrorAction SilentlyContinue
         LeetABit.Build.Arguments\Add-CommandArgument 'TestRoot' (Join-Path $RepositoryRoot 'test') -ErrorAction SilentlyContinue
+        LeetABit.Build.Arguments\Add-CommandArgument 'ReferenceDocsRoot' (Join-Path -Path $RepositoryRoot -ChildPath 'docs' -AdditionalChildPath 'Reference') -ErrorAction SilentlyContinue
         [ModuleSpecification[]]$existingExtensionModule = LeetABit.Build.Arguments\Find-CommandArgument -ParameterName 'ExtensionModule'
         [ModuleSpecification[]]$uniqueExtensionModule = (($existingExtensionModule + $ExtensionModule) | Select-Object -Unique)
         LeetABit.Build.Arguments\Add-CommandArgument 'ExtensionModule' $uniqueExtensionModule -ErrorAction SilentlyContinue

@@ -1,4 +1,5 @@
 # Write-Modification
+
 Writes a message that informs about state change in the current system.
 
 ```Write-Modification [-Message] <String[]>```
@@ -8,12 +9,15 @@ Writes a message that informs about state change in the current system.
 Write-Modification cmdlet writes a message that informs the user about a change that is going to be made to the current system. The message is written to the information stream. This cmdlet shall be used to inform the user about any change that is made to the system in order to give an opportunity to manually revert the changes in case of failure.
 
 ## Examples
+
 ### Example 1:
+
 ```PS >  Write-Modification "Downloading 'archive.zip' file to the repository directory."```
 
 Writes an information message about the file download with the information where it is going to be stored.
 
 ## Parameters
+
 ### ```-Message```
 
 *Modification message to be written by the host.*
@@ -28,7 +32,9 @@ Writes an information message about the file download with the information where
 </table>
 
 ## Input
+
 None
 
 ## Output
+
 None

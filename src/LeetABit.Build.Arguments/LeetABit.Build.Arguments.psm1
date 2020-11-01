@@ -26,6 +26,7 @@ function Find-CommandArgument {
         Locates an argument for a specified named parameter.
     .DESCRIPTION
         Find-CommandArgument cmdlet tries to find argument for the specified parameter. The cmdlet is looking for a variable which name matches one of the following case-insensitive patterns: `LeetABitBuild_$ExtensionName_$ParameterName`, `$ExtensionName_$ParameterName`, `LeetABitBuild_$ParameterName`, `{ParameterName}`. Any dots in the name are ignored. There are four different argument sources, listed below in a precedence order:
+
         1. Dictionary of arguments specified as value for AdditionalArguments parameter.
         2. Arguments provided via Set-CommandArgumentSet and Add-CommandArgument cmdlets.
         3. Values stored in 'LeetABit.Build.json' file located in the repository root directory provided via Set-CommandArgumentSet cmdlet or on of its subdirectories.
@@ -33,16 +34,14 @@ function Find-CommandArgument {
     .EXAMPLE
         PS> Find-CommandArgument "TaskName" "LeetABit.Build" "help" -AdditionalArguments $arguments
 
-        Tries to find a value for a parameter "TaskName" or "LeetABitBuild_TaskName". At the beginning specified arguments dictionary is being checked. If the value is not found the cmdlet checks all the arguments previously specified via Initialize-CommandArgument, Add-CommandArgument and Set-CommandArgumentSet cmdlets. If there was no value provided for any of the parameters a default value "help" is returned.
+        Tries to find a value for a parameter "TaskName" or "LeetABitBuild_TaskName". At the beginning specified arguments dictionary is being checked. If the value is not found the cmdlet checks all the arguments previously specified via `Add-CommandArgument` and `Set-CommandArgumentSet` cmdlets. If there was no value provided for any of the parameters a default value "help" is returned.
     .EXAMPLE
         PS> Find-CommandArgument "ProducePackages" -IsSwitch
 
         Tries to find a value for a parameter "ProducePackages" and gives a hint that the parameter is a switch which may be specified without providing a value for it via argument list.
     .NOTES
-        This cmdlet is using module's internal state that could be modified by Initialize-CommandArgument, Reset-CommandArgumentSet, Add-CommandArgument, Set-CommandArgumentSet cmdlets.
-        When an argument is found in the unknown arguments specified by Set-CommandArgumentSet cmdlet it is being moved from unknown arguments list to a named arguments collection.
-    .LINK
-        Initialize-CommandArgument
+        This cmdlet is using module's internal state that could be modified by `Reset-CommandArgumentSet`, `Add-CommandArgument`, `Set-CommandArgumentSet` cmdlets.
+        When an argument is found in the unknown arguments specified by `Set-CommandArgumentSet` cmdlet it is being moved from unknown arguments list to a named arguments collection.
     .LINK
         Reset-CommandArgumentSet
     .LINK
@@ -103,14 +102,14 @@ function Find-CommandArgument {
         if ($ExtensionName) {
             $sanitizedExtensionName = "$($ExtensionName.Replace('.', [String]::Empty))"
             $parameterNames += "LeetABitBuild_$sanitizedExtensionName`_$ParameterName"
-            
+
             if ($sanitizedExtensionName.StartsWith("LeetABitBuild")) {
                 $trimmedExtensionName = $sanitizedExtensionName.Substring("LeetABitBuild".Length)
                 if ($trimmedExtensionName) {
                     $parameterNames += "LeetABitBuild_$trimmedExtensionName`_$ParameterName"
                 }
             }
-            
+
             $parameterNames += "$sanitizedExtensionName`_$ParameterName"
         }
 
@@ -155,13 +154,11 @@ function Reset-CommandArgumentSet {
     .SYNOPSIS
         Removes all command arguments set in the module command.
     .DESCRIPTION
-        Reset-CommandArgumentSet cmdlet clears all the module internal state that has been set via any of the previous calls to Initialize-CommandArgument, Add-CommandArgument and Set-CommandArgumentSet cmdlets.
+        Reset-CommandArgumentSet cmdlet clears all the module internal state that has been set via any of the previous calls to `Add-CommandArgument` and `Set-CommandArgumentSet` cmdlets.
     .EXAMPLE
         PS> Reset-CommandArgumentSet
 
-        Removes all arguments stored in the LeetABit.Build.Arguments module.
-    .LINK
-        Initialize-CommandArgument
+        Removes all arguments stored in the `LeetABit.Build.Arguments` module.
     .LINK
         Add-CommandArgument
     .LINK
@@ -215,15 +212,13 @@ function Select-CommandArgumentSet {
         Select-CommandArgumentSet cmdlet tries to match each of the command's parameter set till it finds the first satisfied completely.
         If no parameter set is satisfied with the current arguments provided to the module this cmdlet emits an error message.
     .LINK
-        Initialize-CommandArgument
-    .LINK
         Add-CommandArgument
     .LINK
         Set-CommandArgumentSet
     #>
     [CmdletBinding(PositionalBinding = $False,
                    DefaultParameterSetName = "Command")]
-    [OutputType([IDictionary],[Object[]])]
+    [OutputType([Object[]])]
 
     param (
         # Command for which a matching arguments shall be selected.

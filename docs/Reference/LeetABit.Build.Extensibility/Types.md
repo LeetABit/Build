@@ -15,12 +15,6 @@ Provides detailed information about the registered extension.
 ### ```[Dictionary[String,TaskDefinition]] $Tasks```
 *Name of the registered extension.*
 
-### ```[String] Name```
-*Name of the registered extension.*
-
-### ```[String] Name```
-*Name of the registered extension.*
-
 ## Methods
 ### ```[ExtensionDefinition] Clone()```
 *Creates a new instance of the ExtensionDefinition class with all the data copied from this instance.*

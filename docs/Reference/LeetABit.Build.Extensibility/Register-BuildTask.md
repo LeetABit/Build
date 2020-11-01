@@ -1,4 +1,5 @@
 # Register-BuildTask
+
 Registers a specified build task for the specified build extension.
 
 ```Register-BuildTask [-TaskName] <String> [-Jobs] <Object[]> [-ExtensionName <String>] [-IsDefault] [-Condition <Object>] [-PassThru] [-Force]```
@@ -8,32 +9,39 @@ Registers a specified build task for the specified build extension.
 Register-BuildTask cmdlet registers specified information about build task for the specified extension. Name of the extension for which the registration is being performed may be inferred from the script block which is a part of task jobs. If no extension name is provided and cmdlet cannot infer it from job script block an error is emitted.
 
 ## Examples
+
 ### Example 1:
+
 ```PS> Register-BuildTask "build" ("generate", "compile", "test") -ExtensionName "PowerShell"```
 
 Registers a build task for "build" command that is realized by executing a sequence of the specified tasks. The registration is performed for "PowerShell" extension.
 
 ### Example 2:
+
 ```PS> Register-BuildTask "generate" ({ param ($RepositoryRoot) begin { New-Resources $RepositoryRoot } })```
 
 Registers a build task for "generate" command that is realized by executing a specified script block. The registration is performed for extension that is named after a module in which the specified script block is defined.
 
 ### Example 3:
+
 ```PS> Register-BuildTask "test" ("test_scripts", "test_modules") -ExtensionName "PowerShell" -Condition { Text-Command "PSTest" }```
 
 Registers a build task for "test" command that is realized by executing a sequence of "test_scripts" and "test_modules" tasks. The registration is performed for "PowerShell" extension. Execution of the task is conditional on the result of the specified script block execution.
 
 ### Example 4:
+
 ```PS> Register-BuildTask "test" ("test_scripts", "test_modules") -ExtensionName "PowerShell" -IsDefault```
 
 Registers a build task for "test" command that is realized by executing a sequence of "test_scripts" and "test_modules" tasks. The task is being registered as a default task for the extension - it will be executed when no task nem is specified.
 
 ### Example 5:
+
 ```PS> Register-BuildTask "test" ("test_scripts", "test_modules") -ExtensionName "PowerShell" -PassThru -Force```
 
 Registers a build task for "test" command that is realized by executing a sequence of "test_scripts" and "test_modules" tasks. The operation returns an information about registered task. The registration is being performed regardless the extension is already registered or not.
 
 ## Parameters
+
 ### ```-TaskName```
 
 *Name of the task for which the registration shall be performed.*
@@ -126,7 +134,9 @@ Registers a build task for "test" command that is realized by executing a sequen
 </table>
 
 ## Input
+
 None
 
 ## Output
+
 ```[TaskDefinition]```

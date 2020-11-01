@@ -1,4 +1,5 @@
 # Get-BuildExtension
+
 Gets information about all registered build extensions.
 
 ```Get-BuildExtension [[-Name] <String[]>]```
@@ -8,12 +9,15 @@ Gets information about all registered build extensions.
 Get-BuildExtension cmdlet retrieves an information about all registered build extensions which names contains specified $Name parameter. To register a build extensions use Register-BuildExtension cmdlet.
 
 ## Examples
+
 ### Example 1:
+
 ```PS> Get-BuildExtension -Name "PowerShell"```
 
 Retrieves all registered build extensions that have a "PowerShell" term in its registered name.
 
 ## Parameters
+
 ### ```-Name```
 
 *Name of the extensions or part of it.*
@@ -28,7 +32,13 @@ Retrieves all registered build extensions that have a "PowerShell" term in its r
 </table>
 
 ## Input
+
 None
 
 ## Output
+
 ```[ExtensionDefinition[]]```
+
+## Related Links
+
+[Register-BuildExtension](Register-BuildExtension.md)

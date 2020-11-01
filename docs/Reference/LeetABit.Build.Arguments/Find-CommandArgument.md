@@ -1,4 +1,5 @@
 # Find-CommandArgument
+
 Locates an argument for a specified named parameter.
 
 ```Find-CommandArgument [-ParameterName] <String> [[-ExtensionName] <String>] [[-DefaultValue] <Object>] [-IsSwitch] [-AdditionalArguments <IDictionary>]```
@@ -13,17 +14,21 @@ Find-CommandArgument cmdlet tries to find argument for the specified parameter. 
 4. Environment variables.
 
 ## Examples
+
 ### Example 1:
+
 ```PS> Find-CommandArgument "TaskName" "LeetABit.Build" "help" -AdditionalArguments $arguments```
 
-Tries to find a value for a parameter "TaskName" or "LeetABitBuild_TaskName". At the beginning specified arguments dictionary is being checked. If the value is not found the cmdlet checks all the arguments previously specified via Initialize-CommandArgument, Add-CommandArgument and Set-CommandArgumentSet cmdlets. If there was no value provided for any of the parameters a default value "help" is returned.
+Tries to find a value for a parameter "TaskName" or "LeetABitBuild_TaskName". At the beginning specified arguments dictionary is being checked. If the value is not found the cmdlet checks all the arguments previously specified via `Add-CommandArgument` and `Set-CommandArgumentSet` cmdlets. If there was no value provided for any of the parameters a default value "help" is returned.
 
 ### Example 2:
+
 ```PS> Find-CommandArgument "ProducePackages" -IsSwitch```
 
 Tries to find a value for a parameter "ProducePackages" and gives a hint that the parameter is a switch which may be specified without providing a value for it via argument list.
 
 ## Parameters
+
 ### ```-ParameterName```
 
 *Name of the parameter.*
@@ -90,13 +95,22 @@ Tries to find a value for a parameter "ProducePackages" and gives a hint that th
 </table>
 
 ## Input
+
 None
 
 ## Output
+
 ```[System.Object]```
 
+## Notes
+
+This cmdlet is using module's internal state that could be modified by `Reset-CommandArgumentSet`, `Add-CommandArgument`, `Set-CommandArgumentSet` cmdlets.
+When an argument is found in the unknown arguments specified by `Set-CommandArgumentSet` cmdlet it is being moved from unknown arguments list to a named arguments collection.
+
 ## Related Links
-[Initialize-CommandArgument](Initialize-CommandArgument.md)
+
 [Reset-CommandArgumentSet](Reset-CommandArgumentSet.md)
+
 [Add-CommandArgument](Add-CommandArgument.md)
+
 [Set-CommandArgumentSet](Set-CommandArgumentSet.md)

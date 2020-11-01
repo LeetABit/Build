@@ -338,14 +338,14 @@ function Write-StepFinished {
         }
 
         $preamble = if ($env:TRAVIS -and $stepName) { "travis_fold:end:$stepName`r" } else { '' }
-        $color = if ($script:LastStep.Count -gt 0) {
-            'DarkGreen'
+        if ($script:LastStep.Count -gt 0) {
+            if ($preamble) {
+                Write-Message -Message "" -Preamble $preamble -Color 'DarkGreen'
+            }
         }
         else {
-            'Green'
+            Write-Message -Message "$message$([System.Environment]::NewLine)" -Preamble $preamble -Color 'Green'
         }
-
-        Write-Message -Message "$message$([System.Environment]::NewLine)" -Preamble $preamble -Color $color
     }
 }
 

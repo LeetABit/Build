@@ -39,7 +39,7 @@ function Get-BuildExtension {
         PS> Get-BuildExtension -Name "PowerShell"
 
         Retrieves all registered build extensions that have a "PowerShell" term in its registered name.
-    .NOTES
+    .LINK
         Register-BuildExtension
     #>
     [CmdletBinding(PositionalBinding = $False)]
@@ -465,7 +465,7 @@ function Resolve-Project {
                    Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False)]
-        [String]
+        [String[]]
         $TaskName
     )
 
@@ -489,7 +489,15 @@ function Resolve-Project {
                 }
 
                 if ($TaskName) {
-                    if (-not $extension.Tasks.ContainsKey($TaskName)) {
+                    $found = $false
+                    foreach ($task in $TaskName) {
+                        if ($extension.Tasks.ContainsKey($task)) {
+                            $found = $true
+                            break
+                        }
+                    }
+
+                    if (-not $found) {
                         continue
                     }
                 }
@@ -869,7 +877,8 @@ function Invoke-BuildTaskCore {
                             Invoke-BuildTaskCore -Extension $Extension -TaskName $job -ProjectPaths $ProjectPaths -SourceRoot $SourceRoot -AdditionalArguments $AdditionalArguments -TasksAlreadyRun $TasksAlreadyRun
                         }
                         else {
-                            Write-Step -StepName (ConvertTo-Identifier "$($Extension.Name)_$($task.Name)") -Message "$($Extension.Name) -> $($task.Name)"
+                            $stepName = ConvertTo-Identifier "$($Extension.Name)_$($task.Name)"
+                            Write-Step -StepName $stepName -Message "$($Extension.Name) -> $($task.Name)"
                             $index = 0
                             foreach ($ProjectPath in $ProjectPaths) {
                                 $index = $index + 1
@@ -886,10 +895,15 @@ function Invoke-BuildTaskCore {
                                 $relativePath = Resolve-RelativePath $ProjectPath $SourceRoot
 
                                 if ($relativePath -ne '.') {
-                                    Write-Diagnostic -Message "$relativePath"
+                                    $stepName = $stepName + (ConvertTo-Identifier $relativePath)
+                                    Write-Step -StepName $stepName -Message "$relativePath"
                                 }
 
-                                Invoke-ScriptBlock -ScriptBlock $job -ParameterPrefix $Extension.Name -AdditionalArguments $additionalProjectArguments -ErrorVariable +ev
+                                Invoke-ScriptBlock -ScriptBlock $job -ParameterPrefix $Extension.Name -AdditionalArguments $additionalProjectArguments
+
+                                if ($relativePath -ne '.') {
+                                    Write-StepFinished
+                                }
                             }
 
                             Write-StepFinished

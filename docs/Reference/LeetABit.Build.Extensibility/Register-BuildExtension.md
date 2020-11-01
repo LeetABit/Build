@@ -1,4 +1,5 @@
 # Register-BuildExtension
+
 Registers build extension in the module.
 
 ```Register-BuildExtension [[-Resolver] <ScriptBlock>] [[-ExtensionName] <String>] [-Force]```
@@ -15,17 +16,21 @@ The job of the resolver is to return a path to the project file or directory.
 If no resolver is specified a default resolver will be used that returns path to the repository root.
 
 ## Examples
+
 ### Example 1:
+
 ```PS> Register-BuildExtension -ExtensionName "PowerShell"```
 
 Register a default resolver for a "PowerShell" extension if it is not already registered.
 
 ### Example 2:
+
 ```PS> Register-BuildExtension { "./Project.sln" } -Force```
 
 Tries to evaluate name of the module that called Register-BuildExtension cmdlet and in case of success register a specified resolver for the extension with the name of the evaluated module regardless the extension is already registered or not.
 
 ## Parameters
+
 ### ```-Resolver```
 
 *ScriptBlock that resolves path to the projects recognized by the specified extension.*
@@ -66,7 +71,13 @@ Tries to evaluate name of the module that called Register-BuildExtension cmdlet 
 </table>
 
 ## Input
+
 None
 
 ## Output
+
 None
+
+## Notes
+
+When an extension has already registered a resolver of task and a -Force switch is used any registered resolver and all registered tasks are removed during execution of this cmdlet.

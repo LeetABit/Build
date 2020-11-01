@@ -1,4 +1,5 @@
 # Write-Step
+
 Writes a specified build step message to the information stream with step name folding when run in Travis CI environment.
 
 ```Write-Step [-StepName] <String> [-Message] <String[]>```
@@ -8,12 +9,15 @@ Writes a specified build step message to the information stream with step name f
 Write-Step cmdlet writes a message about a new build step that is about to be started. The message is written to the information stream. This cmdlet also emits a log folding preamble when run in Travis CI environment.
 
 ## Examples
+
 ### Example 1:
+
 ```PS >  Write-Step -StepName "prerequisites" -Message "Installing prerequisites."```
 
 Writes an information message about the build step with a folding preamble when run in Travis CI environment.
 
 ## Parameters
+
 ### ```-StepName```
 
 *Name of the step that shall be written as a message preamble.*
@@ -41,10 +45,13 @@ Writes an information message about the build step with a folding preamble when 
 </table>
 
 ## Input
+
 None
 
 ## Output
+
 None
 
 ## Related Links
+
 [Write-StepFinished](Write-StepFinished.md)

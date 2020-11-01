@@ -68,7 +68,8 @@ Param (
                ValueFromPipeline = $True,
                ValueFromPipelineByPropertyName = $True)]
     [AllowEmptyString()]
-    [String]
+    [AllowEmptyCollection()]
+    [String[]]
     $TaskName,
 
     # Version of the LeetABit.Build tools to use. If not specified the current script will try to read it from 'LeetABit.Build.json' file.
@@ -132,6 +133,7 @@ Param (
 )
 
 DynamicParam {
+    Set-StrictMode -Version 3.0
     function Initialize-ScriptConfiguration {
         <#
         .SYNOPSIS
@@ -486,6 +488,7 @@ DynamicParam {
 }
 
 Begin {
+    Set-StrictMode -Version 3.0
     function Start-Logging {
         <#
         .SYNOPSIS
@@ -501,7 +504,12 @@ Begin {
             if ($script:LogFilePath) {
                 if ($PSCmdlet.ShouldProcess("Transcript to a file: '$script:LogFilePath'",
                                             "Start")) {
-                    Start-Transcript -Path $script:LogFilePath | Out-Null
+                    try {
+                        Start-Transcript -Path $script:LogFilePath | Out-Null
+                    }
+                    catch [PSInvalidOperationException] {
+                        Start-Transcript -Path $script:LogFilePath | Out-Null
+                    }
                 }
             }
         }
@@ -564,6 +572,10 @@ Begin {
                     if ($Env:CI) {
                         $script:VerbosePreference = 'Continue'
                     }
+
+                    if ($Env:CI) {
+                        $script:ProgressPreference = 'SilentlyContinue'
+                    }
                 }
             }
         }
@@ -589,8 +601,6 @@ Begin {
     }
 
     try {
-        Set-StrictMode -Version 3.0
-
         $OverrideErrorAction       = -not $PSBoundParameters.ContainsKey('ErrorAction')
         $OverrideInformationAction = -not $PSBoundParameters.ContainsKey('InformationAction')
 

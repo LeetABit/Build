@@ -1,4 +1,5 @@
 # Select-CommandArgumentSet
+
 Selects a collection of arguments that match specified command parameters.
 
 ```Select-CommandArgumentSet [-Command] <CommandInfo> [[-ExtensionName] <String>] [[-AdditionalArguments] <IDictionary>]```
@@ -16,22 +17,27 @@ Select-CommandArgumentSet cmdlet tries to find parameters for the specified comm
 4. Environment variables.
 
 ## Examples
+
 ### Example 1:
+
 ```PS> Select-CommandArgumentSet -Command (Get-Command LeetABit.Build.PowerShell\Deploy-Project)```
 
 Tries to selects arguments for a Get-Command LeetABit.Build.PowerShell\Deploy-Project command.
 
 ### Example 2:
+
 ```PS> Select-CommandArgumentSet -ScriptBlock $script -ExtensionName "LeetABit.Build.PowerShell" -AdditionalArguments $arguments```
 
 Tries to selects arguments for a script block defined in "LeetABit.Build.PowerShell" module with an additional arguments specified as a parameter.
 
 ### Example 3:
+
 ```PS> Select-CommandArgumentSet -ParameterSets (Get-Command LeetABit.Build.PowerShell\Deploy-Project).ParameterSets```
 
 Tries to selects arguments for a Get-Command LeetABit.Build.PowerShell\Deploy-Project command via its parameter sets.
 
 ## Parameters
+
 ### ```-Command```
 
 *Command for which a matching arguments shall be selected.*
@@ -98,13 +104,20 @@ Tries to selects arguments for a Get-Command LeetABit.Build.PowerShell\Deploy-Pr
 </table>
 
 ## Input
+
 None
 
 ## Output
-```[System.Collections.IDictionary]```
+
 ```[System.Object[]]```
 
+## Notes
+
+Select-CommandArgumentSet cmdlet tries to match each of the command's parameter set till it finds the first satisfied completely.
+If no parameter set is satisfied with the current arguments provided to the module this cmdlet emits an error message.
+
 ## Related Links
-[Initialize-CommandArgument](Initialize-CommandArgument.md)
+
 [Add-CommandArgument](Add-CommandArgument.md)
+
 [Set-CommandArgumentSet](Set-CommandArgumentSet.md)

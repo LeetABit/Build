@@ -1,9 +1,10 @@
 # run.ps1
+
 Command execution proxy for LeetABit.Build system that performs all the necessary initialization.
 
-```run.ps1 [[-TaskName] <String>] [-ToolsetVersion <String>] [-RepositoryRoot <String>] [-LogFilePath <String>] [-PreservePreferences] [-UnloadModules] [-Arguments <String[]>] [-WhatIf] [-Confirm]```
+```run.ps1 [[-TaskName] <String[]>] [-ToolsetLocation <String>] [-RepositoryRoot <String>] [-LogFilePath <String>] [-PreservePreferences] [-UnloadModules] [-Arguments <String[]>] [-WhatIf] [-Confirm]```
 
-```run.ps1 [[-TaskName] <String>] -ToolsetLocation <String> [-RepositoryRoot <String>] [-LogFilePath <String>] [-PreservePreferences] [-UnloadModules] [-Arguments <String[]>] [-WhatIf] [-Confirm]```
+```run.ps1 [[-TaskName] <String[]>] -ToolsetVersion <String> [-RepositoryRoot <String>] [-LogFilePath <String>] [-PreservePreferences] [-UnloadModules] [-Arguments <String[]>] [-WhatIf] [-Confirm]```
 
 ## Description
 
@@ -13,50 +14,59 @@ First one by specifying version of the required LeetABit.Build module. This orde
 Second one by providing path to the directory that contains required LeetABit.Build module files. This path will be added to process $env:PSModulePath variable if not already present there.
 
 ## Examples
+
 ### Example 1:
+
 ```PS > ./run.ps1 help```
 
 Use this command to display available build commands and learn about available parameters when the required LeetABit.Build modules configuration is available in the JSON configuration file or in environmental variable.
 
 ### Example 2:
+
 ```PS > ./run.ps1 help -ToolsetVersion 1.0.0```
 
 Use this command to display available build commands and learn about available parameters when a specific version of LeetABit.Build module is expected.
 
 ### Example 3:
+
 ```PS > ./run.ps1 help -ToolsetLocation ~\LeetABit.Build```
 
 Use this command to display available build commands and learn about available parameters for a LeetABit.Build stored in the specified location.
 
 ### Example 4:
+
 ```PS > ./run.ps1 -TaskName test -RepositoryRoot ~\Repository```
 
 Use this command to execute 'test' command against repository located at ~\Repository location using LeetABit.Build configured in JSON file or via environmental variable.
 Configuration LeetABit.Build.json file need to be located under 'build' subfolder of the repository ~\Repository location.
 
 ### Example 5:
+
 ```PS > ./run.ps1 build -LogFilePath ~\LeetABit.Build.log```
 
 Use this command to execute 'build' command against repository located at current location using LeetABit.Build configured in JSON file or via environmental variable and store execution log in ~\LeetABit.Build.log file.
 
 ### Example 6:
+
 ```PS > ./run.ps1 build -PreservePreferences```
 
 Use this command to execute 'build' command without modification of PowerShell preference variables.
 By default this scripts modifies some of the preference variables bo values better suited for build script, i.e. error shall break execution, etc. All the preference variables are restored after each command execution.
 
 ### Example 7:
+
 ```PS > ./run.ps1 build -UnloadModules```
 
 Use this command to execute 'build' command and unloads all LeetABit.Build modules from PowerShell before executing the command.
 
 ## Parameters
+
 ### ```-TaskName```
 
 *Name of the build task to invoke.*
 
 <table>
-  <tr><td>Type:</td><td>String</td></tr>
+  <tr><td>Type:</td><td>String[]</td></tr>
   <tr><td>Required:</td><td>false</td></tr>
   <tr><td>Position:</td><td>1</td></tr>
   <tr><td>Default value:</td><td></td></tr>
@@ -70,7 +80,7 @@ Use this command to execute 'build' command and unloads all LeetABit.Build modul
 
 <table>
   <tr><td>Type:</td><td>String</td></tr>
-  <tr><td>Required:</td><td>false</td></tr>
+  <tr><td>Required:</td><td>true</td></tr>
   <tr><td>Position:</td><td>Named</td></tr>
   <tr><td>Default value:</td><td></td></tr>
   <tr><td>Accept pipeline input:</td><td>true (ByValue)</td></tr>
@@ -83,7 +93,7 @@ Use this command to execute 'build' command and unloads all LeetABit.Build modul
 
 <table>
   <tr><td>Type:</td><td>String</td></tr>
-  <tr><td>Required:</td><td>true</td></tr>
+  <tr><td>Required:</td><td>false</td></tr>
   <tr><td>Position:</td><td>Named</td></tr>
   <tr><td>Default value:</td><td></td></tr>
   <tr><td>Accept pipeline input:</td><td>false</td></tr>
@@ -178,12 +188,15 @@ Use this command to execute 'build' command and unloads all LeetABit.Build modul
 </table>
 
 ## Input
+
 None
 
 ## Output
+
 None
 
 ## Notes
+
 Any parameter for LeetABit.Build system may be provided in three ways:
 1. Explicitly via PowerShell command arguments.
 2. JSON property in 'LeetABit.Build.json' file stored under 'build' subdirectory of the specified repository root.
@@ -195,4 +208,5 @@ LeetABit.Build.json configuration file should be a simple JSON object with prope
 A JSON schema for the configuration file is available at https://raw.githubusercontent.com/LeetABit/Build/master/schema/LeetABit.Build.schema.json
 
 ## Related Links
+
 [LeetABit.Build\Build-Repository](LeetABit.Build/Build-Repository.md)

@@ -1,4 +1,5 @@
 # Unregister-BuildTask
+
 Unregisters specified build task.
 
 ```Unregister-BuildTask [-ExtensionName] <String> [[-TaskName] <String[]>] [-IgnoreMissing] [-WhatIf] [-Confirm]```
@@ -8,17 +9,21 @@ Unregisters specified build task.
 Unregister-BuildTask cmdlet tries to unregister specified tasks from the specified extension. If the specified extension or task is not registered this cmdlet behaves according to -IgnoreMissing switch.
 
 ## Examples
+
 ### Example 1:
+
 ```PS> Unregister-BuildTask "PowerShell"```
 
 Tries to unregister all tasks from "PowerShell" extension and emits an error if the extension is not registered yet.
 
 ### Example 2:
+
 ```PS> Unregister-BuildTask "PowerShell" -TaskName "help" -IgnoreMissing```
 
 Tries to unregister "help" task from "PowerShell" extension and continues execution if the extension nor task is not registered yet.
 
 ## Parameters
+
 ### ```-ExtensionName```
 
 *Name of the extension for which the build task shall be unregistered.*
@@ -81,7 +86,9 @@ Tries to unregister "help" task from "PowerShell" extension and continues execut
 </table>
 
 ## Input
+
 None
 
 ## Output
+
 None

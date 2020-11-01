@@ -23,7 +23,6 @@ function ConvertTo-ExpressionString {
         are converted to array literal expression format.
     .EXAMPLE
         ConvertTo-ExpressionString -Obj $Null, $True, $False
-
         $Null
         $True
         $False
@@ -31,7 +30,6 @@ function ConvertTo-ExpressionString {
         Converts PowerShell literals expression string.
     .EXAMPLE
         ConvertTo-ExpressionString -Obj @{Name = "Custom object instance"}
-
         @{
           'Name' = 'Custom object instance'
         }
@@ -39,7 +37,6 @@ function ConvertTo-ExpressionString {
         Converts hashtable to PowerShell hash literal expression string.
     .EXAMPLE
         ConvertTo-ExpressionString -Obj @( $Name )
-
         @(
           $Null
         )
@@ -47,7 +44,6 @@ function ConvertTo-ExpressionString {
         Converts array to PowerShell array literal expression string.
     .EXAMPLE
         ConvertTo-ExpressionString -Obj (New-PSObject "SampleType" @{Name = "Custom object instance"})
-
         <# SampleType #`>
         @{
           'Name' = 'Custom object instance'
@@ -600,12 +596,12 @@ function Set-DigitalSignature {
         }
 
         foreach ($filePath in $Path) {
-            Write-Message ($LocalizedData.Signing_FilePath -f (Split-Path $filePath -Leaf))
+            Write-Diagnostic ($LocalizedData.Signing_FilePath -f (Split-Path $filePath -Leaf))
             if ($PSCmdlet.ShouldProcess($LocalizedData.Resource_AuthenticodeSignature_FilePath -f $filePath,
                                         $LocalizedData.Operation_Set)) {
                 $result = Set-AuthenticodeSignature -FilePath $filePath -Certificate $Certificate -TimestampServer $TimestampServer -HashAlgorithm SHA256
                 if ($result.Status -ne 'Valid') {
-                    Write-Error $LocalizedData.ErrorSigning_Status_Message -f ($result.Status, $result.StatusMessage)
+                    Write-Error ($LocalizedData.ErrorSigning_Status_Message -f ($result.Status, $result.StatusMessage))
                 }
             }
         }
@@ -863,14 +859,20 @@ class ValidateIdentifierAttribute : ValidateArgumentsAttribute
             throw [System.ArgumentNullException]::new()
         }
 
-        $identifier = [String]$arguments
-
-        if ([String]::IsNullOrWhiteSpace($identifier)) {
-            throw [System.ArgumentException]::new('String cannot be empty nor contains only empty spaces.')
+        if ($arguments -is [String]) {
+            $arguments = @($arguments)
         }
 
-        if ($identifier -notmatch '^[a-z_][a-z0-9_]*$') {
-            throw [System.ArgumentException]::new('Specified string was not a correct identifier.')
+        foreach ($argument in $arguments) {
+            $identifier = [String]$argument
+
+            if ([String]::IsNullOrWhiteSpace($identifier)) {
+                throw [System.ArgumentException]::new('String cannot be empty nor contains only empty spaces.')
+            }
+
+            if ($identifier -notmatch '^[a-z_][a-z0-9_]*$') {
+                throw [System.ArgumentException]::new('Specified string was not a correct identifier.')
+            }
         }
     }
 }
@@ -887,18 +889,24 @@ class ValidateIdentifierOrEmptyAttribute : ValidateArgumentsAttribute
             throw [System.ArgumentNullException]::new()
         }
 
-        $identifier = [String]$arguments
-
-        if ([String]::IsNullOrEmpty($identifier)) {
-            return
+        if ($arguments -is [String]) {
+            $arguments = @($arguments)
         }
 
-        if ([String]::IsNullOrWhiteSpace($identifier)) {
-            throw [System.ArgumentException]::new('String cannot be empty nor contains only empty spaces.')
-        }
+        foreach ($argument in $arguments) {
+            $identifier = [String]$argument
 
-        if ($identifier -notmatch '^[a-z_][a-z0-9_]*$') {
-            throw [System.ArgumentException]::new('Specified string was not a correct identifier.')
+            if ([String]::IsNullOrEmpty($identifier)) {
+                return
+            }
+
+            if ([String]::IsNullOrWhiteSpace($identifier)) {
+                throw [System.ArgumentException]::new('String cannot be empty nor contains only empty spaces.')
+            }
+
+            if ($identifier -notmatch '^[a-z_][a-z0-9_]*$') {
+                throw [System.ArgumentException]::new('Specified string was not a correct identifier.')
+            }
         }
     }
 }
@@ -915,16 +923,22 @@ class ValidateNonContainerPathAttribute : ValidateArgumentsAttribute
             throw [System.ArgumentNullException]::new()
         }
 
-        $path = [String]$arguments
-
-        if ([String]::IsNullOrWhiteSpace($path)) {
-            throw [System.ArgumentException]::new('String cannot be empty nor contains only empty spaces.')
+        if ($arguments -is [String]) {
+            $arguments = @($arguments)
         }
 
-        [void](Join-Path $path '.')
+        foreach ($argument in $arguments) {
+            $path = [String]$argument
 
-        if (Test-Path -Path $path -PathType Container) {
-            throw [System.ArgumentException]::new('Argument cannot be a path to an existing container.')
+            if ([String]::IsNullOrWhiteSpace($path)) {
+                throw [System.ArgumentException]::new('String cannot be empty nor contains only empty spaces.')
+            }
+
+            [void](Join-Path $path '.')
+
+            if (Test-Path -Path $path -PathType Container) {
+                throw [System.ArgumentException]::new('Argument cannot be a path to an existing container.')
+            }
         }
     }
 }
@@ -941,16 +955,22 @@ class ValidateNonLeafPathAttribute : ValidateArgumentsAttribute
             throw [System.ArgumentNullException]::new()
         }
 
-        $path = [String]$arguments
-
-        if ([String]::IsNullOrWhiteSpace($path)) {
-            throw [System.ArgumentException]::new('String cannot be empty nor contains only empty spaces.')
+        if ($arguments -is [String]) {
+            $arguments = @($arguments)
         }
 
-        [void](Join-Path $path '.')
+        foreach ($argument in $arguments) {
+            $path = [String]$argument
 
-        if (Test-Path -Path $path -PathType Leaf) {
-            throw [System.ArgumentException]::new('Argument cannot be a path to an existing leaf.')
+            if ([String]::IsNullOrWhiteSpace($path)) {
+                throw [System.ArgumentException]::new('String cannot be empty nor contains only empty spaces.')
+            }
+
+            [void](Join-Path $path '.')
+
+            if (Test-Path -Path $path -PathType Leaf) {
+                throw [System.ArgumentException]::new('Argument cannot be a path to an existing leaf.')
+            }
         }
     }
 }
@@ -967,13 +987,19 @@ class ValidatePathAttribute : ValidateArgumentsAttribute
             throw [System.ArgumentNullException]::new()
         }
 
-        $path = [String]$arguments
-
-        if ([String]::IsNullOrWhiteSpace($path)) {
-            throw [System.ArgumentException]::new('String cannot be empty nor contains only empty spaces.')
+        if ($arguments -is [String]) {
+            $arguments = @($arguments)
         }
 
-        [void](Join-Path $path '.')
+        foreach ($argument in $arguments) {
+            $path = [String]$argument
+
+            if ([String]::IsNullOrWhiteSpace($path)) {
+                throw [System.ArgumentException]::new('String cannot be empty nor contains only empty spaces.')
+            }
+
+            [void](Join-Path $path '.')
+        }
     }
 }
 

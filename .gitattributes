@@ -1,13 +1,10 @@
 ####################################################################
 # Attributes definitions
 ####################################################################
-[attr]git              !binary text diff merge=text
-[attr]rawtext          !binary text diff merge
+[attr]plaintext        !binary text diff merge
+[attr]code             !binary text diff merge=text
 [attr]windowsscript    !binary text eol=crlf diff merge=text
 [attr]nixscript        !binary text eol=lf diff merge=text
-[attr]json             !binary text diff merge=text
-[attr]yml              !binary text diff merge=text
-[attr]markup           !binary text diff merge
 [attr]binary           -text -diff -merge
 
 ####################################################################
@@ -18,14 +15,15 @@
 ####################################################################
 # File extensions
 ####################################################################
-.gitattributes         git
-.gitignore             git
+.editorconfig          code
+.gitattributes         code
+.gitignore             code
+*.yml                  code
 *.sh                   nixscript
 *.cmd                  windowsscript
-*.ps1                  windowsscript
-*.psd1                 windowsscript
-*.psm1                 windowsscript
+*.ps1                  code
+*.psd1                 code
+*.psm1                 code
 *.txt                  rawtext
-*.md                   markup
-*.json                 json
-*.yml                  yml
+*.md                   plaintext
+*.json                 code

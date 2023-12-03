@@ -2,7 +2,7 @@
 name: Bug report
 about: Create a report to help us improve
 title: ''
-labels: Status:Available Type:Bug
+labels: ["Status:New", "Type:Bug"]
 assignees: hubuk
 
 ---
@@ -21,8 +21,8 @@ A clear and concise description of what you expected to happen.
 
 **Environment:**
  - OS version:
- - PowerShell version:
- - LeetABit.Build version:
+ - Relevant environment (dotnet, PowerShell) version:
+ - Product version:
 
 **Additional information**
 Add any other context logs or gist with an additional information about the problem.

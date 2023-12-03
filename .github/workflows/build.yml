@@ -1,29 +1,30 @@
-name: build
+name: Build
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - main
   pull_request:
-    branches: [ master ]
   workflow_dispatch:
 
 env:
   LeetABitBuild_ForceInstallPowerShell: 1
 
 jobs:
-  build:
+  build_test_release:
+    name: Run
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ windows-2019, ubuntu-20.04, ubuntu-18.04, ubuntu-16.04, macos-10.15 ]
-
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+    env:
+      LeetABit_Buildstrapper: "${{ matrix.os == 'windows-latest' && 'run.cmd' || 'run.sh' }}"
     steps:
-    - uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+          fetch-depth: 0
 
-    - name: Run CMD
-      if: matrix.os == 'windows-2019'
-      run: ./run.cmd help
-      
-    - name: Run Bash
-      if: matrix.os != 'windows-2019'
-      run: ./run.sh help
+      - name: Run Help
+        run: ./${{ env.LeetABit_Buildstrapper }} help

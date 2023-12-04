@@ -8,6 +8,9 @@
 Set-StrictMode -Version 3.0
 
 $script:Regex_ScriptBlockSyntax_FunctionName = '(?<={0})(.+?)(?=\[(-WhatIf|-Confirm|\<CommonParameters\>))'
+Set-Variable "LeetABitBuildWellKnownParameterNames" -Scope Script -Option ReadOnly -Value (
+    'ArtifactsRoot', 'SourceRoot', 'TestRoot', 'ReferenceDocsRoot', 'ExtensionModule', 'ResolutionRoot', 'ProjectPath', 'TaskName'
+)
 
 $script:moduleMetadata = Read-ModuleMetadata $MyInvocation
 if ($script:moduleMetadata.Resources) {
@@ -23,36 +26,4 @@ $MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {
     }
 }
 
-Register-BuildTask "help" -Jobs {
-    <#
-    .SYNOPSIS
-        Gets help for the build script or one of its targets.
-    #>
-    [CmdletBinding(PositionalBinding = $False)]
-
-    param (
-        # Optional name of the build extension for which help shall be obtained.
-        [Parameter(Position = 0,
-                   Mandatory = $False,
-                   ValueFromPipeline = $False,
-                   ValueFromPipelineByPropertyName = $True)]
-        [String]
-        $ExtensionTopic,
-
-        # Optional name of the build task for which help shall be obtained.
-        [Parameter(Position = 1,
-                   Mandatory = $False,
-                   ValueFromPipeline = $False,
-                   ValueFromPipelineByPropertyName = $True)]
-        [String]
-        $TaskTopic
-    )
-
-    begin {
-        LeetABit.Build.Common\Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
-    }
-
-    process {
-        Get-BuildHelp $ExtensionTopic $TaskTopic | Out-String | Write-Information -InformationAction Continue
-    }
-}
+Register-BuildTask "help" -Jobs (Get-Item function:Write-BuildHelp)

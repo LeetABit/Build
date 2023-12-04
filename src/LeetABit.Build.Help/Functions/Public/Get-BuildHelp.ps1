@@ -101,8 +101,13 @@ function Get-BuildHelp {
                 $currentTask.Jobs | ForEach-Object {
                     if ($_ -is [String]) {
                         $task.Jobs += $_
-                        $task.Description += $extension.Tasks[$_].Description
-                        $task.Parameters += $extension.Tasks[$_].Parameters
+                        if ($extension.Tasks[$_].Description) {
+                            $task.Description += $extension.Tasks[$_].Description
+                        }
+
+                        if ($extension.Tasks[$_].Parameters) {
+                            $task.Parameters += $extension.Tasks[$_].Parameters
+                        }
                     }
                     else {
                         if (-not $extension.Description) {
@@ -111,8 +116,7 @@ function Get-BuildHelp {
                             }
                         }
 
-                        $jobScriptBlock = [String]$_
-                        $function:private:ScriptBlockCommand = $jobScriptBlock
+                        $function:private:ScriptBlockCommand = $_
                         $helpObject = Get-Help 'ScriptBlockCommand'
                         $helpString = (Get-Help 'ScriptBlockCommand' -Full | Out-String)
 
@@ -144,28 +148,30 @@ function Get-BuildHelp {
 
                         if ($helpObject.parameters.PSObject.Properties.Name -contains 'parameter') {
                             foreach ($parameterObject in $helpObject.parameters.parameter) {
-                                $parameter = @{}
-                                $parameter.Name = $parameterObject.Name
-                                if ($parameterObject.PSObject.Properties.Name -contains "type") {
-                                    $parameter.Type = $parameterObject.type.name
-                                }
+                                if ($LeetABitBuildWellKnownParameterNames -notcontains $parameterObject.Name) {
+                                    $parameter = @{}
+                                    $parameter.Name = $parameterObject.Name
+                                    if ($parameterObject.PSObject.Properties.Name -contains "type") {
+                                        $parameter.Type = $parameterObject.type.name
+                                    }
 
-                                if ($parameterObject.PSObject.Properties.Name -contains "description") {
-                                    if ($parameterObject.description -is [String]) {
-                                        $parameter.Description = $parameterObject.description
+                                    if ($parameterObject.PSObject.Properties.Name -contains "description") {
+                                        if ($parameterObject.description -is [String]) {
+                                            $parameter.Description = $parameterObject.description
+                                        }
+                                        else {
+                                            $parameter.Description = $parameterObject.description.Text
+                                        }
                                     }
                                     else {
-                                        $parameter.Description = $parameterObject.description.Text
+                                        $parameter.Description = ""
                                     }
-                                }
-                                else {
-                                    $parameter.Description = ""
-                                }
 
-                                $parameter.Mandatory = [System.Convert]::ToBoolean($parameterObject.required)
-                                $parameterObject = Convert-DictionaryToHelpObject -Properties $parameter -HelpObjectName 'Parameter' -HelpView $typeNameSuffix
-                                $task.Parameters += $parameterObject
-                                $job.Parameters += $parameterObject
+                                    $parameter.Mandatory = [System.Convert]::ToBoolean($parameterObject.required)
+                                    $parameterObject = Convert-DictionaryToHelpObject -Properties $parameter -HelpObjectName 'Parameter' -HelpView $typeNameSuffix
+                                    $task.Parameters += $parameterObject
+                                    $job.Parameters += $parameterObject
+                                }
                             }
                         }
 

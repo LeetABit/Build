@@ -1,6 +1,8 @@
-####################################################################
-# Editor configuration file
-####################################################################
+############################################################################
+#   Copyright (c) Hubert Bukowski. All rights reserved.
+#   Licensed under the MIT License.
+#   See License.txt in the project root for full license information.
+############################################################################
 root = true
 
 [*.{sh,cmd,ps1,psm1,psd1,ps1xml,json,yml,md,txt}]

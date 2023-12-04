@@ -3,10 +3,6 @@
 ::  Copyright (c) Hubert Bukowski. All rights reserved.
 ::  Licensed under the MIT License.
 ::  See License.txt in the project root for full license information.
-::==========================================================================
-::  This script makes sure that the PowerShell Core in the required version
-::  is installed in the system and then runs 'run.ps1' PowerShell script
-::  passing all current script's parameters to it.
 ::##########################################################################
 SETLOCAL EnableDelayedExpansion EnableExtensions
 

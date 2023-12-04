@@ -1,12 +1,9 @@
 @ECHO OFF
-REM ==========================================================================
-REM   Copyright (c) Hubert Bukowski. All rights reserved.
-REM   Licensed under the MIT License.
-REM   See License.txt in the project root for full license information.
-REM --------------------------------------------------------------------------
-REM   Buildstrapper script for passing local LeetABit.Build toolset location
-REM   to the general buildstrapper.
-REM ==========================================================================
+::##########################################################################
+::  Copyright (c) Hubert Bukowski. All rights reserved.
+::  Licensed under the MIT License.
+::  See License.txt in the project root for full license information.
+::##########################################################################
 
 :Init
 

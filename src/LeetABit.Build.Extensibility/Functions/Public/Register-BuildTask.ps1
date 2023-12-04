@@ -47,6 +47,15 @@ function Register-BuildTask {
         [String]
         $TaskName,
 
+        # ScriptBlock that gets called before first task run.
+        [Parameter(Mandatory = $False,
+                   ValueFromPipeline = $False,
+                   ValueFromPipelineByPropertyName = $False,
+                   ValueFromRemainingArguments = $False)]
+        [Object]
+        $Initialization,
+
+
         # Defines list of script blocks or names of other tasks that shall be executed in the specified order as a realization of the task being defined.
         [Parameter(HelpMessage = 'Provide a collection of jobs for the task.',
                    Position = 1,
@@ -133,7 +142,7 @@ function Register-BuildTask {
             }
         }
 
-        $task = [TaskDefinition]::new($TaskName, $IsDefault, $Condition, $Jobs)
+        $task = [TaskDefinition]::new($TaskName, $IsDefault, $Condition, $Jobs, $Initialization)
         $extension.Tasks.Add($TaskName, $task)
 
         if ($PassThru) {

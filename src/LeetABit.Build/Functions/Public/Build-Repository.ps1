@@ -59,7 +59,7 @@ function Build-Repository {
                    ValueFromPipelineByPropertyName = $True)]
         [AllowNull()]
         [AllowEmptyCollection()]
-        [ModuleSpecification[]]
+        [Object[]]
         $ExtensionModule,
 
         # Dictionary of buildstrapper arguments (including dynamic ones) that have been successfully bound.
@@ -88,13 +88,29 @@ function Build-Repository {
         $ExtensionModule = LeetABit.Build.Arguments\Find-CommandArgument -ParameterName 'ExtensionModule'
         if ($ExtensionModule) {
             $ExtensionModule | ForEach-Object {
-                if (-not (Get-Module -FullyQualifiedName @{ ModuleName="$($_.Name)"; ModuleVersion=$_.RequiredVersion } -ListAvailable)) {
-                    Write-Verbose "Installing $($_.Name) v$($_.RequiredVersion) from the available PowerShell repositories..."
-                    Install-Module -Name $_.Name -RequiredVersion $_.RequiredVersion -Scope CurrentUser -AllowPrerelease -Force
+                if ($_ -is [string]) {
+                    $path = if ([System.IO.Path]::IsPathFullyQualified($_)) { $_ } else { Join-Path $RepositoryRoot $_ }
+                    $path = LeetABit.Build.Common\ConvertTo-NormalizedPath $path
+                    $found = $false
+                    foreach ($module in (Get-Module)) {
+                        if ($module.ModuleBase -eq $path) {
+                            $found = $true
+                            break
+                        }
+                    }
+
+                    if (!$found) {
+                        Import-Module -Name $path
+                    }
+                }
+                else {
+                    if (-not (Get-Module -FullyQualifiedName @{ ModuleName="$($_.Name)"; ModuleVersion=$_.RequiredVersion } -ListAvailable)) {
+                        Write-Verbose "Installing $($_.Name) v$($_.RequiredVersion) from the available PowerShell repositories..."
+                        Install-Module -Name $_.Name -RequiredVersion $_.RequiredVersion -Scope CurrentUser -AllowPrerelease -Force
+                        Import-Module -FullyQualifiedName $_
+                    }
                 }
             }
-
-            Import-Module -FullyQualifiedName $ExtensionModule
         }
 
         Import-RepositoryExtension -RepositoryRoot $RepositoryRoot
@@ -105,12 +121,31 @@ function Build-Repository {
 
         $lastExtension = $Null
         $aggregatedProjects = @()
+        $supportedTasks = @()
+
+        LeetABit.Build.Extensibility\Get-BuildExtension | ForEach-Object {
+            if ($_.BuildInitializer) {
+                LeetABit.Build.Extensibility\Invoke-ScriptBlock -ScriptBlock $_.BuildInitializer -ParameterPrefix $_.Name
+            }
+        }
 
         LeetABit.Build.Extensibility\Resolve-Project $projectPath 'LeetABit.Build.Repository' $TaskName | Select-Object -Unique | ForEach-Object {
             $projectPath, $extensionName = $_
             if ($lastExtension -and $lastExtension -ne $extensionName) {
-                LeetABit.Build.Extensibility\Invoke-BuildTask $lastExtension $TaskName $aggregatedProjects $SourceRoot
+                LeetABit.Build.Extensibility\Invoke-BuildTask $lastExtension $supportedTasks $aggregatedProjects $SourceRoot
                 $aggregatedProjects = @()
+            }
+
+            if (-not $lastExtension -or $lastExtension -ne $extensionName) {
+                $extension = LeetABit.Build.Extensibility\Get-BuildExtension $extensionName
+                $supportedTasks = ($extension.Tasks.Keys) | Where-Object {
+                    if ($TaskName) {
+                        $TaskName -contains $_
+                    }
+                    else {
+                        $extension.Tasks[$_].IsDefault
+                    }
+                }
             }
 
             $lastExtension = $extensionName
@@ -118,7 +153,7 @@ function Build-Repository {
         }
 
         if ($lastExtension) {
-            LeetABit.Build.Extensibility\Invoke-BuildTask $lastExtension $TaskName $aggregatedProjects $SourceRoot
+            LeetABit.Build.Extensibility\Invoke-BuildTask $lastExtension $supportedTasks $aggregatedProjects $SourceRoot
         }
     }
 }

@@ -57,6 +57,11 @@ function Register-BuildExtension {
         [String]
         $ExtensionName,
 
+        # ScriptBlock that gets called at the begining of each repository build.
+        [Parameter()]
+        [Object]
+        $BuildInitializer,
+
         # Indicates that this cmdlet overwrites already registered extension removing all registered tasks and resolver.
         [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
@@ -74,6 +79,12 @@ function Register-BuildExtension {
             $Resolver.ScriptBlock
         } else {
             $Resolver
+        }
+
+        $initializerScriptBlock = if ($BuildInitializer -is [CommandInfo]) {
+            $BuildInitializer.ScriptBlock
+        } else {
+            $BuildInitializer
         }
 
         if (-not $ExtensionName) {
@@ -98,6 +109,7 @@ function Register-BuildExtension {
 
         $extension = [ExtensionDefinition]::new($ExtensionName)
         $extension.Resolver = $resolverScriptBlock
+        $extension.BuildInitializer = $initializerScriptBlock
         $script:Extensions.Add($ExtensionName, $extension)
     }
 }

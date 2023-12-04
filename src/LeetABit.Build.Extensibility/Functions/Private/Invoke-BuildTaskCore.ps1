@@ -94,6 +94,10 @@ function Invoke-BuildTaskCore {
 
                             $stepName = ConvertTo-Identifier "$($Extension.Name)_$($task.Name)"
                             Write-Step -StepName $stepName -Message "$($Extension.Name) -> $($task.Name)"
+                            if ($task.Initialization) {
+                                Invoke-ScriptBlock -ScriptBlock $task.Initialization -ParameterPrefix $Extension.Name -AdditionalArguments $AdditionalArguments
+                            }
+
                             $index = 0
                             foreach ($ProjectPath in $ProjectPaths) {
                                 $index = $index + 1

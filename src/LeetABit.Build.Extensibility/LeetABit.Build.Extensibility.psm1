@@ -36,6 +36,11 @@ class ExtensionDefinition {
     [ScriptBlock] $Resolver
 
     <#
+    ##  Represents a script block that will be run at the begining of the each repository build.
+    #>
+    [ScriptBlock] $BuildInitializer
+
+    <#
     ##  Dictionary of the detailed information object about current extension tasks mapped to the task name.
     #>
     [Dictionary[String,TaskDefinition]] $Tasks
@@ -43,10 +48,10 @@ class ExtensionDefinition {
     <#
     ##  Initializes a new instance of the ExtensionDefinition class.
     #>
-    ExtensionDefinition([String] $name)
-    {
+    ExtensionDefinition([String] $name) {
         $this.Name = $name
         $this.Resolver = $null
+        $this.BuildInitializer = $null
         $this.Tasks = [Dictionary[String,TaskDefinition]]::new([StringComparer]::OrdinalIgnoreCase)
     }
 
@@ -56,6 +61,7 @@ class ExtensionDefinition {
     [ExtensionDefinition] Clone() {
         $result = [ExtensionDefinition]::new($this.Name)
         $result.Resolver = $this.Resolver
+        $result.BuildInitializer = $this.BuildInitializer
         $result.Tasks = [Dictionary[String,TaskDefinition]]::new([StringComparer]::OrdinalIgnoreCase)
         $this.Tasks.Values | ForEach-Object {
             $result.Tasks.Add($_.Name, $_.Clone())
@@ -64,6 +70,7 @@ class ExtensionDefinition {
         return $result
     }
 }
+
 
 
 <#
@@ -92,13 +99,19 @@ class TaskDefinition
     [Object[]] $Jobs
 
     <#
+    ##  Task's initialization script.
+    #>
+    [ScriptBlock] $Initialization
+
+    <#
     ##  Initializes a new instance of the TaskDefinition class.
     #>
-    TaskDefinition([String] $name, [Boolean] $isDefault, [Object] $condition, [Object[]] $jobs) {
+    TaskDefinition([String] $name, [Boolean] $isDefault, [Object] $condition, [Object[]] $jobs, [ScriptBlock] $initialization) {
         $this.Name = $name
         $this.IsDefault = $isDefault
         $this.Condition = $condition
         $this.Jobs = $jobs
+        $this.Initialization = $initialization
     }
 
 
@@ -106,9 +119,13 @@ class TaskDefinition
     ##  Creates a new instance of the TaskDefinition class with all the data copied from this instance.
      #>
     [TaskDefinition] Clone() {
-        return [TaskDefinition]::new($this.Name,
+        return [TaskDefinition]::new(
+            $this.Name,
             $this.IsDefault,
             $this.Condition,
-            $this.Jobs.Clone())
+            $this.Jobs.Clone(),
+            $this.Initialization
+        )
     }
 }
+

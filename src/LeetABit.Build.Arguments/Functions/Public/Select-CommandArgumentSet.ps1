@@ -122,7 +122,15 @@ function Select-CommandArgumentSet {
                 $ExtensionName = $Command.ModuleName
             }
         } elseif ($PSCmdlet.ParameterSetName -eq 'ScriptBlock') {
-            if ($ScriptBlock.Ast.ParamBlock) {
+            $paramBlock = if ($ScriptBlock.Ast | Get-Member 'ParamBlock') {
+                $ScriptBlock.Ast.ParamBlock
+            } elseif ($ScriptBlock.Ast | Get-Member 'Body') {
+                $ScriptBlock.Ast.Body.ParamBlock
+            } else {
+                $null
+            }
+
+            if ($paramBlock) {
                 $function:private:ScriptBlockCommand = $ScriptBlock
                 $commandFunction = Get-Command -Name ScriptBlockCommand -Type Function
                 $ParameterSets = $commandFunction.ParameterSets
@@ -179,7 +187,7 @@ function Select-CommandArgumentSet {
             }
         }
 
-        if (-not $found) {
+        if (-not $found -and $parameterSets) {
             throw $LocalizedData.Error_SelectCommandArgumentSet_Reason -f
                 ($LocalizedData.Reason_NoMatchingParameterSetFound_NewLine_Errors -f [Environment]::NewLine, ($errors -join [Environment]::NewLine))
         }

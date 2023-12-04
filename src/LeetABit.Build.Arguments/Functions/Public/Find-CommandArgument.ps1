@@ -104,6 +104,10 @@ function Find-CommandArgument {
         $parameterNames += $ParameterName
 
         foreach ($parameterNameToFind in $parameterNames) {
+            if ($parameterNameToFind -eq 'ProjectPath') {
+                return $script:ProjectPath
+            }
+
             $result = Find-CommandArgumentInDictionary $parameterNameToFind -Dictionary $AdditionalArguments
             if ($result) {
                 Convert-ArgumentValue $result -IsSwitch:$IsSwitch

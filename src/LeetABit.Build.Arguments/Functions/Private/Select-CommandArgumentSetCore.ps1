@@ -22,6 +22,8 @@ function Select-CommandArgumentSetCore {
                    Mandatory = $True,
                    ValueFromPipeline = $True,
                    ValueFromPipelineByPropertyName = $True)]
+        [AllowEmptyCollection()]
+        [AllowNull()]
         [CommandParameterInfo[]]
         $Parameters,
 

@@ -32,8 +32,8 @@ function ConvertTo-Hashtable {
         elseif ($InputObject -is [IEnumerable] -and $InputObject -isnot [string]) {
             $InputObject | ForEach-Object {
                 ConvertTo-Hashtable -InputObject $_
-            }
-        } elseif ($InputObject -is [PSObject]) {
+            } | Write-Output -NoEnumerate
+        } elseif ($InputObject -is [PSObject] -and $InputObject -isnot [string]) {
             $hash = @{}
             foreach ($property in $InputObject.PSObject.Properties) {
                 $hash[$property.Name] = ConvertTo-Hashtable -InputObject $property.Value

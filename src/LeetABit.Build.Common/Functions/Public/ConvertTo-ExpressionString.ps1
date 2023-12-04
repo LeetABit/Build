@@ -13,7 +13,7 @@ function ConvertTo-ExpressionString {
     .SYNOPSIS
         Converts an object to a PowerShell expression string with a specified indentation.
     .DESCRIPTION
-        The ConvertTo-ExpressionStringWithIndentation cmdlet converts any .NET object to a object type's defined string representation.
+        The ConvertTo-ExpressionString cmdlet converts any .NET object to a object type's defined string representation.
         Dictionaries and PSObjects are converted to hash literal expression format. The field and properties are converted to key expressions,
         the field and properties values are converted to property values, and the methods are removed. Objects that implements IEnumerable
         are converted to array literal expression format.

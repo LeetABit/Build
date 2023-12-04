@@ -40,7 +40,7 @@ function Invoke-ScriptBlock {
 
         [Parameter(HelpMessage = "Provide a dictionary with additional arguments that may be used by the task implementation.",
                    Position = 2,
-                   Mandatory = $True,
+                   Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False)]
         [AllowNull()]

@@ -37,7 +37,9 @@ function Register-BuildExtension {
     .NOTES
         When an extension has already registered a resolver of task and a -Force switch is used any registered resolver and all registered tasks are removed during execution of this cmdlet.
     #>
-    [CmdletBinding(PositionalBinding = $False)]
+    [CmdletBinding(DefaultParameterSetName = 'Default',
+                   PositionalBinding = $False)]
+
 
     param (
         [Parameter(HelpMessage = 'Provide a resolver ScriptBlock.',
@@ -46,7 +48,7 @@ function Register-BuildExtension {
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False,
                    ParameterSetName = "Resolver")]
-        [ScriptBlock]
+        [Object]
         $Resolver = $script:DefaultResolver,
 
         [Parameter(HelpMessage = 'Provide a name for the registered extension.',

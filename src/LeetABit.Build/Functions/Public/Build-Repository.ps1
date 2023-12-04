@@ -51,11 +51,13 @@ function Build-Repository {
         [String]
         $RepositoryRoot,
 
-        [Parameter(Position = 1,
+        [Parameter(HelpMessage = "Provide name of the tasks to be run.",
+                   Position = 1,
                    Mandatory = $True,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $True)]
-        [ValidateIdentifierOrEmptyAttribute()]
+        [ValidateIdentifierOrEmptyOrNullAttribute()]
+        [AllowNull()]
         [AllowEmptyString()]
         [AllowEmptyCollection()]
         [String[]]

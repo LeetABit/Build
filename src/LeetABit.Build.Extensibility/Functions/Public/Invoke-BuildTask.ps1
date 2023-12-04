@@ -22,7 +22,7 @@ function Invoke-BuildTask {
     .PARAMETER SourceRoot
         Path to the repository's source directory.
     .PARAMETER ArgumentList
-        Collection with additional arguments that may be used by the task implementation.
+        Collection of additional arguments that may be used by the task implementation.
     .EXAMPLE
         PS> Invoke-BuildTask "PowerShell" "test"
 

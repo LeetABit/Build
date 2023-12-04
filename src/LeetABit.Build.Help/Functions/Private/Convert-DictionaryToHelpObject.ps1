@@ -23,21 +23,24 @@ function Convert-DictionaryToHelpObject {
     [OutputType([String])]
 
     param (
-        [Parameter(Position = 0,
+        [Parameter(HelpMessage = "Provide a hashtable with desired object's properties.",
+                   Position = 0,
                    Mandatory = $True,
                    ValueFromPipeline = $True,
                    ValueFromPipelineByPropertyName = $True)]
         [IDictionary]
         $Properties,
 
-        [Parameter(Position = 1,
+        [Parameter(HelpMessage = "Provide a name of the help object's type that shall be assigned to the object.",
+                   Position = 1,
                    Mandatory = $True,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $True)]
         [String]
         $HelpObjectName,
 
-        [Parameter(Position = 2,
+        [Parameter(HelpMessage = "Provide a name of the help object's type suffix that shall be assigned to the object as a secondary type.",
+                   Position = 2,
                    Mandatory = $True,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $True)]

@@ -47,7 +47,8 @@ function Resolve-RelativePath {
         [String[]]
         $LiteralPath,
 
-        [Parameter(Position = 1,
+        [Parameter(HelpMessage = "Provide base path in which the relative path shall be rooted.",
+                   Position = 1,
                    Mandatory = $True,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $True)]

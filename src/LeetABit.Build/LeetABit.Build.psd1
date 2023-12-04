@@ -10,7 +10,7 @@
     RootModule = 'LeetABit.Build.psm1'
 
     # Version number of this module.
-    ModuleVersion = '0.0.3'
+    ModuleVersion = '0.0.0'
 
     # Supported PSEditions
     # CompatiblePSEditions = @()
@@ -50,11 +50,11 @@
 
     # Modules that must be imported into the global environment prior to importing this module
     RequiredModules = @(
-        @{ModuleName = 'LeetABit.Build.Arguments'; ModuleVersion = '0.0.3'; },
-        @{ModuleName = 'LeetABit.Build.Common'; ModuleVersion = '0.0.3'; },
-        @{ModuleName = 'LeetABit.Build.Extensibility'; ModuleVersion = '0.0.3'; },
-        @{ModuleName = 'LeetABit.Build.Help'; ModuleVersion = '0.0.3'; },
-        @{ModuleName = 'LeetABit.Build.Logging'; ModuleVersion = '0.0.3'; }
+        @{ModuleName = 'LeetABit.Build.Arguments'; ModuleVersion = '0.0.0'; },
+        @{ModuleName = 'LeetABit.Build.Common'; ModuleVersion = '0.0.0'; },
+        @{ModuleName = 'LeetABit.Build.Extensibility'; ModuleVersion = '0.0.0'; },
+        @{ModuleName = 'LeetABit.Build.Help'; ModuleVersion = '0.0.0'; },
+        @{ModuleName = 'LeetABit.Build.Logging'; ModuleVersion = '0.0.0'; }
     )
 
     # Assemblies that must be loaded prior to importing this module

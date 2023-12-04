@@ -8,6 +8,7 @@
 Set-StrictMode -Version 3.0
 
 $script:Regex_ScriptBlockSyntax_FunctionName = '(?<={0})(.+?)(?=\[(-WhatIf|-Confirm|\<CommonParameters\>))'
+# TODO: Shall be moved to LeetABit.Build module.
 Set-Variable "LeetABitBuildWellKnownParameterNames" -Scope Script -Option ReadOnly -Value (
     'ArtifactsRoot', 'SourceRoot', 'TestRoot', 'ReferenceDocsRoot', 'ExtensionModule', 'ResolutionRoot', 'ProjectPath', 'TaskName'
 )

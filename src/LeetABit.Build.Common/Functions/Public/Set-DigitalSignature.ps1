@@ -83,7 +83,7 @@ function Set-DigitalSignature {
                                         $LocalizedData.Operation_Set)) {
                 $result = Set-AuthenticodeSignature -FilePath $filePath -Certificate $Certificate -TimestampServer $TimestampServer -HashAlgorithm SHA256
                 if ($result.Status -ne 'Valid') {
-                    Write-Error ($LocalizedData.ErrorSigning_Status_Message -f ($result.Status, $result.StatusMessage))
+                    Write-Error ($LocalizedData.ErrorSigning_Path_Message -f ($filePath, $result.StatusMessage))
                 }
             }
         }

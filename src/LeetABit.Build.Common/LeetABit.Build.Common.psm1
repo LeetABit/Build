@@ -154,6 +154,40 @@ class ValidateIdentifierOrEmptyAttribute : ValidateArgumentsAttribute
 
 
 <#
+    Validates specified argument as a null reference or an empty string or string of consecutive alphanumeric characters.
+#>
+class ValidateIdentifierOrEmptyOrNullAttribute : ValidateArgumentsAttribute
+{
+    [void] Validate([object]$arguments, [EngineIntrinsics]$engineIntrinsics)
+    {
+        if ([Object]::ReferenceEquals($arguments, $Null)) {
+            return
+        }
+
+        if ($arguments -is [String]) {
+            $arguments = @($arguments)
+        }
+
+        foreach ($argument in $arguments) {
+            $identifier = [String]$argument
+
+            if ([String]::IsNullOrEmpty($identifier)) {
+                return
+            }
+
+            if ([String]::IsNullOrWhiteSpace($identifier)) {
+                throw [System.ArgumentException]::new('String cannot be empty nor contains only empty spaces.')
+            }
+
+            if ($identifier -notmatch '^[a-z_][a-z0-9_]*$') {
+                throw [System.ArgumentException]::new('Specified string was not a correct identifier.')
+            }
+        }
+    }
+}
+
+
+<#
     Validates specified argument as a path to a leaf or not existing entry.
 #>
 class ValidateNonContainerPathAttribute : ValidateArgumentsAttribute

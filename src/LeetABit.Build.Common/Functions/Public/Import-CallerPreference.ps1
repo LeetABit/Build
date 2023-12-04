@@ -52,7 +52,6 @@ function Import-CallerPreference {
         $preferenceVariablesMap = @{
             'ErrorView' = $null
             'FormatEnumerationLimit' = $null
-            'InformationPreference' = $null
             'LogCommandHealthEvent' = $null
             'LogCommandLifecycleEvent' = $null
             'LogEngineHealthEvent' = $null
@@ -74,6 +73,7 @@ function Import-CallerPreference {
             'ConfirmPreference' = 'Confirm'
             'DebugPreference' = 'Debug'
             'ErrorActionPreference' = 'ErrorAction'
+            'InformationPreference' = 'InformationAction'
             'VerbosePreference' = 'Verbose'
             'WarningPreference' = 'WarningAction'
             'WhatIfPreference' = 'WhatIf'

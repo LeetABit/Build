@@ -49,7 +49,7 @@ function ConvertTo-ExpressionString {
         Converts custom PSObject to PowerShell hash literal expression string with a custom type name in the comment block.
     #>
     [CmdletBinding(PositionalBinding = $False)]
-    [OutputType([String])]
+    [OutputType([String[]])]
 
     param (
         # Object to convert.

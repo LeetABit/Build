@@ -13,4 +13,3 @@ if ($script:moduleMetadata.Resources) {
 
 $script:moduleMetadata.ScriptFiles | ForEach-Object { . $_ }
 Export-ModuleMember -Function $script:moduleMetadata.PublicFunctionNames
-

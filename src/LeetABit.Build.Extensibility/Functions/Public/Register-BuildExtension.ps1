@@ -70,8 +70,14 @@ function Register-BuildExtension {
     }
 
     process {
+        $resolverScriptBlock = if ($Resolver -is [CommandInfo]) {
+            $Resolver.ScriptBlock
+        } else {
+            $Resolver
+        }
+
         if (-not $ExtensionName) {
-            $callingModuleName = Get-CallingModuleName $Resolver
+            $callingModuleName = Get-CallingModuleName $resolverScriptBlock
             if ($callingModuleName) {
                 $ExtensionName = $callingModuleName
             } else {
@@ -91,7 +97,7 @@ function Register-BuildExtension {
         }
 
         $extension = [ExtensionDefinition]::new($ExtensionName)
-        $extension.Resolver = $Resolver
+        $extension.Resolver = $resolverScriptBlock
         $script:Extensions.Add($ExtensionName, $extension)
     }
 }

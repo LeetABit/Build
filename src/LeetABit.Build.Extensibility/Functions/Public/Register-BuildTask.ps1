@@ -129,7 +129,7 @@ function Register-BuildTask {
         $Jobs | Where-Object { $_ -is [String] } | ForEach-Object {
             if (-not $extension.Tasks.ContainsKey($_)) {
                 throw $LocalizedData.Error_RegisterBuildTask_Reason -f
-                    ($LocalizedData.Exception_ChildTaskNotFound_ExtensionName_TaskName -f $ExtensionName, $TaskName)
+                    ($LocalizedData.Exception_ChildTaskNotFound_ExtensionName_TaskName -f $ExtensionName, $_)
             }
         }
 

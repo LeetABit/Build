@@ -86,21 +86,19 @@ function Invoke-BuildTaskCore {
                             Invoke-BuildTaskCore -Extension $Extension -TaskName $job -ProjectPaths $ProjectPaths -SourceRoot $SourceRoot -AdditionalArguments $AdditionalArguments -TasksAlreadyRun $TasksAlreadyRun
                         }
                         else {
+                            $scriptBlock = if ($job -is [ScriptBlock]) {
+                                $job
+                            } else {
+                                $job.ScriptBlock
+                            }
+
                             $stepName = ConvertTo-Identifier "$($Extension.Name)_$($task.Name)"
                             Write-Step -StepName $stepName -Message "$($Extension.Name) -> $($task.Name)"
                             $index = 0
                             foreach ($ProjectPath in $ProjectPaths) {
                                 $index = $index + 1
-                                $additionalProjectArguments = @{}
 
-                                if ($AdditionalArguments) {
-                                    foreach ($key in $AdditionalArguments.Keys) {
-                                        $additionalProjectArguments[$key] = $AdditionalArguments[$key]
-                                    }
-                                }
-
-                                $additionalProjectArguments['ProjectPath'] = $ProjectPath
-
+                                LeetABit.Build.Arguments\Set-ProjectPath $ProjectPath
                                 $relativePath = Resolve-RelativePath $ProjectPath $SourceRoot
 
                                 if ($relativePath -ne '.') {
@@ -108,7 +106,7 @@ function Invoke-BuildTaskCore {
                                     Write-Step -StepName $stepName -Message "$relativePath"
                                 }
 
-                                Invoke-ScriptBlock -ScriptBlock $job -ParameterPrefix $Extension.Name -AdditionalArguments $additionalProjectArguments
+                                Invoke-ScriptBlock -ScriptBlock $scriptBlock -ParameterPrefix $Extension.Name -AdditionalArguments $additionalArguments
 
                                 if ($relativePath -ne '.') {
                                     Write-StepFinished

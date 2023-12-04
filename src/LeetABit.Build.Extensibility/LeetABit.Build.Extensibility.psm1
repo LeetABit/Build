@@ -10,23 +10,6 @@ using namespace System.Diagnostics.CodeAnalysis
 
 Set-StrictMode -Version 3.0
 
-$script:Extensions = @{}
-$script:DefaultResolver = {
-    [CmdletBinding(PositionalBinding = $False)]
-    [OutputType([String])]
-    <#
-    .SYNOPSIS
-        Provides a default mechanism of project resolution for build extension.
-    #>
-    param (
-        # Path to the project.
-        [String]
-        $ResolutionRoot
-    )
-
-    $ResolutionRoot
-}
-
 $script:moduleMetadata = Read-ModuleMetadata $MyInvocation
 if ($script:moduleMetadata.Resources) {
     Import-LocalizedData -BindingVariable 'LocalizedData' -FileName $script:moduleMetadata.Resources.Name
@@ -34,6 +17,9 @@ if ($script:moduleMetadata.Resources) {
 
 $script:moduleMetadata.ScriptFiles | ForEach-Object { . $_ }
 Export-ModuleMember -Function $script:moduleMetadata.PublicFunctionNames
+
+$script:Extensions = @{}
+$script:DefaultResolver = (Get-Item function:Resolve-RepositoryRoot).ScriptBlock
 
 <#
 ##  Provides detailed information about the registered extension.

@@ -277,5 +277,3 @@ class ValidatePathAttribute : ValidateArgumentsAttribute
         }
     }
 }
-
-Export-ModuleMember -Function '*' -Variable '*' -Alias '*' -Cmdlet '*'

@@ -40,7 +40,7 @@ function Register-BuildExtension {
                    ValueFromPipelineByPropertyName = $False,
                    ParameterSetName = "Resolver")]
         [ScriptBlock]
-        $Resolver = $DefaultResolver,
+        $Resolver = $script:DefaultResolver,
 
         # Name of the extension for which the registration shall be performed.
         [Parameter(HelpMessage = 'Provide a name for the registered extension.',

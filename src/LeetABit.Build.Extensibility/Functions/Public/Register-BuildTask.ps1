@@ -114,7 +114,7 @@ function Register-BuildTask {
 
         if (-not $script:Extensions.ContainsKey($ExtensionName)) {
             $extension = [ExtensionDefinition]::new($ExtensionName)
-            $extension.Resolver = $DefaultResolver
+            $extension.Resolver = $script:DefaultResolver
             $script:Extensions.Add($ExtensionName, $extension)
         }
         else {

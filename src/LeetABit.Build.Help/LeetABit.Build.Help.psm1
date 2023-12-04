@@ -1,7 +1,8 @@
 #requires -version 6
-using namespace System.Collections
 
 Set-StrictMode -Version 3.0
+
+$script:Regex_ScriptBlockSyntax_FunctionName = '(?<={0})(.+?)(?=\[(-WhatIf|-Confirm|\<CommonParameters\>))'
 
 $script:moduleMetadata = Read-ModuleMetadata $MyInvocation
 if ($script:moduleMetadata.Resources) {
@@ -11,17 +12,11 @@ if ($script:moduleMetadata.Resources) {
 $script:moduleMetadata.ScriptFiles | ForEach-Object { . $_ }
 Export-ModuleMember -Function $script:moduleMetadata.PublicFunctionNames
 
-
-Import-LocalizedData -BindingVariable LocalizedData -FileName LeetABit.Build.Help.Resources.psd1
-
 $MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {
     if (Get-Module 'LeetABit.Build.Extensibility') {
         LeetABit.Build.Extensibility\Unregister-BuildExtension "LeetABit.Build.Help" -ErrorAction SilentlyContinue
     }
 }
-
-$script:Regex_ScriptBlockSyntax_FunctionName = '(?<={0})(.+?)(?=\[(-WhatIf|-Confirm|\<CommonParameters\>))'
-
 
 Register-BuildTask "help" -Jobs {
     <#

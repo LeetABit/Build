@@ -1,4 +1,5 @@
 #requires -version 6
+using namespace System.Management.Automation
 
 Set-StrictMode -Version 3.0
 

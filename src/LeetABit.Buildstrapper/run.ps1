@@ -1,5 +1,6 @@
 #!/usr/bin/env pwsh
 #requires -version 6
+using namespace System.Collections
 
 <#
 .SYNOPSIS

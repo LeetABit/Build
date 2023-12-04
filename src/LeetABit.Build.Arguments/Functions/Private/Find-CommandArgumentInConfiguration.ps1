@@ -11,12 +11,13 @@ function Find-CommandArgumentInConfiguration {
     <#
     .SYNOPSIS
         Examines JSON configuration file for presence of a specified named parameter's value.
+    .PARAMETER ParameterName
+        Name of the parameter.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([Object])]
 
     param (
-        # Name of the parameter.
         [Parameter(HelpMessage = 'Provide parameter name.',
                    Position=0,
                    Mandatory=$True,

@@ -13,6 +13,12 @@ function Resolve-RelativePath {
         Resolves a specified path as a relative path anchored at a specified base path.
     .DESCRIPTION
         The Resolve-RelativePath cmdlet returns a relative path between a specified path and a base path.
+    .PARAMETER Path
+        The path which relative version shall be obtained.
+    .PARAMETER LiteralPath
+        The path which relative version shall be obtained.
+    .PARAMETER Base
+        The base path in which the relative path shall be rooted.
     .EXAMPLE
         PS> Resolve-RelativePath -Path "C:\Directory\Subdirectory\File.txt" -BasePath "C:\Directory\"
 
@@ -23,7 +29,6 @@ function Resolve-RelativePath {
     [OutputType([String])]
 
     param (
-        # The path which relative version shall be obtained.
         [Parameter(HelpMessage = "Provide path to convert.",
                    Position = 0,
                    Mandatory = $True,
@@ -33,7 +38,6 @@ function Resolve-RelativePath {
         [String[]]
         $Path,
 
-        # The path which relative version shall be obtained.
         [Parameter(HelpMessage = "Provide path to convert.",
                    Position = 0,
                    Mandatory = $True,
@@ -43,7 +47,6 @@ function Resolve-RelativePath {
         [String[]]
         $LiteralPath,
 
-        # The base path in which the relative path shall be rooted.
         [Parameter(Position = 1,
                    Mandatory = $True,
                    ValueFromPipeline = $False,

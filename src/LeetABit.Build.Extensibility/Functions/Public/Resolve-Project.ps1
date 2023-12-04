@@ -13,6 +13,12 @@ function Resolve-Project {
         Resolves paths to the projects found in the specified location.
     .DESCRIPTION
         Resolve-Project cmdlet tries to resolve projects inside specified directory using particular specified extension or all registered extensions.
+    .PARAMETER Path
+        Path to location from which the project shall be resolved.
+    .PARAMETER ExtensionName
+        Name of the extension for which the project shall be resolved.
+    .PARAMETER TaskName
+        Name of the task that the extension shall provide. Extensions that do not support this task are not evaluated during the execution.
     .EXAMPLE
         PS> Resolve-Project
 
@@ -42,7 +48,6 @@ function Resolve-Project {
     [OutputType([String[]])]
 
     param (
-        # Path to location from which the project shall be resolved.
         [Parameter(Position = 0,
                    Mandatory = $False,
                    ValueFromPipeline = $False,
@@ -50,7 +55,6 @@ function Resolve-Project {
         [String]
         $Path = (LeetABit.Build.Arguments\Find-CommandArgument 'SourceRoot'),
 
-        # Name of the extension for which the project shall be resolved.
         [Parameter(Position = 1,
                    Mandatory = $False,
                    ValueFromPipeline = $False,
@@ -58,7 +62,6 @@ function Resolve-Project {
         [String]
         $ExtensionName,
 
-        # Name of the task that the extension shall provide. Extensions that do not support this task are not evaluated during the execution.
         [Parameter(Position = 2,
                    Mandatory = $False,
                    ValueFromPipeline = $False,

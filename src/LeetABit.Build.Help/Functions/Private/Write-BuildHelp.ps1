@@ -11,11 +11,14 @@ function Write-BuildHelp {
     <#
     .SYNOPSIS
         Gets help for the build script or one of its targets.
+    .PARAMETER ExtensionTopic
+        Optional name of the build extension for which help shall be obtained.
+    .PARAMETER TaskTopic
+        Optional name of the build task for which help shall be obtained.
     #>
     [CmdletBinding(PositionalBinding = $False)]
 
     param (
-        # Optional name of the build extension for which help shall be obtained.
         [Parameter(Position = 0,
                    Mandatory = $False,
                    ValueFromPipeline = $False,
@@ -23,7 +26,6 @@ function Write-BuildHelp {
         [String]
         $ExtensionTopic,
 
-        # Optional name of the build task for which help shall be obtained.
         [Parameter(Position = 1,
                    Mandatory = $False,
                    ValueFromPipeline = $False,

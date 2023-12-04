@@ -12,12 +12,17 @@ function Convert-DictionaryToHelpObject {
     <#
     .SYNOPSIS
         Converts a hashtable to a PSObject using keys as property names with associated values.
+    .PARAMETER Properties
+        A hashtable with desired object's properties.
+    .PARAMETER HelpObjectName
+        A name of the help object's type that shall be assigned to the object.
+    .PARAMETER HelpView
+        A name of the help object's type suffix that shall be assigned to the object as a secondary type.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([String])]
 
     param (
-        # A hashtable with desired object's properties.
         [Parameter(Position = 0,
                    Mandatory = $True,
                    ValueFromPipeline = $True,
@@ -25,7 +30,6 @@ function Convert-DictionaryToHelpObject {
         [IDictionary]
         $Properties,
 
-        # A name of the help object's type that shall be assigned to the object.
         [Parameter(Position = 1,
                    Mandatory = $True,
                    ValueFromPipeline = $False,
@@ -33,7 +37,6 @@ function Convert-DictionaryToHelpObject {
         [String]
         $HelpObjectName,
 
-        # A name of the help object's type suffix that shall be assigned to the object as a secondary type.
         [Parameter(Position = 2,
                    Mandatory = $True,
                    ValueFromPipeline = $False,

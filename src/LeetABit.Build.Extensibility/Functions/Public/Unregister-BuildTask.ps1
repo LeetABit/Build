@@ -13,6 +13,12 @@ function Unregister-BuildTask {
         Unregisters specified build task.
     .DESCRIPTION
         Unregister-BuildTask cmdlet tries to unregister specified tasks from the specified extension. If the specified extension or task is not registered this cmdlet behaves according to -IgnoreMissing switch.
+    .PARAMETER ExtensionName
+        Name of the extension for which the build task shall be unregistered.
+    .PARAMETER TaskName
+        Name of the tasks that shall be unregistered.
+    .PARAMETER IgnoreMissing
+        Indicates that this cmdlet ignores tasks that are not defined for the specified build extension.
     .EXAMPLE
         PS> Unregister-BuildTask "PowerShell"
 
@@ -27,7 +33,6 @@ function Unregister-BuildTask {
                    ConfirmImpact = 'Low')]
 
     param (
-        # Name of the extension for which the build task shall be unregistered.
         [Parameter(HelpMessage = 'Provide name of the extension which task shall be unregistered.',
                    Position = 0,
                    Mandatory = $True,
@@ -36,7 +41,6 @@ function Unregister-BuildTask {
         [String]
         $ExtensionName,
 
-        # Name of the tasks that shall be unregistered.
         [Parameter(Position = 1,
                    Mandatory = $False,
                    ValueFromPipeline = $False,
@@ -44,7 +48,6 @@ function Unregister-BuildTask {
         [String[]]
         $TaskName,
 
-        # Indicates that this cmdlet ignores tasks that are not defined for the specified build extension.
         [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False)]

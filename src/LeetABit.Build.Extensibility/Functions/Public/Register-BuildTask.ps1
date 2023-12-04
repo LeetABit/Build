@@ -12,7 +12,25 @@ function Register-BuildTask {
     .SYNOPSIS
         Registers a specified build task for the specified build extension.
     .DESCRIPTION
-        Register-BuildTask cmdlet registers specified information about build task for the specified extension. Name of the extension for which the registration is being performed may be inferred from the script block which is a part of task jobs. If no extension name is provided and cmdlet cannot infer it from job script block an error is emitted.
+        Register-BuildTask cmdlet registers specified information about build task for the specified extension. Name of the extension for which the registration is being
+        performed may be inferred from the script block which is a part of task jobs. If no extension name is provided and cmdlet cannot infer it from job script block an error is emitted.
+    .PARAMETER TaskName
+        Name of the task for which the registration shall be performed.
+    .PARAMETER Initialization
+        ScriptBlock that gets called before first task run.
+    .PARAMETER Jobs
+        Defines list of script blocks or names of other tasks that shall be executed in the specified order as a realization of the task being defined.
+    .PARAMETER ExtensionName
+        Name of the extension for which the registration shall be performed.
+    .PARAMETER IsDefault
+        Marks the task being registered as a task that will be executed when no task name for the execution will be specified.
+    .PARAMETER Condition
+        Defines condition that shall be meet to execute the task being defined. This condition may be a script block that will be evaluated during task
+        execution. Parameters for the script block are provided by means of LeetABit.Build.Arguments module. To execute the task the script block need to return a $True value.
+    .PARAMETER PassThru
+        Returns a information about task defined by the cmdlet. By default, this cmdlet does not generate any output.
+    .PARAMETER Force
+        Indicates that this cmdlet overwrites already registered build task.
     .EXAMPLE
         PS> Register-BuildTask "build" ("generate", "compile", "test") -ExtensionName "PowerShell"
 
@@ -38,7 +56,6 @@ function Register-BuildTask {
     [OutputType([TaskDefinition[]])]
 
     param (
-        # Name of the task for which the registration shall be performed.
         [Parameter(HelpMessage = 'Provide name for the task for which the registration shall be performed.',
                    Position = 0,
                    Mandatory = $True,
@@ -47,7 +64,6 @@ function Register-BuildTask {
         [String]
         $TaskName,
 
-        # ScriptBlock that gets called before first task run.
         [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False,
@@ -55,8 +71,6 @@ function Register-BuildTask {
         [Object]
         $Initialization,
 
-
-        # Defines list of script blocks or names of other tasks that shall be executed in the specified order as a realization of the task being defined.
         [Parameter(HelpMessage = 'Provide a collection of jobs for the task.',
                    Position = 1,
                    Mandatory = $True,
@@ -66,7 +80,6 @@ function Register-BuildTask {
         [Object[]]
         $Jobs,
 
-        # Name of the extension for which the registration shall be performed.
         [Parameter(HelpMessage = 'Provide name of the extension for which the registration shall be performed.',
                    Mandatory = $False,
                    ValueFromPipeline = $False,
@@ -74,28 +87,24 @@ function Register-BuildTask {
         [String]
         $ExtensionName,
 
-        # Marks the task being registered as a task that will be executed when no task name for the execution will be specified.
         [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False)]
         [Switch]
         $IsDefault,
 
-        # Defines condition that shall be meet to execute the task being defined. This condition may be a script block that will be evaluated during task execution. Parameters for the script block are provided by means of LeetABit.Build.Arguments module. To execute the task the script block need to return a $True value.
         [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False)]
         [Object]
         $Condition = $True,
 
-        # Returns a information about task defined by the cmdlet. By default, this cmdlet does not generate any output.
         [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False)]
         [Switch]
         $PassThru,
 
-        # Indicates that this cmdlet overwrites already registered build task.
         [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False)]

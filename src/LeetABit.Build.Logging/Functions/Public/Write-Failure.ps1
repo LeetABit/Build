@@ -13,6 +13,8 @@ function Write-Failure {
         Writes a message that informs about build failure.
     .DESCRIPTION
         Write-Failure cmdlet writes a failure message to the information stream. It also emits a message in error stream if $ErrorActionPreference is set to 'Stop'.
+    .PARAMETER Message
+        Build failure message.
     .EXAMPLE
         Write-Failure -Message "Could not execute build step." -ErrorAction 'Stop'
 
@@ -27,7 +29,6 @@ function Write-Failure {
     [CmdletBinding(PositionalBinding = $False)]
 
     param (
-        # Build failure message.
         [Parameter(HelpMessage = 'Enter message that describes the failure.',
                    Position = 0,
                    Mandatory = $True,

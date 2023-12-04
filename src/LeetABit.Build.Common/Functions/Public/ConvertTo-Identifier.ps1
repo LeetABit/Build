@@ -14,6 +14,8 @@ function ConvertTo-Identifier {
     .DESCRIPTION
         ConvertTo-Identifier cmdlet creates an identifier from the specified string value by replacing all characters that are not letter, digit or underscore with underscore.
         When the value does not start with letter or underscore this cmdlet inserts an underscore character at the beginning of the result.
+    .PARAMETER Value
+        String to convert.
     .EXAMPLE
         PS> ConvertTo-Identifier ""
 
@@ -27,7 +29,6 @@ function ConvertTo-Identifier {
     [OutputType([String])]
 
     param (
-        # String to convert.
         [Parameter(HelpMessage = 'Provide a string to convert.',
                    Position = 0,
                    Mandatory = $True,

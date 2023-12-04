@@ -16,6 +16,16 @@ function Build-Repository {
         Performs a build operation on all projects located in the specified repository.
     .DESCRIPTION
         Build-Repository cmdlet runs project resolution for all registered extensions against specified repository root directory. And then run specified task for all projects and its extensions.
+    .PARAMETER RepositoryRoot
+        The path to the repository root folder.
+    .PARAMETER TaskName
+        Name of the build task to invoke.
+    .PARAMETER ExtensionModule
+        Extension modules to import.
+    .PARAMETER NamedArguments
+        Dictionary of buildstrapper arguments (including dynamic ones) that have been successfully bound.
+    .PARAMETER UnknownArguments
+        Arguments to be passed to the target.
     .EXAMPLE
         PS> Build-Repository '~/repository' 'help'
 
@@ -32,7 +42,6 @@ function Build-Repository {
     [CmdletBinding(PositionalBinding = $False)]
 
     param (
-        # The path to the repository root folder.
         [Parameter(HelpMessage = "Provide path to the repository's root directory.",
                    Position = 0,
                    Mandatory = $True,
@@ -42,7 +51,6 @@ function Build-Repository {
         [String]
         $RepositoryRoot,
 
-        # Name of the build task to invoke.
         [Parameter(Position = 1,
                    Mandatory = $True,
                    ValueFromPipeline = $False,
@@ -53,7 +61,6 @@ function Build-Repository {
         [String[]]
         $TaskName,
 
-        # Extension modules to import.
         [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $True)]
@@ -62,14 +69,12 @@ function Build-Repository {
         [Object[]]
         $ExtensionModule,
 
-        # Dictionary of buildstrapper arguments (including dynamic ones) that have been successfully bound.
         [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $True)]
         [IDictionary]
         $NamedArguments,
 
-        # Arguments to be passed to the target.
         [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $True)]

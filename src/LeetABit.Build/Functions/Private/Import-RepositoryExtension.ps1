@@ -11,11 +11,12 @@ function Import-RepositoryExtension {
     <#
     .SYNOPSIS
         Executes LeetABit.Build.Repository scripts from the specified repository.
+    .PARAMETER RepositoryRoot
+        The directory to the repository's root directory path.
     #>
     [CmdletBinding(PositionalBinding = $False)]
 
     param (
-        # The directory to the repository's root directory path.
         [Parameter(HelpMessage = "Provide path to the repository's root directory.",
                    Position = 0,
                    Mandatory = $True,

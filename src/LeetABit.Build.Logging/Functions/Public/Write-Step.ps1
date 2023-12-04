@@ -13,6 +13,10 @@ function Write-Step {
         Writes a specified build step message to the information stream with step name folding when run in Travis CI environment.
     .DESCRIPTION
         Write-Step cmdlet writes a message about a new build step that is about to be started. The message is written to the information stream. This cmdlet also emits a log folding preamble when run in Travis CI environment.
+    .PARAMETER StepName
+        Name of the step that shall be written as a message preamble.
+    .PARAMETER Message
+        Step information message to be written by the host.
     .EXAMPLE
         Write-Step -StepName "prerequisites" -Message "Installing prerequisites."
 
@@ -23,7 +27,6 @@ function Write-Step {
     [CmdletBinding(PositionalBinding = $False)]
 
     param (
-        # Name of the step that shall be written as a message preamble.
         [Parameter(HelpMessage = 'Enter a name of the step being reported.',
                    Position = 0,
                    Mandatory = $True,
@@ -33,7 +36,6 @@ function Write-Step {
         [String]
         $StepName,
 
-        # Step information message to be written by the host.
         [Parameter(HelpMessage = 'Enter a step message.',
                    Position = 1,
                    Mandatory = $True,

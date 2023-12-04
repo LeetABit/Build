@@ -13,6 +13,12 @@ function Add-CommandArgument {
         Adds a value for the specified parameter.
     .DESCRIPTION
         Add-CommandArgument cmdlet stores a specified value for the parameter in internal module state for later usage. This value may be further selected by Find-CommandArgument or Select-CommandArgumentSet cmdlets.
+    .PARAMETER ParameterName
+        Name of the parameter which value shall be updated.
+    .PARAMETER ParameterValue
+        A new value for the parameter.
+    .PARAMETER Force
+        Indicates that this cmdlet overwrites value already set to the parameter.
     .EXAMPLE
         PS> Add-CommandArgument -ParameterName "TaskName" -ParameterValue "help"
 
@@ -29,7 +35,6 @@ function Add-CommandArgument {
     [CmdletBinding(PositionalBinding = $False)]
 
     param (
-        # Name of the parameter which value shall be updated.
         [Parameter(HelpMessage = 'Provide name of the parameter which value shall be updated',
                    Position = 0,
                    Mandatory = $True,
@@ -39,7 +44,6 @@ function Add-CommandArgument {
         [String]
         $ParameterName,
 
-        # A new value for the parameter.
         [Parameter(HelpMessage = 'Provide a new value for the parameter.',
                    Position=1,
                    Mandatory=$True,
@@ -49,7 +53,6 @@ function Add-CommandArgument {
         [Object]
         $ParameterValue,
 
-        # Indicates that this cmdlet overwrites value already set to the parameter.
         [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False)]

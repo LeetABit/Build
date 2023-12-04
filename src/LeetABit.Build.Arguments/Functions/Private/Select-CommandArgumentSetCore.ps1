@@ -11,12 +11,17 @@ function Select-CommandArgumentSetCore {
     <#
     .SYNOPSIS
         Selects a collection of arguments that match specified command parameter set.
+    .PARAMETER Parameters
+        Collection of the parameters for which a matching arguments shall be selected.
+    .PARAMETER ExtensionName
+        Prefix for the parameters name that shall be used.
+    .PARAMETER AdditionalArguments
+        Dictionary of additional arguments that shall be used as a source of parameter's values.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([IDictionary],[Object[]])]
 
     param (
-        # Collection of the parameters for which a matching arguments shall be selected.
         [Parameter(HelpMessage = 'Provide collection of the parameters for which a matching arguments shall be selected.',
                    Position = 0,
                    Mandatory = $True,
@@ -27,7 +32,6 @@ function Select-CommandArgumentSetCore {
         [CommandParameterInfo[]]
         $Parameters,
 
-        # Prefix for the parameters name that shall be used.
         [Parameter(HelpMessage = 'Provide prefix for the parameters name that shall be used.',
                    Position = 1,
                    Mandatory = $True,
@@ -36,7 +40,6 @@ function Select-CommandArgumentSetCore {
         [String]
         $ExtensionName,
 
-        # Dictionary of additional arguments that shall be used as a source of parameter's values.
         [Parameter(HelpMessage = "Provide dictionary of additional arguments that shall be used as a source of parameter's values.",
                    Position = 2,
                    Mandatory = $False,

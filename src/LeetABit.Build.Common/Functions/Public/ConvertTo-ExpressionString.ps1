@@ -18,6 +18,10 @@ function ConvertTo-ExpressionString {
         the field and properties values are converted to property values, and the methods are removed. Objects that implements IEnumerable
         are converted to array literal expression format.
         Each line of the resulting string is indented by the specified number of spaces.
+    .PARAMETER Obj
+        Object to convert.
+    .PARAMETER IndentationLevel
+        Number of spaces to perpend to each line of the resulting string.
     .EXAMPLE
         ConvertTo-ExpressionString -Obj $Null, $True, $False
         $Null
@@ -52,7 +56,6 @@ function ConvertTo-ExpressionString {
     [OutputType([String[]])]
 
     param (
-        # Object to convert.
         [Parameter(HelpMessage = 'Provide an object to convert.',
                    Position = 0,
                    Mandatory = $True,
@@ -63,7 +66,6 @@ function ConvertTo-ExpressionString {
         [Object]
         $Obj,
 
-        # Number of spaces to perpend to each line of the resulting string.
         [Parameter(HelpMessage = 'Provide an indentation level.',
                    Position = 1,
                    Mandatory = $False,

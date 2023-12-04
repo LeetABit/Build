@@ -14,6 +14,8 @@ function Write-Invocation {
         Writes a verbose message about the specified invocation.
     .DESCRIPTION
         Write-Invocation cmdlet writes a message to a verbose stream that contains information about executing function invocation.
+    .PARAMETER Invocation
+        Invocation which information shall be written.
     .EXAMPLE
         Write-Invocation $MyInvocation
 
@@ -22,7 +24,6 @@ function Write-Invocation {
     [CmdletBinding(PositionalBinding = $False)]
 
     param (
-        # Invocation which information shall be written.
         [Parameter(HelpMessage = "Provide invocation information about the command to write to verbose log.",
                    Position = 0,
                    Mandatory = $True,

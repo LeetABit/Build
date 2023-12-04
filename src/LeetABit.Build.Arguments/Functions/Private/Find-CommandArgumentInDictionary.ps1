@@ -11,12 +11,15 @@ function Find-CommandArgumentInDictionary {
     <#
     .SYNOPSIS
         Examines specified arguments dictionary for presence of a specified named parameter's value.
+    .PARAMETER ParameterName
+        Name of the parameter.
+    .PARAMETER Dictionary
+        A dictionary that holds an arguments to be used as a parameter's value source.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([Object])]
 
     param (
-        # Name of the parameter.
         [Parameter(HelpMessage = 'Provide parameter name.',
                    Position=0,
                    Mandatory=$True,
@@ -25,7 +28,6 @@ function Find-CommandArgumentInDictionary {
         [String]
         $ParameterName,
 
-        # A dictionary that holds an arguments to be used as a parameter's value source.
         [Parameter(Position=2,
                    Mandatory=$False,
                    ValueFromPipeline=$False,

@@ -14,6 +14,10 @@ function Get-BuildHelp {
         Gets help about build scripts usage.
     .DESCRIPTION
         Get-BuildHelp cmdlet provides a concise documentation about each of the loaded extensions and build tasks.
+    .PARAMETER ExtensionTopic
+        Optional name of the build extension for which help shall be obtained.
+    .PARAMETER TaskTopic
+        Optional name of the build task for which help shall be obtained.
     .EXAMPLE
         PC> Get-BuildHelp
 
@@ -34,7 +38,6 @@ function Get-BuildHelp {
     [CmdletBinding(PositionalBinding = $False)]
 
     param (
-        # Optional name of the build extension for which help shall be obtained.
         [Parameter(Position = 0,
                    Mandatory = $False,
                    ValueFromPipeline = $False,
@@ -42,7 +45,6 @@ function Get-BuildHelp {
         [String]
         $ExtensionTopic,
 
-        # Optional name of the build task for which help shall be obtained.
         [Parameter(Position = 1,
                    Mandatory = $False,
                    ValueFromPipeline = $False,

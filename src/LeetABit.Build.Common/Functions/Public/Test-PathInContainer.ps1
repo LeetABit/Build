@@ -13,6 +13,12 @@ function Test-PathInContainer {
         Checks whether the specified path is contained by any of the specified containers.
     .DESCRIPTION
         The Test-PathInContainer cmdlet returns a value for each specified path that indicates whether this path is contained by any of the specified containers.
+    .PARAMETER Path
+        The path which shall be checked.
+    .PARAMETER LiteralPath
+        The path which shall be checked.
+    .PARAMETER Container
+        The path to the container for test.
     .EXAMPLE
         PS> Test-PathInContainer -Path ("C:\Windows\system32", "D:\Repository\temp.file") -Container "C:\Windows"
         True
@@ -25,7 +31,6 @@ function Test-PathInContainer {
     [OutputType([Boolean])]
 
     param(
-        # The path which shall be checked.
         [Parameter(HelpMessage = "Provide path to test.",
                    Position = 0,
                    Mandatory = $True,
@@ -35,7 +40,6 @@ function Test-PathInContainer {
         [String[]]
         $Path,
 
-        # The path which shall be checked.
         [Parameter(HelpMessage = "Provide path to test.",
                    Position = 0,
                    Mandatory = $True,
@@ -45,7 +49,6 @@ function Test-PathInContainer {
         [String[]]
         $LiteralPath,
 
-        # The path to the container for test.
         [Parameter(HelpMessage = "Provide path to the container.",
                    Position = 1,
                    Mandatory = $True,

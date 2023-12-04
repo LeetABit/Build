@@ -11,6 +11,10 @@ function Convert-ArgumentValue {
     <#
     .SYNOPSIS
         Conditionally converts a specified argument to a [Switch] type.
+    .PARAMETER Value
+        Argument to convert.
+    .PARAMETER IsSwitch
+        Indicates whether the argument shall be threated as a value for [Switch] parameter.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([Object[]])]
@@ -20,7 +24,6 @@ function Convert-ArgumentValue {
         'IsSwitch',
         Justification = 'False positive as rule does not scan child scopes: https://github.com/PowerShell/PSScriptAnalyzer/issues/1472')]
     param (
-        # Argument to convert.
         [Parameter(HelpMessage = 'Provide argument value.',
                    Position=0,
                    Mandatory=$True,
@@ -29,7 +32,6 @@ function Convert-ArgumentValue {
         [Object[]]
         $Value,
 
-        # Indicates whether the argument shall be threated as a value for [Switch] parameter.
         [Parameter(Position=1,
                    Mandatory=$False,
                    ValueFromPipeline=$False,

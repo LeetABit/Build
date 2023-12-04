@@ -11,12 +11,13 @@ function Set-ProjectPath {
     <#
     .SYNOPSIS
         Sets path to the currently executing project.
+    .PARAMETER ProjectPath
+        Argument string to convert.
     #>
     [CmdletBinding(PositionalBinding = $False,
                    SupportsShouldProcess = $True)]
 
     param (
-        # Argument string to convert.
         [Parameter(HelpMessage = 'Provide path to the currently executing project.',
                    Position=0,
                    Mandatory=$True,

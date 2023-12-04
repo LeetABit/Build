@@ -18,6 +18,14 @@ function Register-BuildExtension {
         define parameters. Values for the parameters will be provided by the means of `LeetABit.Build.Arguments` module.
         The job of the resolver is to return a path to the project file or directory.
         If no resolver is specified a default resolver will be used that returns path to the repository root.
+    .PARAMETER Resolver
+        ScriptBlock that resolves path to the projects recognized by the specified extension.
+    .PARAMETER ExtensionName
+        Name of the extension for which the registration shall be performed.
+    .PARAMETER BuildInitializer
+        ScriptBlock that gets called at the begining of each repository build.
+    .PARAMETER Force
+        Indicates that this cmdlet overwrites already registered extension removing all registered tasks and resolver.
     .EXAMPLE
         PS> Register-BuildExtension -ExtensionName "PowerShell"
 
@@ -32,7 +40,6 @@ function Register-BuildExtension {
     [CmdletBinding(PositionalBinding = $False)]
 
     param (
-        # ScriptBlock that resolves path to the projects recognized by the specified extension.
         [Parameter(HelpMessage = 'Provide a resolver ScriptBlock.',
                    Position = 0,
                    Mandatory = $False,
@@ -42,7 +49,6 @@ function Register-BuildExtension {
         [ScriptBlock]
         $Resolver = $script:DefaultResolver,
 
-        # Name of the extension for which the registration shall be performed.
         [Parameter(HelpMessage = 'Provide a name for the registered extension.',
                    Position = 0,
                    Mandatory = $True,
@@ -57,12 +63,10 @@ function Register-BuildExtension {
         [String]
         $ExtensionName,
 
-        # ScriptBlock that gets called at the begining of each repository build.
         [Parameter()]
         [Object]
         $BuildInitializer,
 
-        # Indicates that this cmdlet overwrites already registered extension removing all registered tasks and resolver.
         [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False)]

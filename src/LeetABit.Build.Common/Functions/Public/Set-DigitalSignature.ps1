@@ -13,6 +13,14 @@ function Set-DigitalSignature {
         Sets an Authenticode signature for a specified item.
     .DESCRIPTION
         The Set-DigitalSignature cmdlet adds an Authenticode signature to any file that supports Subject Interface Package (SIP). If there is a signature in the file when this cmdlet runs, that signature is removed.
+    .PARAMETER Path
+        Path to the file that shall be signed.
+    .PARAMETER CertificatePath
+        PowerShell Certificate Store path to the Code Sign certificate.
+    .PARAMETER Certificate
+        Code Sign certificate to be used.
+    .PARAMETER TimestampServer
+        Code Sign Timestamp Server to be used.
     .EXAMPLE
         PS> Set-DigitalSignature -ArtifactPath "C:\artifact.dll" -Certificate $cert
 
@@ -29,7 +37,6 @@ function Set-DigitalSignature {
     [OutputType([System.Management.Automation.Signature])]
 
     param (
-        # Path to the file that shall be signed.
         [Parameter(HelpMessage = 'Provide path to the file that shall be signed.',
                    Position = 0,
                    Mandatory = $True,
@@ -38,7 +45,6 @@ function Set-DigitalSignature {
         [String[]]
         $Path,
 
-        # PowerShell Certificate Store path to the Code Sign certificate.
         [Parameter(HelpMessage = 'Provide path to the Code Sign certificate.',
                    Position = 1,
                    Mandatory = $True,
@@ -48,7 +54,6 @@ function Set-DigitalSignature {
         [String]
         $CertificatePath,
 
-        # Code Sign certificate to be used.
         [Parameter(HelpMessage = 'Provide Code Sign certificate.',
                    Position = 1,
                    Mandatory = $True,
@@ -58,7 +63,6 @@ function Set-DigitalSignature {
         [System.Security.Cryptography.X509Certificates.X509Certificate2]
         $Certificate,
 
-        # Code Sign Timestamp Server to be used.
         [Parameter(Position = 2,
                    Mandatory = $False,
                    ValueFromPipeline = $False,

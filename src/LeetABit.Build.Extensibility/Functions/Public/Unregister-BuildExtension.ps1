@@ -13,6 +13,10 @@ function Unregister-BuildExtension {
         Unregisters specified build extension.
     .DESCRIPTION
         Unregister-BuildExtension removes all registered information for a specified extension name. If the specified extension is not registered this cmdlet behaves according to -IgnoreMissing switch.
+    .PARAMETER ExtensionName
+        Name of the extension that shall be unregistered.
+    .PARAMETER IgnoreMissing
+        Indicates that this cmdlet ignores build extensions that are not registered.
     .EXAMPLE
         PS> Unregister-BuildExtension "PowerShell"
 
@@ -31,7 +35,6 @@ function Unregister-BuildExtension {
         'IgnoreMissing',
         Justification = 'False positive as rule does not scan child scopes: https://github.com/PowerShell/PSScriptAnalyzer/issues/1472')]
     param (
-        # Name of the extension that shall be unregistered.
         [Parameter(HelpMessage = 'Provide name of the extension that shall be unregistered.',
                    Position = 0,
                    Mandatory = $True,
@@ -40,7 +43,6 @@ function Unregister-BuildExtension {
         [String[]]
         $ExtensionName,
 
-        # Indicates that this cmdlet ignores build extensions that are not registered.
         [SuppressMessageAttribute(
             'PSReviewUnusedParameter',
             'ReplaceWithParameterName',

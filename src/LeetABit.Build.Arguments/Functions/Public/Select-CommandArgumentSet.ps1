@@ -17,6 +17,16 @@ function Select-CommandArgumentSet {
         2. Arguments provided via Set-CommandArgumentSet and Add-CommandArgument cmdlets.
         3. Values stored in 'LeetABit.Build.json' file located in the repository root directory provided via Set-CommandArgumentSet cmdlet or on of its subdirectories.
         4. Environment variables.
+    .PARAMETER Command
+        Command for which a matching arguments shall be selected.
+    .PARAMETER ScriptBlock
+        Script block for which a matching arguments shall be selected.
+    .PARAMETER ParameterSets
+        Collection of the parameter sets for which a matching arguments shall be selected.
+    .PARAMETER ExtensionName
+        Name of the build extension for which the arguments shall be selected.
+    .PARAMETER AdditionalArguments
+        Dictionary of additional arguments that shall be used as a source of parameter's values.
     .EXAMPLE
         PS> Select-CommandArgumentSet -Command (Get-Command LeetABit.Build.PowerShell\Deploy-Project)
 
@@ -42,7 +52,6 @@ function Select-CommandArgumentSet {
     [OutputType([Object[]])]
 
     param (
-        # Command for which a matching arguments shall be selected.
         [Parameter(HelpMessage = 'Provide command info object for which arguments shall be selected.',
                    Position = 0,
                    Mandatory = $True,
@@ -52,7 +61,6 @@ function Select-CommandArgumentSet {
         [System.Management.Automation.CommandInfo]
         $Command,
 
-        # Script block for which a matching arguments shall be selected.
         [Parameter(HelpMessage = 'Provide script block object for which arguments shall be selected.',
                    Position = 0,
                    Mandatory = $True,
@@ -62,7 +70,6 @@ function Select-CommandArgumentSet {
         [System.Management.Automation.ScriptBlock]
         $ScriptBlock,
 
-        # Collection of the parameter sets for which a matching arguments shall be selected.
         [Parameter(Position = 0,
                    Mandatory = $False,
                    ValueFromPipeline = $True,
@@ -71,7 +78,6 @@ function Select-CommandArgumentSet {
         [CommandParameterSetInfo[]]
         $ParameterSets,
 
-        # Name of the build extension for which the arguments shall be selected.
         [Parameter(Position = 1,
                    Mandatory = $False,
                    ValueFromPipeline = $False,
@@ -90,7 +96,6 @@ function Select-CommandArgumentSet {
         [String]
         $ExtensionName,
 
-        # Dictionary of additional arguments that shall be used as a source of parameter's values.
         [Parameter(Position = 2,
                    Mandatory = $False,
                    ValueFromPipeline = $False,

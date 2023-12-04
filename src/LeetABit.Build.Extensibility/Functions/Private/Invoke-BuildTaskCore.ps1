@@ -12,11 +12,22 @@ function Invoke-BuildTaskCore {
     <#
     .SYNOPSIS
         Implements build task invocation.
+    .PARAMETER Extension
+        Extension which defines the task.
+    .PARAMETER TaskName
+        Name of the tasks to invoke.
+    .PARAMETER ProjectPaths
+        Path to the project on which the task shall invoked.
+    .PARAMETER SourceRoot
+        Path to the repository's source directory.
+    .PARAMETER AdditionalArguments
+        Dictionary with additional arguments that may be used by the task implementation.
+    .PARAMETER TasksAlreadyRun
+        Collection of the task names that has already been run.
     #>
     [CmdletBinding(PositionalBinding = $False)]
 
     param (
-        # Extension which defines the task.
         [Parameter(HelpMessage = "Provide build extension from which the task shall be executed.",
                    Position = 0,
                    Mandatory = $True,
@@ -25,7 +36,6 @@ function Invoke-BuildTaskCore {
         [ExtensionDefinition]
         $Extension,
 
-        # Name of the tasks to invoke.
         [Parameter(HelpMessage = "Provide name of the build tasks to be executed.",
                    Position = 1,
                    Mandatory = $True,
@@ -34,7 +44,6 @@ function Invoke-BuildTaskCore {
         [String[]]
         $TaskName,
 
-        # Path to the project on which the task shall invoked.
         [Parameter(HelpMessage = "Provide path to the project on which the task shall invoked.",
                    Position = 2,
                    Mandatory = $True,
@@ -43,7 +52,6 @@ function Invoke-BuildTaskCore {
         [String[]]
         $ProjectPaths,
 
-        # PAth to the repository's source directory.
         [Parameter(HelpMessage = "Provide path to the project on which the task shall invoked.",
                    Position = 3,
                    Mandatory = $True,
@@ -52,7 +60,6 @@ function Invoke-BuildTaskCore {
         [String]
         $SourceRoot,
 
-        # Dictionary with additional arguments that may be used by the task implementation.
         [Parameter(HelpMessage = "Provide path to the project on which the task shall invoked.",
                    Position = 4,
                    Mandatory = $True,
@@ -62,7 +69,6 @@ function Invoke-BuildTaskCore {
         [IDictionary]
         $AdditionalArguments,
 
-        # Collection of the task names that has already been run.
         [Parameter(Position = 5,
                    Mandatory = $False,
                    ValueFromPipeline = $False,

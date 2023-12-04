@@ -13,6 +13,16 @@ function Invoke-BuildTask {
         Invokes a specified build task on the specified project.
     .DESCRIPTION
         Invoke-BuildTask cmdlet executes a specified extension's task against specified project.
+    .PARAMETER ExtensionName
+        Name of the extension which defines the task.
+    .PARAMETER TaskName
+        Name of the tasks to invoke.
+    .PARAMETER ProjectPath
+        Path to the project on which the task shall invoked.
+    .PARAMETER SourceRoot
+        Path to the repository's source directory.
+    .PARAMETER ArgumentList
+        Collection with additional arguments that may be used by the task implementation.
     .EXAMPLE
         PS> Invoke-BuildTask "PowerShell" "test"
 
@@ -28,7 +38,6 @@ function Invoke-BuildTask {
     [OutputType([Object])]
 
     param (
-        # Name of the extension which defines the task.
         [Parameter(HelpMessage = "Provide name of the build extension from which the task shall be executed.",
                    Position = 0,
                    Mandatory = $True,
@@ -37,7 +46,6 @@ function Invoke-BuildTask {
         [String]
         $ExtensionName,
 
-        # Name of the tasks to invoke.
         [Parameter(HelpMessage = "Provide name of the build tasks to be executed.",
                    Position = 1,
                    Mandatory = $True,
@@ -48,7 +56,6 @@ function Invoke-BuildTask {
         [String[]]
         $TaskName,
 
-        # Path to the project on which the task shall invoked.
         [Parameter(Position = 2,
                    Mandatory = $False,
                    ValueFromPipeline = $False,
@@ -56,7 +63,6 @@ function Invoke-BuildTask {
         [String[]]
         $ProjectPath,
 
-        # Path to the repository's source directory.
         [Parameter(Position = 3,
                    Mandatory = $False,
                    ValueFromPipeline = $False,
@@ -64,7 +70,6 @@ function Invoke-BuildTask {
         [String]
         $SourceRoot,
 
-        # Collection with additional arguments that may be used by the task implementation.
         [Parameter(Position = 4,
                    Mandatory = $False,
                    ValueFromPipeline = $True,

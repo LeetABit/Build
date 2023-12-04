@@ -12,7 +12,11 @@ function Write-Modification {
     .SYNOPSIS
         Writes a message that informs about state change in the current system.
     .DESCRIPTION
-        Write-Modification cmdlet writes a message that informs the user about a change that is going to be made to the current system. The message is written to the information stream. This cmdlet shall be used to inform the user about any change that is made to the system in order to give an opportunity to manually revert the changes in case of failure.
+        Write-Modification cmdlet writes a message that informs the user about a change that is going to be made to the current system.
+        The message is written to the information stream. This cmdlet shall be used to inform the user about any change that is made
+        to the system in order to give an opportunity to manually revert the changes in case of failure.
+    .PARAMETER Message
+        Modification message to be written by the host.
     .EXAMPLE
         Write-Modification "Downloading 'archive.zip' file to the repository directory."
 
@@ -21,7 +25,6 @@ function Write-Modification {
     [CmdletBinding(PositionalBinding = $False)]
 
     param (
-        # Modification message to be written by the host.
         [Parameter(HelpMessage = 'Enter a diagnostic message.',
                    Position = 0,
                    Mandatory = $True,

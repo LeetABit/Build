@@ -13,6 +13,12 @@ function Set-CommandArgumentSet {
         Sets a collection of arguments that shall be used for command execution.
     .DESCRIPTION
         Set-CommandArgumentSet cmdlet clears all arguments previously set and stores a new values for the parameters in internal module state for later usage. These values may be further selected by Find-CommandArgument or Select-CommandArgumentSet cmdlets.
+    .PARAMETER RepositoryRoot
+        Location of the repository on which te command will be executed.
+    .PARAMETER NamedArguments
+        Dictionary of buildstrapper parameters (including dynamic ones) that have been successfully bound.
+    .PARAMETER UnknownArguments
+        Collection of other arguments passed.
     .EXAMPLE
         PS> Set-CommandArgumentSet -RepositoryRoot "." -NamedArguments @{ "TaskName" = "help" } -UnknownArguments $args
 
@@ -27,7 +33,6 @@ function Set-CommandArgumentSet {
                    ConfirmImpact = 'Low')]
 
     param (
-        # Location of the repository on which te command will be executed.
         [Parameter(HelpMessage = 'Provide path to the root folder of the repository for which the command will be executed.',
                    Position=0,
                    Mandatory=$True,
@@ -37,7 +42,6 @@ function Set-CommandArgumentSet {
         [String]
         $RepositoryRoot,
 
-        # Dictionary of buildstrapper parameters (including dynamic ones) that have been successfully bound.
         [Parameter(Position=1,
                    Mandatory=$False,
                    ValueFromPipeline=$False,
@@ -45,7 +49,6 @@ function Set-CommandArgumentSet {
         [IDictionary]
         $NamedArguments,
 
-        # Collection of other arguments passed.
         [Parameter(Position=2,
                    Mandatory=$False,
                    ValueFromPipeline=$False,

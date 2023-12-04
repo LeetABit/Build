@@ -17,6 +17,12 @@ function Import-CallerPreference {
         obtained through the $PSCmdlet variable in Advanced Functions. This function is a helper function
         for any script module Advanced Function; by passing in the values of $PSCmdlet and
         $ExecutionContext.SessionState, Import-CallerPreference will set the caller's preference variables locally.
+    .PARAMETER Cmdlet
+        The $PSCmdlet object from a script module Advanced Function.
+    .PARAMETER SessionState
+        The $ExecutionContext.SessionState object from a script module Advanced Function.
+        This is how the Import-CallerPreference function sets variables in its callers' scope,
+        even if that caller is in a different script module.
     .EXAMPLE
         Import-CallerPreference -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
 
@@ -27,7 +33,6 @@ function Import-CallerPreference {
     [CmdletBinding(PositionalBinding = $False)]
 
     param (
-        # The $PSCmdlet object from a script module Advanced Function.
         [Parameter(HelpMessage = 'Provide an instance of the $PSCmdlet object.',
                    Position = 0,
                    Mandatory = $True,
@@ -36,9 +41,6 @@ function Import-CallerPreference {
         [PSCmdlet]
         $Cmdlet,
 
-        # The $ExecutionContext.SessionState object from a script module Advanced Function.
-        # This is how the Import-CallerPreference function sets variables in its callers' scope,
-        # even if that caller is in a different script module.
         [Parameter(HelpMessage = 'Provide an instance of the $ExecutionContext.SessionState object.',
                    Position = 1,
                    Mandatory = $True,

@@ -12,11 +12,14 @@ function Initialize-WellKnownParameters {
     <#
     .SYNOPSIS
         Initializes a set of well known parameters with its default values.
+    .PARAMETER RepositoryRoot
+        The directory to the repository's root directory path.
+    .PARAMETER ExtensionModule
+        Collection fo extension modules to import.
     #>
     [CmdletBinding(PositionalBinding = $False)]
 
     param (
-        # The directory to the repository's root directory path.
         [Parameter(HelpMessage = "Provide path to the repository's root directory.",
                    Position = 0,
                    Mandatory = $True,
@@ -25,7 +28,6 @@ function Initialize-WellKnownParameters {
         [String]
         $RepositoryRoot,
 
-        # Collection fo extension modules to import.
         [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $False)]

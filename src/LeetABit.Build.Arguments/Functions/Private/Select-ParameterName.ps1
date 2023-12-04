@@ -11,12 +11,13 @@ function Select-ParameterName {
     <#
     .SYNOPSIS
         Obtains a parameter name from the specified argument if it matches an parameter name pattern.
+    .PARAMETER Argument
+        Argument to examine.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([String])]
 
     param (
-        # Argument to examine.
         [Parameter(HelpMessage = "Provide value of the command's argument.",
                    Position=0,
                    Mandatory=$True,

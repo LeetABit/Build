@@ -13,6 +13,12 @@ function Write-Message {
         Writes a specified message string to the information stream with optional preamble and ANSI color escape sequence.
     .DESCRIPTION
         Write-Message cmdlet writes a message to the information stream. An optional preamble is also written on the first line before the actual message. Caller may also specify a color of the message using one of the [System.ConsoleColor] members.
+    .PARAMETER Message
+        Message to be written by the host.
+    .PARAMETER Preamble
+        Additional control text to be used for the message.
+    .PARAMETER Color
+        Color for the message.
     .EXAMPLE
         Write-Message -Message "Working on updates..." -Preamble "{step:updates}" -Color "Red"
 
@@ -26,7 +32,6 @@ function Write-Message {
     #>
 
     param (
-        # Message to be written by the host.
         [Parameter(Position = 0,
                    Mandatory = $False,
                    ValueFromPipeline = $True,
@@ -34,14 +39,12 @@ function Write-Message {
         [String[]]
         $Message = @(),
 
-        # Additional control text to be used for the message.
         [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $True)]
         [String]
         $Preamble = '',
 
-        # Color for the message.
         [Parameter(Mandatory = $False,
                    ValueFromPipeline = $False,
                    ValueFromPipelineByPropertyName = $True)]

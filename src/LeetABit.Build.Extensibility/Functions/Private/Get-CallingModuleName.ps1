@@ -11,11 +11,12 @@ function Get-CallingModuleName {
     <#
     .SYNOPSIS
         Gets the name of the module in which the specified script blocks are defined or the nearest module on the call stack.
+    .PARAMETER Scripts
+        Name of the extension for which the project resolver shall be unregistered.
     #>
     [CmdletBinding(PositionalBinding = $False)]
 
     param (
-        # Name of the extension for which the project resolver shall be unregistered.
         [Parameter(Position = 0,
                    Mandatory = $False,
                    ValueFromPipeline = $True,

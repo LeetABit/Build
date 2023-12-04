@@ -15,6 +15,22 @@ using namespace System.Collections
     The script may be instructed in two ways:
     First one by specifying version of the required LeetABit.Build module. This orders this script to download requested version of LeetABit.Build module from available PSRepositories when it is missing in the system.
     Second one by providing path to the directory that contains required LeetABit.Build module files. This path will be added to process $env:PSModulePath variable if not already present there.
+.PARAMETER TaskName
+    Name of the build task to invoke.
+.PARAMETER ToolsetVersion
+    Version of the LeetABit.Build tools to use. If not specified the current script will try to read it from 'LeetABit.Build.json' file.
+.PARAMETER ToolsetLocation
+    Location of a local LeetABit.Build version to use for the build.
+.PARAMETER RepositoryRoot
+    The path to the project's repository root directory. If not specified the current script root directory will be used.
+.PARAMETER LogFilePath
+    Path to the build log file.
+.PARAMETER PreservePreferences
+    Indicates whether the buildstrapper script shall not modify preference variables.
+.PARAMETER UnloadModules
+    Indicates whether the buildstrapper script shall unload all LeetABit.Build modules before importing them.
+.PARAMETER Arguments
+    Arguments to be passed to the LeetABit.Build toolset.
 .EXAMPLE
     PS > ./run.ps1 help
 
@@ -68,7 +84,6 @@ using namespace System.Management.Automation
                PositionalBinding = $False,
                DefaultParameterSetName = 'Local')]
 Param (
-    # Name of the build task to invoke.
     [Parameter(Position = 0,
                Mandatory = $False,
                ValueFromPipeline = $True,
@@ -78,7 +93,6 @@ Param (
     [String[]]
     $TaskName,
 
-    # Version of the LeetABit.Build tools to use. If not specified the current script will try to read it from 'LeetABit.Build.json' file.
     [Parameter(HelpMessage = 'Enter version of the LeetABit.Build to be used to run build scripts.',
                ParameterSetName = 'Remote',
                Mandatory = $True,
@@ -88,7 +102,6 @@ Param (
     [String]
     $ToolsetVersion,
 
-    # Location of a local LeetABit.Build version to use for the build.
     [Parameter(HelpMessage = 'Enter path to a LeetABit.Build directory to be used to run build scripts.',
                ParameterSetName = 'Local',
                Mandatory = $False,
@@ -98,7 +111,6 @@ Param (
     [String]
     $ToolsetLocation,
 
-    # The path to the project's repository root directory. If not specified the current script root directory will be used.
     [Parameter(Mandatory = $False,
                ValueFromPipeline = $False,
                ValueFromPipelineByPropertyName = $False)]
@@ -106,7 +118,6 @@ Param (
     [String]
     $RepositoryRoot = $PSScriptRoot,
 
-    # Path to the build log file.
     [Parameter(Mandatory = $False,
                ValueFromPipeline = $False,
                ValueFromPipelineByPropertyName = $False)]
@@ -115,21 +126,18 @@ Param (
     [String]
     $LogFilePath = 'LeetABit.Build.log',
 
-    # Indicates whether the buildstrapper script shall not modify preference variables.
     [Parameter(Mandatory = $False,
                ValueFromPipeline = $False,
                ValueFromPipelineByPropertyName = $False)]
     [Switch]
     $PreservePreferences,
 
-    # Indicates whether the buildstrapper script shall unload all LeetABit.Build modules before importing them.
     [Parameter(Mandatory = $False,
                ValueFromPipeline = $False,
                ValueFromPipelineByPropertyName = $False)]
     [Switch]
     $UnloadModules,
 
-    # Arguments to be passed to the LeetABit.Build toolset.
     [Parameter(Mandatory = $False,
                ValueFromPipeline = $False,
                ValueFromPipelineByPropertyName = $True,
@@ -160,10 +168,11 @@ DynamicParam {
         <#
         .SYNOPSIS
             Reads a script configuration values from LeetABit.Build.json configuration file.
+        .PARAMETER RepositoryRoot
+            The path to the project's repository root directory. If not specified the current script root directory will be used.
         #>
 
         Param (
-            # The path to the project's repository root directory. If not specified the current script root directory will be used.
             [String]
             $RepositoryRoot = $PSScriptRoot
         )
@@ -197,11 +206,12 @@ DynamicParam {
         <#
         .SYNOPSIS
             Converts an input object to a HAshtable.
+        .PARAMETER InputObject
+            Object to convert.
         #>
         [CmdletBinding(PositionalBinding = $False)]
         [OutputType([Hashtable])]
         param (
-            # Object to convert.
             [Parameter(Position = 0,
                        Mandatory = $False,
                        ValueFromPipeline = $True,
@@ -293,10 +303,11 @@ DynamicParam {
         <#
         .SYNOPSIS
             Imports LeetABit.Build modules.
+        .PARAMETER UnloadModules
+            Indicates whether the buildstrapper script shall unload all LeetABit.Build modules before importing them.
         #>
 
         param (
-            # Indicates whether the buildstrapper script shall unload all LeetABit.Build modules before importing them.
             [Parameter(Mandatory = $False,
                        ValueFromPipeline = $False,
                        ValueFromPipelineByPropertyName = $False)]
@@ -318,14 +329,16 @@ DynamicParam {
         <#
         .SYNOPSIS
             Joins a specified directory and a $Path variable if it does not contain the directory yet.
+        .PARAMETER Directory
+            A directory to be added to the $Path.
+        .PARAMETER Path
+            A value of the path set to which the directory shall be added.
         #>
 
         param (
-            # A directory to be added to the $Path.
             [String]
             $Directory,
 
-            # A value of the path set to which the directory shall be added.
             [String]
             $Path
         )
@@ -355,14 +368,16 @@ DynamicParam {
         <#
         .SYNOPSIS
             Gets a value for the specified script's parameter if not specified via command line using environment variables or LeetABit.Build.json configuration file.
+        .PARAMETER ParameterName
+            Name of the script's parameter which value shall be set.
+        .PARAMETER ConfigurationJson
+            Custom PowerShell object with JSON configuration.
         #>
 
         param (
-            # Name of the script's parameter which value shall be set.
             [String]
             $ParameterName,
 
-            # Custom PowerShell object with JSON configuration.
             [PSCustomObject]
             $ConfigurationJson
         )
@@ -402,11 +417,12 @@ DynamicParam {
         <#
         .SYNOPSIS
             Executes LeetABit.Build.Repository scripts from the specified repository.
+        .PARAMETER RepositoryRoot
+            The directory to the repository's root directory path.
         #>
         [CmdletBinding(PositionalBinding = $False)]
 
         param (
-            # The directory to the repository's root directory path.
             [Parameter(HelpMessage = "Provide path to the repository's root directory.",
                        Position = 0,
                        Mandatory = $True,
@@ -497,6 +513,12 @@ Begin {
         <#
         .SYNOPSIS
             Sets global preference variables to its local values to propagate them in module functions.
+        .PARAMETER PreservePreferences
+            Indicates whether the current preference variables shall be preserved by this function. If the value is set to $True this method is a no-op.
+        .PARAMETER OverrideErrorAction
+            Indicates whether the Error action preference variable shall be set to 'Stop'.
+        .PARAMETER OverrideInformationAction
+            Indicates whether the Information action preference variable shall be set to 'Continue'.
         #>
         [CmdletBinding(PositionalBinding = $False,
                        SupportsShouldProcess = $True,
@@ -539,10 +561,11 @@ Begin {
         <#
         .SYNOPSIS
             Writes a verbose message about the specified invocation.
+        .PARAMETER Invocation
+            Invocation which information shall be written.
         #>
 
         param (
-            # Invocation which information shall be written.
             [InvocationInfo]
             $Invocation
         )

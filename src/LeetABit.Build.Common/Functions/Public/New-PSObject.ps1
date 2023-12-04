@@ -14,6 +14,10 @@ function New-PSObject {
         Creates an instance of a System.Management.Automation.PSObject object.
     .DESCRIPTION
         The New-PSObject cmdlet creates an instance of a System.Management.Automation.PSObject object.
+    .PARAMETER TypeName
+        Specifies a custom type name for the object.
+    .PARAMETER Property
+        Sets property values and invokes methods of the new object.
     .EXAMPLE
         New-PSObject -TypeName "CustomType" -Property @{InstanceName = "Sample instance"}
 
@@ -25,7 +29,6 @@ function New-PSObject {
     [OutputType([PSObject])]
 
     param (
-        # Specifies a custom type name for the object.
         [Parameter(Position = 0,
                    Mandatory = $False,
                    ValueFromPipeline = $False,
@@ -33,7 +36,6 @@ function New-PSObject {
         [String[]]
         $TypeName,
 
-        # Sets property values and invokes methods of the new object.
         [Parameter(Position = 1,
                    Mandatory = $False,
                    ValueFromPipeline = $True,

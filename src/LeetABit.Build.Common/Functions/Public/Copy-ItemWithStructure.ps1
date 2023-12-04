@@ -13,6 +13,14 @@ function Copy-ItemWithStructure {
         Copies specified item to a destination directory with the base subdirectory structure.
     .DESCRIPTION
         Copy-ItemWithStructure cmdlet copies specified item to the destination location. Copied items are being stored inside a subdirectory structure that reflects structure between source files and source base directory.
+    .PARAMETER Path
+        Path to normalize.
+    .PARAMETER LiteralPath
+        Path to normalize.
+    .PARAMETER Base
+        Path to the base source directory from which the subdirectory evaluation shall begin.
+    .PARAMETER Destination
+        Path to the destination folder to which the files shall be copied.
     .EXAMPLE
         PS> Copy-ItemWithStructure -SourceBaseDirectory "C:\BaseDirectory" -SourceFiles "Subdirectory\File.txt" -DestinationDirectory "C:\DestinationDirectory"
 
@@ -28,7 +36,6 @@ function Copy-ItemWithStructure {
         'Destination',
         Justification = 'False positive as rule does not scan child scopes: https://github.com/PowerShell/PSScriptAnalyzer/issues/1472')]
     param (
-        # Path to normalize.
         [Parameter(HelpMessage = 'Provide a path to an item to copy.',
                    Position = 0,
                    Mandatory = $True,
@@ -38,7 +45,6 @@ function Copy-ItemWithStructure {
         [String[]]
         $Path,
 
-        # Path to normalize.
         [Parameter(HelpMessage = 'Provide a path to an item to copy.',
                    Position = 0,
                    Mandatory = $True,
@@ -48,7 +54,6 @@ function Copy-ItemWithStructure {
         [String[]]
         $LiteralPath,
 
-        # Path to the base source directory from which the subdirectory evaluation shall begin.
         [Parameter(HelpMessage = 'Provide path to the base source directory from which the subdirectory evaluation shall begin.',
                    Position = 1,
                    Mandatory = $True,
@@ -58,7 +63,6 @@ function Copy-ItemWithStructure {
         [String]
         $Base,
 
-        # Path to the destination folder to which the files shall be copied.
         [Parameter(HelpMessage = 'Provide path to the destination directory to which the files with directory structure shall be copied.',
                    Position = 2,
                    Mandatory = $True,
@@ -91,6 +95,7 @@ function Copy-ItemWithStructure {
                         Remove-Item $destinationDirectory -Recurse -Force
                     }
                 }
+
                 if ($PSCmdlet.ShouldProcess($LocalizedData.Copy_ItemWithStructure_Directory_DirectoryPath -f $destinationDirectory,
                                             $LocalizedData.Copy_ItemWithStructure_Create)) {
                     [void](New-Item -Path $destinationDirectory -ItemType Directory -Force)

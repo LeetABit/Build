@@ -14,6 +14,10 @@ function ConvertTo-NormalizedPath {
     .DESCRIPTION
         The ConvertTo-NormalizedPath cmdlet converts specified path to canonical form by removing any provider name from the beginning of the path.
         In the next steps path is converted to absolute path with unified directory separator characters. This cmdlet does not support wildcard characters.
+    .PARAMETER Path
+        Path to normalize.
+    .PARAMETER LiteralPath
+        Path to normalize.
     .EXAMPLE
         PS> ConvertTo-NormalizedPath -LiteralPath '.'
 
@@ -28,7 +32,6 @@ function ConvertTo-NormalizedPath {
     [OutputType([String])]
 
     param (
-        # Path to normalize.
         [Parameter(HelpMessage = 'Provide a path to normalize.',
                    Position = 0,
                    Mandatory = $True,
@@ -38,7 +41,6 @@ function ConvertTo-NormalizedPath {
         [String[]]
         $Path,
 
-        # Path to normalize.
         [Parameter(HelpMessage = 'Provide a path to normalize.',
                    Position = 0,
                    Mandatory = $True,

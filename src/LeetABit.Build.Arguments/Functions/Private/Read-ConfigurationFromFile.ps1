@@ -11,11 +11,12 @@ function Read-ConfigurationFromFile {
     <#
     .SYNOPSIS
         Initializes a script configuration values from LeetABit.Build.json configuration file.
+    .PARAMETER RepositoryRoot
+        Location of the repository for which te configuration file shall be located.
     #>
     [CmdletBinding(PositionalBinding = $False)]
 
     param (
-        # Location of the repository for which te configuration file shall be located.
         [Parameter(HelpMessage = "Provide path to the repository root directory.",
                    Position=0,
                    Mandatory=$True,

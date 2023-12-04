@@ -11,12 +11,13 @@ function Test-ParameterName {
     <#
     .SYNOPSIS
         Checks whether the specified argument represents a name of the parameter specifier.
+    .PARAMETER Argument
+        Argument which shall be checked.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([System.Boolean])]
 
     param (
-        # Argument which shall be checked.
         [Parameter(HelpMessage = "Provide value of the command's argument.",
                    Position=0,
                    Mandatory=$True,

@@ -13,6 +13,8 @@ function Get-BuildExtension {
         Gets information about all registered build extensions.
     .DESCRIPTION
         Get-BuildExtension cmdlet retrieves an information about all registered build extensions which names contains specified $Name parameter. To register a build extensions use Register-BuildExtension cmdlet.
+    .PARAMETER Name
+        Name of the extensions or part of it.
     .EXAMPLE
         PS> Get-BuildExtension -Name "PowerShell"
 
@@ -28,7 +30,6 @@ function Get-BuildExtension {
         'Name',
         Justification = 'False positive as rule does not scan child scopes: https://github.com/PowerShell/PSScriptAnalyzer/issues/1472')]
     param (
-        # Name of the extensions or part of it.
         [Parameter(Position = 0,
                    Mandatory = $False,
                    ValueFromPipeline = $True,

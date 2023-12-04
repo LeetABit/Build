@@ -18,6 +18,16 @@ function Find-CommandArgument {
         2. Arguments provided via Set-CommandArgumentSet and Add-CommandArgument cmdlets.
         3. Values stored in 'LeetABit.Build.json' file located in the repository root directory provided via Set-CommandArgumentSet cmdlet or on of its subdirectories.
         4. Environment variables.
+    .PARAMETER ParameterName
+        Name of the parameter.
+    .PARAMETER ExtensionName
+        Name of the build extension in which the command is defined.
+    .PARAMETER DefaultValue
+        Default value that shall be used when no argument with the specified name is found.
+    .PARAMETER IsSwitch
+        Indicates whether the argument shall be threated as a value for [Switch] parameter.
+    .PARAMETER AdditionalArguments
+        A dictionary that holds an additional arguments to be used as a parameter's value source.
     .EXAMPLE
         PS> Find-CommandArgument "TaskName" "LeetABit.Build" "help" -AdditionalArguments $arguments
 
@@ -40,7 +50,6 @@ function Find-CommandArgument {
     [OutputType([Object])]
 
     param (
-        # Name of the parameter.
         [Parameter(HelpMessage = 'Provide parameter name.',
                    Position=0,
                    Mandatory=$True,
@@ -49,7 +58,6 @@ function Find-CommandArgument {
         [String]
         $ParameterName,
 
-        # Name of the build extension in which the command is defined.
         [Parameter(Position=1,
                    Mandatory=$False,
                    ValueFromPipeline=$False,
@@ -57,7 +65,6 @@ function Find-CommandArgument {
         [String]
         $ExtensionName,
 
-        # Default value that shall be used when no argument with the specified name is found.
         [Parameter(Position=2,
                    Mandatory=$False,
                    ValueFromPipeline=$False,
@@ -65,14 +72,12 @@ function Find-CommandArgument {
         [Object]
         $DefaultValue,
 
-        # Indicates whether the argument shall be threated as a value for [Switch] parameter.
         [Parameter(Mandatory=$False,
                    ValueFromPipeline=$False,
                    ValueFromPipelineByPropertyName=$True)]
         [Switch]
         $IsSwitch,
 
-        # A dictionary that holds an additional arguments to be used as a parameter's value source.
         [Parameter(Mandatory=$False,
                    ValueFromPipeline=$False,
                    ValueFromPipelineByPropertyName=$False)]

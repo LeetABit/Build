@@ -11,11 +11,12 @@ function ConvertTo-Hashtable {
     <#
     .SYNOPSIS
         Converts an input object to a HAshtable.
+    .PARAMETER InputObject
+        Object to convert.
     #>
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([Hashtable])]
     param (
-        # Object to convert.
         [Parameter(Position = 0,
                    Mandatory = $False,
                    ValueFromPipeline = $True,

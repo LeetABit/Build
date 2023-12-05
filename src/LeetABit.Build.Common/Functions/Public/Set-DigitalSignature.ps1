@@ -4,6 +4,7 @@
 # See License.txt in the project root for full license information.
 #########################################################################################
 #requires -version 6
+using namespace System.Management.Automation
 
 Set-StrictMode -Version 3.0
 
@@ -34,7 +35,7 @@ function Set-DigitalSignature {
                    SupportsShouldProcess = $True,
                    ConfirmImpact = "Low",
                    DefaultParameterSetName = 'CertificatePath')]
-    [OutputType([System.Management.Automation.Signature])]
+    [OutputType([Signature[]])]
 
     param (
         [Parameter(HelpMessage = 'Provide path to the file that shall be signed.',

@@ -7,6 +7,8 @@
 using namespace System.Collections
 using namespace System.Collections.Generic
 using namespace System.Diagnostics.CodeAnalysis
+using namespace System.Management.Automation
+using namespace System.Management.Automation.Language
 
 Set-StrictMode -Version 3.0
 
@@ -16,7 +18,7 @@ function Get-DynamicParameters {
         Gets dynamic parameters for all extensions registered in the LeetABit.Build system.
     #>
     [CmdletBinding()]
-    [OutputType([RuntimeDefinedParameterDictionary])]
+    [OutputType([RuntimeDefinedParameterDictionary[]])]
     param (
     )
 
@@ -64,7 +66,7 @@ function Get-DynamicParameters {
                                                 $_.NamedArguments[0].Argument
                                             }
 
-                                            $completerParameter = if ($commonArgument -is [System.Management.Automation.Language.ScriptBlockExpressionAst]) {
+                                            $completerParameter = if ($commonArgument -is [ScriptBlockExpressionAst]) {
                                                 $commonArgument.ScriptBlock.GetScriptBlock()
                                             }
                                             else {

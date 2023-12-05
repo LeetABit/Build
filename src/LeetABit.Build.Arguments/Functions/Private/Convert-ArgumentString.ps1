@@ -4,6 +4,7 @@
 # See License.txt in the project root for full license information.
 #########################################################################################
 #requires -version 6
+using namespace System.Diagnostics.CodeAnalysis
 
 Set-StrictMode -Version 3
 
@@ -19,7 +20,7 @@ function Convert-ArgumentString {
     [CmdletBinding(PositionalBinding = $False)]
     [OutputType([Object[]])]
 
-    [SuppressMessage(
+    [SuppressMessageAttribute(
         'PSReviewUnusedParameter',
         'IsSwitch',
         Justification = 'False positive as rule does not scan child scopes: https://github.com/PowerShell/PSScriptAnalyzer/issues/1472')]

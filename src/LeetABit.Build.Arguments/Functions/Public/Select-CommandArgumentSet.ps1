@@ -4,6 +4,8 @@
 # See License.txt in the project root for full license information.
 #########################################################################################
 #requires -version 6
+using namespace System.Collections
+using namespace System.Management.Automation
 
 Set-StrictMode -Version 3
 
@@ -58,7 +60,7 @@ function Select-CommandArgumentSet {
                    ValueFromPipeline = $True,
                    ValueFromPipelineByPropertyName = $True,
                    ParameterSetName = "Command")]
-        [System.Management.Automation.CommandInfo]
+        [CommandInfo]
         $Command,
 
         [Parameter(HelpMessage = 'Provide script block object for which arguments shall be selected.',
@@ -67,7 +69,7 @@ function Select-CommandArgumentSet {
                    ValueFromPipeline = $True,
                    ValueFromPipelineByPropertyName = $True,
                    ParameterSetName = "ScriptBlock")]
-        [System.Management.Automation.ScriptBlock]
+        [ScriptBlock]
         $ScriptBlock,
 
         [Parameter(Position = 0,

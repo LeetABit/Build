@@ -5,7 +5,6 @@
 # See License.txt in the project root for full license information.
 #########################################################################################
 #requires -version 6
-using namespace System.Collections
 
 <#
 .SYNOPSIS

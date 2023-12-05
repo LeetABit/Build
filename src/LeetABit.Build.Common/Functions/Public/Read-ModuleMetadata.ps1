@@ -42,11 +42,16 @@ function Read-ModuleMetadata {
 
         $functionsBase = Join-Path $moduleBase 'Functions'
         $publicFunctionsBase = Join-Path $functionsBase 'Public'
-        $publicFunctionFiles  = Get-ChildItem "$publicFunctionsBase\*.ps1"
+        $publicFunctionNames = if (Test-Path $publicFunctionsBase -PathType Container) {
+            $items = Get-ChildItem "$publicFunctionsBase\*.ps1"
+            $items.BaseName
+        } else {
+            @()
+        }
 
         [ModuleMetadataInfo]@{
             ScriptFiles = $scriptFiles
-            PublicFunctionNames = $publicFunctionFiles.BaseName
+            PublicFunctionNames = $publicFunctionNames
             Resources = $resourcesFile
         }
     }

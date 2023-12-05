@@ -10,7 +10,7 @@ SETLOCAL EnableDelayedExpansion EnableExtensions
 ::##########################################################################
 ::  Configuration.
 ::##########################################################################
-SET "PowerShellVersion=7.0.3"
+SET "PowerShellVersion=7.4.0"
 SET "PowerShellFileName=pwsh.exe"
 
 

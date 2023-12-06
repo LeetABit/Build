@@ -8,7 +8,7 @@
           "type": "PowerShell",
           "request": "launch",
           "name": "PowerShell Launch Current File Default",
-          "script": "./run.ps1 help -UnloadModules -Verbose",
+          "script": "./run.ps1 test -UnloadModules -Verbose",
           "args": [
               ""
           ],

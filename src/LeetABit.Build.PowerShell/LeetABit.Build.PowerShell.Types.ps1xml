@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--##################################################################################
+< Copyright (c) Hubert Bukowski. All rights reserved.
+< Licensed under the MIT License.
+< See License.txt in the project root for full license information.
+<#####################################################################################-->
+
+<Types>
+
+  <Type>
+    <Name>Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>RelativeScriptPath</Name>
+        <GetScriptBlock>
+          Resolve-RelativePath -Path $this.ScriptPath -Base (LeetABit.Build.Arguments\Find-CommandArgument -ParameterName 'ArtifactsRoot')
+        </GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+</Types>

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--##################################################################################
+< Copyright (c) Hubert Bukowski. All rights reserved.
+< Licensed under the MIT License.
+< See License.txt in the project root for full license information.
+<#####################################################################################-->
+
+<Configuration>
+  <ViewDefinitions>
+    <View>
+      <Name>LeetABit.Build.PesterDescribeResult-View</Name>
+      <ViewSelectedBy>
+        <TypeName>LeetABit.Build.PesterDescribeResult</TypeName>
+      </ViewSelectedBy>
+      <CustomControl>
+        <CustomEntries>
+          <CustomEntry>
+            <CustomItem>
+              <Text>Describe: </Text>
+              <ExpressionBinding>
+                <PropertyName>Name</PropertyName>
+              </ExpressionBinding>
+              <NewLine/>
+              <Frame>
+                <LeftIndent>2</LeftIndent>
+                <CustomItem>
+                  <ExpressionBinding>
+                    <EnumerateCollection/>
+                    <PropertyName>Failures</PropertyName>
+                    <CustomControl>
+                      <CustomEntries>
+                        <CustomEntry>
+                          <CustomItem>
+                            <ExpressionBinding>
+                              <ScriptBlock>"$_.Name $_.Parameters: $_.Message"</ScriptBlock>
+                            </ExpressionBinding>
+                            <NewLine/>
+                          </CustomItem>
+                        </CustomEntry>
+                      </CustomEntries>
+                    </CustomControl>
+                  </ExpressionBinding>
+                  <ExpressionBinding>
+                    <ScriptBlock>"Tests passed: $($_.TestsPassed), failed: $($_.Failures.Count)"</ScriptBlock>
+                  </ExpressionBinding>
+                  <NewLine/>
+                </CustomItem>
+              </Frame>
+            </CustomItem>
+          </CustomEntry>
+        </CustomEntries>
+      </CustomControl>
+    </View>
+    <View>
+      <Name>Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord-View</Name>
+      <ViewSelectedBy>
+        <TypeName>Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord</TypeName>
+      </ViewSelectedBy>
+      <CustomControl>
+        <CustomEntries>
+          <CustomEntry>
+            <CustomItem>
+              <ExpressionBinding>
+                <PropertyName>RelativeScriptPath</PropertyName>
+              </ExpressionBinding>
+              <Text> : </Text>
+              <ExpressionBinding>
+                <PropertyName>Line</PropertyName>
+              </ExpressionBinding>
+              <Text>,</Text>
+              <ExpressionBinding>
+                <PropertyName>Column</PropertyName>
+              </ExpressionBinding>
+              <Text>    </Text>
+              <ExpressionBinding>
+                <PropertyName>RuleName</PropertyName>
+              </ExpressionBinding>
+              <NewLine/>
+              <Frame>
+                <LeftIndent>4</LeftIndent>
+                <CustomItem>
+                  <ExpressionBinding>
+                    <EnumerateCollection/>
+                    <PropertyName>Message</PropertyName>
+                  </ExpressionBinding>
+                  <NewLine/>
+                </CustomItem>
+              </Frame>
+            </CustomItem>
+          </CustomEntry>
+        </CustomEntries>
+      </CustomControl>
+    </View>
+  </ViewDefinitions>
+</Configuration>

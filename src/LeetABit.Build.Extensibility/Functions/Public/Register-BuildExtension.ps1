@@ -95,7 +95,13 @@ function Register-BuildExtension {
         }
 
         if (-not $ExtensionName) {
-            $callingModuleName = Get-CallingModuleName $resolverScriptBlock
+            $usedScriptBlock = if ($resolverScriptBlock -ne $script:DefaultResolver) {
+                $resolverScriptBlock
+            } else {
+                $initializerScriptBlock
+            }
+
+            $callingModuleName = Get-CallingModuleName $usedScriptBlock
             if ($callingModuleName) {
                 $ExtensionName = $callingModuleName
             } else {

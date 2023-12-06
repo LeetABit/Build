@@ -12,9 +12,10 @@ env:
 
 jobs:
   build_test_release:
-    name: Run
+    name: Build and Test
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
     env:
@@ -26,5 +27,5 @@ jobs:
           submodules: true
           fetch-depth: 0
 
-      - name: Run Help
-        run: ./${{ env.LeetABit_Buildstrapper }} help
+      - name: Build and Test
+        run: ./${{ env.LeetABit_Buildstrapper }} test

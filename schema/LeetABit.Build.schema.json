@@ -3,7 +3,7 @@
   "title": "Configuration file for LeetABit.Build toolset.",
   "$schema": "https://json-schema.org/draft/2019-09/hyper-schema",
   "type": "object",
-  
+
     "anyOf": [
       {
         "oneOf": [
@@ -30,17 +30,25 @@
           "description": "Collection of information items about extension modules to be imported during task execution.",
           "type": "array",
           "items": {
-            "type": "object",
-            "properties": {
-              "ModuleName": {
-                "description": "Name of the module to import.",
-                "type": "string"
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "ModuleName": {
+                    "description": "Name of the module to import.",
+                    "type": "string"
+                  },
+                  "ModuleVersion": {
+                    "description": "Version of the module to import.",
+                    "type": "string"
+                  }
+                }
               },
-              "ModuleVersion": {
-                "description": "Version of the module to import.",
-                "type": "string"
+              {
+                "type": "string",
+                "description": "Location of an extension module to import."
               }
-            }
+            ]
           }
         },
         "ArtifactsRoot": {
@@ -53,6 +61,10 @@
         },
         "TestRoot": {
           "description": "Location of the repository tests directory.",
+          "type": "string"
+        },
+        "ReferenceDocsRoot": {
+          "description": "Location of the reference documentation directory.",
           "type": "string"
         }
       }

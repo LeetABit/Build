@@ -2,9 +2,9 @@
 
 Registers build extension in the module.
 
-```Register-BuildExtension [[-Resolver] <ScriptBlock>] [[-ExtensionName] <String>] [-Force]```
+```Register-BuildExtension [-ExtensionName] <String> [-BuildInitializer <Object>] [-Force]```
 
-```Register-BuildExtension [-ExtensionName] <String> [-Force]```
+```Register-BuildExtension [[-Resolver] <Object>] [[-ExtensionName] <String>] [-BuildInitializer <Object>] [-Force]```
 
 ## Description
 
@@ -36,10 +36,10 @@ Tries to evaluate name of the module that called Register-BuildExtension cmdlet 
 *ScriptBlock that resolves path to the projects recognized by the specified extension.*
 
 <table>
-  <tr><td>Type:</td><td>ScriptBlock</td></tr>
+  <tr><td>Type:</td><td>Object</td></tr>
   <tr><td>Required:</td><td>false</td></tr>
   <tr><td>Position:</td><td>1</td></tr>
-  <tr><td>Default value:</td><td>$DefaultResolver</td></tr>
+  <tr><td>Default value:</td><td>$script:DefaultResolver</td></tr>
   <tr><td>Accept pipeline input:</td><td>false</td></tr>
   <tr><td>Accept wildcard characters:</td><td>false</td></tr>
 </table>
@@ -50,8 +50,21 @@ Tries to evaluate name of the module that called Register-BuildExtension cmdlet 
 
 <table>
   <tr><td>Type:</td><td>String</td></tr>
+  <tr><td>Required:</td><td>true</td></tr>
+  <tr><td>Position:</td><td>1</td></tr>
+  <tr><td>Default value:</td><td></td></tr>
+  <tr><td>Accept pipeline input:</td><td>false</td></tr>
+  <tr><td>Accept wildcard characters:</td><td>false</td></tr>
+</table>
+
+### ```-BuildInitializer```
+
+*ScriptBlock that gets called at the begining of each repository build.*
+
+<table>
+  <tr><td>Type:</td><td>Object</td></tr>
   <tr><td>Required:</td><td>false</td></tr>
-  <tr><td>Position:</td><td>2</td></tr>
+  <tr><td>Position:</td><td>Named</td></tr>
   <tr><td>Default value:</td><td></td></tr>
   <tr><td>Accept pipeline input:</td><td>false</td></tr>
   <tr><td>Accept wildcard characters:</td><td>false</td></tr>

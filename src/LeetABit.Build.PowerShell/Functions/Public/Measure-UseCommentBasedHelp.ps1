@@ -4,6 +4,7 @@
 # See License.txt in the project root for full license information.
 #########################################################################################
 #requires -version 6
+using module PSScriptAnalyzer
 using namespace System.Management.Automation
 using namespace System.Management.Automation.Language
 

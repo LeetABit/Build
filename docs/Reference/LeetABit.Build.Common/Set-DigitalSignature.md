@@ -106,4 +106,4 @@ None
 
 ## Output
 
-```[System.Management.Automation.Signature]```
+```[System.Management.Automation.Signature[]]```

@@ -2,11 +2,12 @@
 
 Registers a specified build task for the specified build extension.
 
-```Register-BuildTask [-TaskName] <String> [-Jobs] <Object[]> [-ExtensionName <String>] [-IsDefault] [-Condition <Object>] [-PassThru] [-Force]```
+```Register-BuildTask [-TaskName] <String> [-Initialization <Object>] [-Jobs] <Object[]> [-ExtensionName <String>] [-IsDefault] [-Condition <Object>] [-PassThru] [-Force]```
 
 ## Description
 
-Register-BuildTask cmdlet registers specified information about build task for the specified extension. Name of the extension for which the registration is being performed may be inferred from the script block which is a part of task jobs. If no extension name is provided and cmdlet cannot infer it from job script block an error is emitted.
+Register-BuildTask cmdlet registers specified information about build task for the specified extension. Name of the extension for which the registration is being
+performed may be inferred from the script block which is a part of task jobs. If no extension name is provided and cmdlet cannot infer it from job script block an error is emitted.
 
 ## Examples
 
@@ -55,6 +56,19 @@ Registers a build task for "test" command that is realized by executing a sequen
   <tr><td>Accept wildcard characters:</td><td>false</td></tr>
 </table>
 
+### ```-Initialization```
+
+*ScriptBlock that gets called before first task run.*
+
+<table>
+  <tr><td>Type:</td><td>Object</td></tr>
+  <tr><td>Required:</td><td>false</td></tr>
+  <tr><td>Position:</td><td>Named</td></tr>
+  <tr><td>Default value:</td><td></td></tr>
+  <tr><td>Accept pipeline input:</td><td>false</td></tr>
+  <tr><td>Accept wildcard characters:</td><td>false</td></tr>
+</table>
+
 ### ```-Jobs```
 
 *Defines list of script blocks or names of other tasks that shall be executed in the specified order as a realization of the task being defined.*
@@ -96,7 +110,8 @@ Registers a build task for "test" command that is realized by executing a sequen
 
 ### ```-Condition```
 
-*Defines condition that shall be meet to execute the task being defined. This condition may be a script block that will be evaluated during task execution. Parameters for the script block are provided by means of LeetABit.Build.Arguments module. To execute the task the script block need to return a $True value.*
+*Defines condition that shall be meet to execute the task being defined. This condition may be a script block that will be evaluated during task
+execution. Parameters for the script block are provided by means of LeetABit.Build.Arguments module. To execute the task the script block need to return a $True value.*
 
 <table>
   <tr><td>Type:</td><td>Object</td></tr>
@@ -139,4 +154,4 @@ None
 
 ## Output
 
-```[TaskDefinition]```
+```[TaskDefinition[]]```

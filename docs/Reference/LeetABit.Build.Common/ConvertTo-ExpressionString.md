@@ -1,8 +1,8 @@
 # ConvertTo-ExpressionString
 
-Converts an object to a PowerShell expression string.
+Converts an object to a PowerShell expression string with a specified indentation.
 
-```ConvertTo-ExpressionString [-Obj] <Object>```
+```ConvertTo-ExpressionString [-Obj] <Object> [[-IndentationLevel] <Int32>]```
 
 ## Description
 
@@ -10,6 +10,7 @@ The ConvertTo-ExpressionString cmdlet converts any .NET object to a object type'
 Dictionaries and PSObjects are converted to hash literal expression format. The field and properties are converted to key expressions,
 the field and properties values are converted to property values, and the methods are removed. Objects that implements IEnumerable
 are converted to array literal expression format.
+Each line of the resulting string is indented by the specified number of spaces.
 
 ## Examples
 
@@ -61,6 +62,19 @@ Converts custom PSObject to PowerShell hash literal expression string with a cus
   <tr><td>Required:</td><td>true</td></tr>
   <tr><td>Position:</td><td>1</td></tr>
   <tr><td>Default value:</td><td></td></tr>
+  <tr><td>Accept pipeline input:</td><td>true (ByValue, ByPropertyName)</td></tr>
+  <tr><td>Accept wildcard characters:</td><td>false</td></tr>
+</table>
+
+### ```-IndentationLevel```
+
+*Number of spaces to perpend to each line of the resulting string.*
+
+<table>
+  <tr><td>Type:</td><td>Int32</td></tr>
+  <tr><td>Required:</td><td>false</td></tr>
+  <tr><td>Position:</td><td>2</td></tr>
+  <tr><td>Default value:</td><td>0</td></tr>
   <tr><td>Accept pipeline input:</td><td>true (ByValue, ByPropertyName)</td></tr>
   <tr><td>Accept wildcard characters:</td><td>false</td></tr>
 </table>

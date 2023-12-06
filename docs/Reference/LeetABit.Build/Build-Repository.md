@@ -2,7 +2,7 @@
 
 Performs a build operation on all projects located in the specified repository.
 
-```Build-Repository [-RepositoryRoot] <String> [-TaskName] <String[]> [-ExtensionModule <ModuleSpecification[]>] [-NamedArguments <IDictionary>] [-UnknownArguments <String[]>]```
+```Build-Repository [-RepositoryRoot] <String> [-TaskName] <String[]> [-ExtensionModule <Object[]>] [-NamedArguments <IDictionary>] [-UnknownArguments <String[]>]```
 
 ## Description
 
@@ -61,7 +61,7 @@ Runs a default build task for all extensions that supports it using specified ad
 *Extension modules to import.*
 
 <table>
-  <tr><td>Type:</td><td>ModuleSpecification[]</td></tr>
+  <tr><td>Type:</td><td>Object[]</td></tr>
   <tr><td>Required:</td><td>false</td></tr>
   <tr><td>Position:</td><td>Named</td></tr>
   <tr><td>Default value:</td><td></td></tr>

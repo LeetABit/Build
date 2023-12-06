@@ -1,17 +1,17 @@
-# Set-ProjectPath
+# Invoke-ScriptBlock
 
-Sets path to the currently executing project.
+Invokes a specified script block using dynamic parameter matching.
 
-```Set-ProjectPath [-ProjectPath] <String> [-WhatIf] [-Confirm]```
+```Invoke-ScriptBlock [-ScriptBlock] <ScriptBlock> [-ParameterPrefix] <String> [[-AdditionalArguments] <IDictionary>]```
 
 ## Parameters
 
-### ```-ProjectPath```
+### ```-ScriptBlock```
 
-*Argument string to convert.*
+*Script block that shall be invoked.*
 
 <table>
-  <tr><td>Type:</td><td>String</td></tr>
+  <tr><td>Type:</td><td>ScriptBlock</td></tr>
   <tr><td>Required:</td><td>true</td></tr>
   <tr><td>Position:</td><td>1</td></tr>
   <tr><td>Default value:</td><td></td></tr>
@@ -19,23 +19,27 @@ Sets path to the currently executing project.
   <tr><td>Accept wildcard characters:</td><td>false</td></tr>
 </table>
 
-### ```-WhatIf```
+### ```-ParameterPrefix```
+
+*Prefix that may be used in parameters matching.*
 
 <table>
-  <tr><td>Type:</td><td>SwitchParameter</td></tr>
-  <tr><td>Required:</td><td>false</td></tr>
-  <tr><td>Position:</td><td>Named</td></tr>
+  <tr><td>Type:</td><td>String</td></tr>
+  <tr><td>Required:</td><td>true</td></tr>
+  <tr><td>Position:</td><td>2</td></tr>
   <tr><td>Default value:</td><td></td></tr>
   <tr><td>Accept pipeline input:</td><td>false</td></tr>
   <tr><td>Accept wildcard characters:</td><td>false</td></tr>
 </table>
 
-### ```-Confirm```
+### ```-AdditionalArguments```
+
+*Dictionary with additional arguments that may be used by the task implementation.*
 
 <table>
-  <tr><td>Type:</td><td>SwitchParameter</td></tr>
+  <tr><td>Type:</td><td>IDictionary</td></tr>
   <tr><td>Required:</td><td>false</td></tr>
-  <tr><td>Position:</td><td>Named</td></tr>
+  <tr><td>Position:</td><td>3</td></tr>
   <tr><td>Default value:</td><td></td></tr>
   <tr><td>Accept pipeline input:</td><td>false</td></tr>
   <tr><td>Accept wildcard characters:</td><td>false</td></tr>

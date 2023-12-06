@@ -1,14 +1,14 @@
-# Set-ProjectPath
+# Clear-Project
 
-Sets path to the currently executing project.
+Cleans artifacts produced for the specified project.
 
-```Set-ProjectPath [-ProjectPath] <String> [-WhatIf] [-Confirm]```
+```Clear-Project [-LiteralPath] <String> -SourceRoot <String> -ArtifactsRoot <String>```
 
 ## Parameters
 
-### ```-ProjectPath```
+### ```-LiteralPath```
 
-*Argument string to convert.*
+*Path to the project which artifacts have to be cleaned.*
 
 <table>
   <tr><td>Type:</td><td>String</td></tr>
@@ -19,25 +19,29 @@ Sets path to the currently executing project.
   <tr><td>Accept wildcard characters:</td><td>false</td></tr>
 </table>
 
-### ```-WhatIf```
+### ```-SourceRoot```
+
+*Path to the source root directory.*
 
 <table>
-  <tr><td>Type:</td><td>SwitchParameter</td></tr>
-  <tr><td>Required:</td><td>false</td></tr>
+  <tr><td>Type:</td><td>String</td></tr>
+  <tr><td>Required:</td><td>true</td></tr>
   <tr><td>Position:</td><td>Named</td></tr>
   <tr><td>Default value:</td><td></td></tr>
-  <tr><td>Accept pipeline input:</td><td>false</td></tr>
+  <tr><td>Accept pipeline input:</td><td>true (ByPropertyName)</td></tr>
   <tr><td>Accept wildcard characters:</td><td>false</td></tr>
 </table>
 
-### ```-Confirm```
+### ```-ArtifactsRoot```
+
+*Path to the artifacts root directory.*
 
 <table>
-  <tr><td>Type:</td><td>SwitchParameter</td></tr>
-  <tr><td>Required:</td><td>false</td></tr>
+  <tr><td>Type:</td><td>String</td></tr>
+  <tr><td>Required:</td><td>true</td></tr>
   <tr><td>Position:</td><td>Named</td></tr>
   <tr><td>Default value:</td><td></td></tr>
-  <tr><td>Accept pipeline input:</td><td>false</td></tr>
+  <tr><td>Accept pipeline input:</td><td>true (ByPropertyName)</td></tr>
   <tr><td>Accept wildcard characters:</td><td>false</td></tr>
 </table>
 

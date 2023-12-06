@@ -1,48 +1,32 @@
-# Invoke-BuildTask
+# Set-CodeSignature
 
-Invokes a specified build task on the specified project.
+Handler for PowerShell 'sign' target.
 
-```Invoke-BuildTask [-ExtensionName] <String> [-TaskName] <String[]> [[-ProjectPath] <String[]>] [[-SourceRoot] <String>] [[-ArgumentList] <String[]>] [-WhatIf] [-Confirm]```
+```Set-CodeSignature [-ProjectPath <String>] [-ArtifactsRoot] <String> [-SourceRoot <String>] [[-CertificatePath] <String>] [[-TimestampServer] <String>] [-WhatIf] [-Confirm]```
 
-## Description
-
-Invoke-BuildTask cmdlet executes a specified extension's task against specified project.
-
-## Examples
-
-### Example 1:
-
-```PS> Invoke-BuildTask "PowerShell" "test"```
-
-Invokes "test" task from "PowerShell" extension on a repository root directory.
-
-### Example 2:
-
-```PS> Invoke-BuildTask "PowerShell" "test" "~/repository/src/Script.ps1" -ArgumentList @{ "ToolVersion" = "1.0.0" }```
-
-Invokes "test" task from "PowerShell" extension on "~/repository/src/Script.ps1" script file with additional parameter "ToolVersion".
+```Set-CodeSignature [-ProjectPath <String>] [-ArtifactsRoot] <String> [-SourceRoot <String>] [-Certificate] <X509Certificate2> [[-TimestampServer] <String>] [-WhatIf] [-Confirm]```
 
 ## Parameters
 
-### ```-ExtensionName```
+### ```-ProjectPath```
 
-*Name of the extension which defines the task.*
+*Path to the project which output shall be signed.*
 
 <table>
   <tr><td>Type:</td><td>String</td></tr>
-  <tr><td>Required:</td><td>true</td></tr>
-  <tr><td>Position:</td><td>1</td></tr>
+  <tr><td>Required:</td><td>false</td></tr>
+  <tr><td>Position:</td><td>Named</td></tr>
   <tr><td>Default value:</td><td></td></tr>
-  <tr><td>Accept pipeline input:</td><td>true (ByPropertyName)</td></tr>
+  <tr><td>Accept pipeline input:</td><td>false</td></tr>
   <tr><td>Accept wildcard characters:</td><td>false</td></tr>
 </table>
 
-### ```-TaskName```
+### ```-ArtifactsRoot```
 
-*Name of the tasks to invoke.*
+*Location of the repository artifacts directory to which the PowerShell files shall be copied.*
 
 <table>
-  <tr><td>Type:</td><td>String[]</td></tr>
+  <tr><td>Type:</td><td>String</td></tr>
   <tr><td>Required:</td><td>true</td></tr>
   <tr><td>Position:</td><td>2</td></tr>
   <tr><td>Default value:</td><td></td></tr>
@@ -50,40 +34,53 @@ Invokes "test" task from "PowerShell" extension on "~/repository/src/Script.ps1"
   <tr><td>Accept wildcard characters:</td><td>false</td></tr>
 </table>
 
-### ```-ProjectPath```
+### ```-SourceRoot```
 
-*Path to the project on which the task shall invoked.*
+*Path to the project source directory.*
 
 <table>
-  <tr><td>Type:</td><td>String[]</td></tr>
+  <tr><td>Type:</td><td>String</td></tr>
   <tr><td>Required:</td><td>false</td></tr>
-  <tr><td>Position:</td><td>3</td></tr>
+  <tr><td>Position:</td><td>Named</td></tr>
   <tr><td>Default value:</td><td></td></tr>
-  <tr><td>Accept pipeline input:</td><td>true (ByPropertyName)</td></tr>
+  <tr><td>Accept pipeline input:</td><td>false</td></tr>
   <tr><td>Accept wildcard characters:</td><td>false</td></tr>
 </table>
 
-### ```-SourceRoot```
+### ```-Certificate```
 
-*Path to the repository's source directory.*
+*Code Sign certificate to be used.*
+
+<table>
+  <tr><td>Type:</td><td>X509Certificate2</td></tr>
+  <tr><td>Required:</td><td>true</td></tr>
+  <tr><td>Position:</td><td>3</td></tr>
+  <tr><td>Default value:</td><td></td></tr>
+  <tr><td>Accept pipeline input:</td><td>true (ByValue, ByPropertyName)</td></tr>
+  <tr><td>Accept wildcard characters:</td><td>false</td></tr>
+</table>
+
+### ```-CertificatePath```
+
+*Path to the Code Sign certificate to be used.*
+
+<table>
+  <tr><td>Type:</td><td>String</td></tr>
+  <tr><td>Required:</td><td>false</td></tr>
+  <tr><td>Position:</td><td>3</td></tr>
+  <tr><td>Default value:</td><td></td></tr>
+  <tr><td>Accept pipeline input:</td><td>true (ByValue, ByPropertyName)</td></tr>
+  <tr><td>Accept wildcard characters:</td><td>false</td></tr>
+</table>
+
+### ```-TimestampServer```
+
+*Code Sign Timestamp Server to be used.*
 
 <table>
   <tr><td>Type:</td><td>String</td></tr>
   <tr><td>Required:</td><td>false</td></tr>
   <tr><td>Position:</td><td>4</td></tr>
-  <tr><td>Default value:</td><td></td></tr>
-  <tr><td>Accept pipeline input:</td><td>true (ByPropertyName)</td></tr>
-  <tr><td>Accept wildcard characters:</td><td>false</td></tr>
-</table>
-
-### ```-ArgumentList```
-
-*Collection of additional arguments that may be used by the task implementation.*
-
-<table>
-  <tr><td>Type:</td><td>String[]</td></tr>
-  <tr><td>Required:</td><td>false</td></tr>
-  <tr><td>Position:</td><td>5</td></tr>
   <tr><td>Default value:</td><td></td></tr>
   <tr><td>Accept pipeline input:</td><td>true (ByValue, ByPropertyName)</td></tr>
   <tr><td>Accept wildcard characters:</td><td>false</td></tr>
@@ -117,4 +114,4 @@ None
 
 ## Output
 
-```[System.Object]```
+None

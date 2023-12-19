@@ -59,9 +59,8 @@ function Write-ReferenceDocumentation {
                                 $null = New-Item $markdownFilePath -ItemType File -Force
                             }
 
-                            LeetABit.Build.PowerShell\Get-Markdown $helpItem | ForEach-Object {
-                                $_.Replace("`n", [Environment]::NewLine)
-                            } | Set-Content -Path $markdownFilePath
+                            LeetABit.Build.PowerShell\Get-Markdown $helpItem |
+                                Set-Content -Path $markdownFilePath
                         }
                         catch {
                             $_
@@ -95,9 +94,8 @@ function Write-ReferenceDocumentation {
                 [void](New-Item $dir -ItemType Directory -Force)
             }
 
-            Get-Markdown $helpItem | ForEach-Object {
-                $_.Replace("`n", [Environment]::NewLine)
-            } | Set-Content -Path (Join-Path (Split-Path $outputPath) "$($itemPath.BaseName).md")
+            Get-Markdown $helpItem |
+                Set-Content -Path (Join-Path (Split-Path $outputPath) "$($itemPath.BaseName).md")
         }
     }
 }

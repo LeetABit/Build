@@ -8,6 +8,12 @@
 Set-StrictMode -Version 3.0
 
 function Get-ContainingModule {
+    <#
+    .SYNOPSIS
+        Gets a module that contains the specified script block.
+    .PARAMETER ScriptBlock
+        Script block which module shall be retrieved.
+    #>
     param (
         [ScriptBlock]
         $ScriptBlock

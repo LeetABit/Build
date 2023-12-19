@@ -41,7 +41,7 @@ function Get-Markdown {
 
             Write-Output "# $name"
             Write-Output ""
-            Write-Output "$($HelpObject.Synopsis)"
+            Write-Output ("$($HelpObject.Synopsis)".TrimEnd() -split "[\r\n]")
 
             $HelpObject.Syntax.SyntaxItem | ForEach-Object {
                 $syntax = $_.Name
@@ -76,14 +76,14 @@ function Get-Markdown {
 
                 $syntax += "``````"
                 Write-Output ""
-                Write-Output $syntax
+                Write-Output ($syntax -split "[\r\n]")
             }
 
             if ($HelpObject.psobject.Properties.name -match "Description" -and $HelpObject.Description) {
                 Write-Output ""
                 Write-Output "## Description"
                 Write-Output ""
-                Write-Output "$($HelpObject.Description.Text)"
+                Write-Output ("$($HelpObject.Description.Text)" -split "[\r\n]")
             }
 
             $exampleNumber = 1;
@@ -96,7 +96,7 @@ function Get-Markdown {
                     Write-Output ""
                     Write-Output "``````$($_.Introduction.Text) $($_.Code)``````"
                     Write-Output ""
-                    Write-Output $($_.Remarks.Text -replace "#`>", "#>" -join [System.Environment]::NewLine).TrimEnd()
+                    Write-Output (($($_.Remarks.Text -replace "#`>", "#>" -join [System.Environment]::NewLine).TrimEnd()) -split "[\r\n]")
                     $exampleNumber += 1
                 }
             }
@@ -110,7 +110,7 @@ function Get-Markdown {
                     $_ | Select-Object -Property Description | ForEach-Object {
                         if ($_.Description) {
                             Write-Output ""
-                            Write-Output "*$($_.Description.Text)*"
+                            Write-Output ("*$($_.Description.Text)*" -split "[\r\n]")
                         }
                     }
 
@@ -157,14 +157,14 @@ function Get-Markdown {
                 Write-Output "## Notes"
                 if (Get-Member -InputObject $HelpObject -Name "Notes") {
                     Write-Output ""
-                    Write-Output "$HelpObject.Notes"
+                    Write-Output ("$HelpObject.Notes" -split "[\r\n]")
                 }
 
                 if (Get-Member -InputObject $HelpObject -Name "AlertSet") {
                     foreach ($alert in $HelpObject.AlertSet) {
                         foreach ($alertItem in $alert.alert) {
                             Write-Output ""
-                            Write-Output $alertItem.Text
+                            Write-Output ($alertItem.Text -split "[\r\n]")
                         }
                     }
                 }

@@ -2,7 +2,7 @@
 name: Requirement
 about: Define a requirement for this project
 title: ''
-labels: ["Status:New", "Type:Requirement"]
+labels: ["Status: New", "Type: Requirement"]
 assignees: hubuk
 
 ---

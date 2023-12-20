@@ -2,7 +2,7 @@
 name: Feature request
 about: Suggest an idea for this project
 title: ''
-labels: ["Status:New", "Type:Feature"]
+labels: ["Status: New", "Type: Feature"]
 assignees: hubuk
 
 ---

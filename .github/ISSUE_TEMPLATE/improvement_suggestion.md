@@ -2,7 +2,7 @@
 name: Improvement suggestion
 about: Suggest an improvement for this project
 title: ''
-labels: ["Status:New", "Type:Improvement"]
+labels: ["Status: New", "Type: Improvement"]
 assignees: hubuk
 
 ---

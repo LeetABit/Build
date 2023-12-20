@@ -28,7 +28,7 @@ function Write-Message {
 
         Writes an information in default foreground color with no preamble.
     .NOTES
-        Preamble may be used to decorate a message with a text consumed by the presentation layer. This feature is used by Travis CI for log folding.
+        Preamble may be used to decorate a message with a text consumed by the presentation layer. This feature may be used to include for example folding prefix.
     #>
 
     param (
@@ -64,13 +64,13 @@ function Write-Message {
 
         if ($Color) {
             $colorToWrite = [char]0x001b + '['
-            $colorToWrite += if ($Color -ge [System.ConsoleColor]::DarkGray) { if ($env:APPVEYOR) { '1;9' } else { '1;3' } } else { '3' }
+            $colorToWrite += if ($Color -ge [System.ConsoleColor]::DarkGray) { '1;3' } else { '3' }
 
             $colorToWrite += [String]($colors[[Int]$Color % 8]) + 'm'
             $resetToWrite = [char]0x001b + '[0m'
         }
 
-        $indentation = "  " * ($script:LastStep.Count)
+        $indentation = "  " * ($script:StepsStarted)
 
         foreach ($messagePart in $Message) {
             Write-Information "$preambleToWrite$indentation$colorToWrite$messagePart$resetToWrite"

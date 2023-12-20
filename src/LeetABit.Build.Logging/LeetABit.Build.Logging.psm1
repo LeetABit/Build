@@ -8,7 +8,7 @@ using namespace System.Collections
 
 Set-StrictMode -Version 3.0
 
-[Queue]$script:LastStep       = [Queue]::new()
+$script:StepsStarted = 0
 [Queue]$script:LastStepResult = [Queue]::new()
 
 $script:moduleMetadata = Read-ModuleMetadata $MyInvocation

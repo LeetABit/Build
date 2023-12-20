@@ -1,6 +1,6 @@
 # Write-StepFinished
 
-Writes a message about the result of the most recent build step and closes folding when run in Travis CI environment.
+Writes a message about the result of the most recent build step.
 
 ```Write-StepFinished```
 

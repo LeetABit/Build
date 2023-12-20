@@ -73,4 +73,4 @@ None
 
 ## Notes
 
-Preamble may be used to decorate a message with a text consumed by the presentation layer. This feature is used by Travis CI for log folding.
+Preamble may be used to decorate a message with a text consumed by the presentation layer. This feature may be used to include for example folding prefix.

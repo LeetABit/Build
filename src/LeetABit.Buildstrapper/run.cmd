@@ -238,7 +238,6 @@ GOTO :EOF
 SETLOCAL EnableDelayedExpansion EnableExtensions
 
     SET "LightPrefix=1;3"
-    IF DEFINED APPVEYOR ( SET "LightPrefix=1;9" )
     SET "ColorReset=[0m"
     SET "ColorRed=[!LightPrefix!1m"
     SET "ColorGreen=[!LightPrefix!2m"
@@ -248,25 +247,20 @@ SETLOCAL EnableDelayedExpansion EnableExtensions
     SET "ColorsSupported=0"
     SET "Message="
 
-    IF DEFINED APPVEYOR (
-        SET "Message=Console colors enabled: running in AppVeyor environment."
-        SET "ColorsSupported=1"
-    ) ELSE (
-        CALL :GetWindowsVersion
-        SET "windowsVersion=!result!"
+    CALL :GetWindowsVersion
+    SET "windowsVersion=!result!"
 
-        SET "MajorVersion="
-        SET "ReleaseId="
-        FOR /F "tokens=1,5 delims=. " %%A IN ("!windowsVersion!") DO (
-            SET "MajorVersion=%%A"
-            SET "ReleaseId=%%B"
-        )
+    SET "MajorVersion="
+    SET "ReleaseId="
+    FOR /F "tokens=1,5 delims=. " %%A IN ("!windowsVersion!") DO (
+        SET "MajorVersion=%%A"
+        SET "ReleaseId=%%B"
+    )
 
-        IF !MajorVersion! GEQ 10 (
-            IF !ReleaseId! GEQ 1511 (
-                SET "Message=Console colors enabled: running in Windows v!windowsVersion! environment."
-                SET "ColorsSupported=1"
-            )
+    IF !MajorVersion! GEQ 10 (
+        IF !ReleaseId! GEQ 1511 (
+            SET "Message=Console colors enabled: running in Windows v!windowsVersion! environment."
+            SET "ColorsSupported=1"
         )
     )
 

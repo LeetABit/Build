@@ -10,9 +10,9 @@ Set-StrictMode -Version 3.0
 function Write-Step {
     <#
     .SYNOPSIS
-        Writes a specified build step message to the information stream with step name folding when run in Travis CI environment.
+        Writes a specified build step message to the information stream.
     .DESCRIPTION
-        Write-Step cmdlet writes a message about a new build step that is about to be started. The message is written to the information stream. This cmdlet also emits a log folding preamble when run in Travis CI environment.
+        Write-Step cmdlet writes a message about a new build step that is about to be started. The message is written to the information stream.
     .PARAMETER StepName
         Name of the step that shall be written as a message preamble.
     .PARAMETER Message
@@ -20,7 +20,7 @@ function Write-Step {
     .EXAMPLE
         Write-Step -StepName "prerequisites" -Message "Installing prerequisites."
 
-        Writes an information message about the build step with a folding preamble when run in Travis CI environment.
+        Writes an information message about the build step.
     .LINK
         Write-StepFinished
     #>
@@ -50,25 +50,22 @@ function Write-Step {
     }
 
     process {
-        $preamble = if ($env:TRAVIS -and $StepName) { "travis_fold:start:$StepName`r" }
-                    else                            { '' }
-
-        $color = if ($script:LastStep.Count -gt 0) {
+        $color = if ($script:StepsStarted -gt 0) {
             'DarkCyan'
         }
         else {
             'Cyan'
         }
 
-        if ($script:LastStep.Count -eq 0) {
-            Write-Message -Message "" -Preamble $preamble
+        if ($script:StepsStarted -eq 0) {
+            Write-Message -Message ""
             Write-Message -Message "$Message" -Color $color
         }
         else {
-            Write-Message -Message "$Message" -Preamble $preamble -Color $color
+            Write-Message -Message "$Message" -Color $color
         }
 
-        $script:LastStep.Enqueue($StepName)
+        $script:StepsStarted += 1
         $script:LastStepResult.Enqueue($True)
     }
 }

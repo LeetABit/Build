@@ -10,7 +10,7 @@ Set-StrictMode -Version 3.0
 function Write-StepFinished {
     <#
     .SYNOPSIS
-        Writes a message about the result of the most recent build step and closes folding when run in Travis CI environment.
+        Writes a message about the result of the most recent build step.
     .DESCRIPTION
         Write-StepFinished cmdlet writes a message about build step failure when Write-Failure cmdlet was called since last Write-Step. Otherwise a success message is being written to the information stream.
     .EXAMPLE
@@ -32,25 +32,19 @@ function Write-StepFinished {
     }
 
     process {
-        if ($script:LastStep.Count -eq 0) {
+        if ($script:StepsStarted -eq 0) {
             throw $LocalizedData.Write_StepFinished_NoStepStarted
         }
 
-        $stepName = $script:LastStep.Dequeue()
+        $script:StepsStarted -= 1;
         $stepResult = $script:LastStepResult.Dequeue()
 
         if (-not $stepResult) {
             throw $LocalizedData.Write_StepFinished_BuildFailed
         }
 
-        $preamble = if ($env:TRAVIS -and $stepName) { "travis_fold:end:$stepName`r" } else { '' }
-        if ($script:LastStep.Count -gt 0) {
-            if ($preamble) {
-                Write-Message -Message "" -Preamble $preamble -Color 'DarkGreen'
-            }
-        }
-        else {
-            Write-Message -Message "$message$([System.Environment]::NewLine)" -Preamble $preamble -Color 'Green'
+        if ($script:StepsStarted -eq 0) {
+            Write-Message -Message "$message$([System.Environment]::NewLine)" -Color 'Green'
         }
     }
 }

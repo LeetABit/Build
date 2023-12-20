@@ -214,7 +214,7 @@ function initialize_force_install_powershell() {
 #           colors.
 #===========================================================================
 function initialize_console_colors() {
-    if [[ -n "${APPVEYOR:-}" ]] || [[ -n "${GITHUB_WORKFLOW:-}" ]] ; then
+    if [[ -n "${GITHUB_WORKFLOW:-}" ]] ; then
         color_reset="\033[0m"
         color_red="\033[91m"
         color_green="\033[32m"
@@ -222,7 +222,7 @@ function initialize_console_colors() {
         color_magenta="\033[95m"
         color_cyan="\033[96m"
 
-        write_verbose "Console colors enabled: running in AppVeyor environment."
+        write_verbose "Console colors enabled: running as GitHub workflow."
         exec 2> >(while read line; do printf "%b\n" "${color_red:-}$line${color_reset:-}" >&2 ; done)
     else
         ncolors=$(tput colors)
@@ -545,13 +545,7 @@ function begin_step() {
     local step_name=$1
     local message=$2
 
-    local preamble=""
-
-    if [[ ${TRAVIS:-} ]]; then
-        preamble="travis_fold:start:$step_name"
-    fi
-
-    printf "%b\n" "$preamble${color_cyan:-}$message${color_reset:-}" >&3
+    printf "%b\n" "${color_cyan:-}$message${color_reset:-}" >&3
     last_step_name=$step_name
 }
 
@@ -561,12 +555,7 @@ function begin_step() {
 #===========================================================================
 function end_step() {
 
-    local preamble=""
-    if [[ ${TRAVIS:-} ]]; then
-        preamble="travis_fold:end:$last_step_name"
-    fi
-
-    printf "%b\n" "$preamble${color_green:-}Success${color_reset:-}" >&3
+    printf "%b\n" "${color_green:-}Success${color_reset:-}" >&3
 }
 
 

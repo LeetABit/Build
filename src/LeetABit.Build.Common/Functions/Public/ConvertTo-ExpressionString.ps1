@@ -4,7 +4,10 @@
 # See License.txt in the project root for full license information.
 #########################################################################################
 #requires -version 6
+
+using namespace System
 using namespace System.Collections
+using namespace System.Management.Automation
 
 Set-StrictMode -Version 3.0
 
@@ -13,38 +16,41 @@ function ConvertTo-ExpressionString {
     .SYNOPSIS
         Converts an object to a PowerShell expression string with a specified indentation.
     .DESCRIPTION
-        The ConvertTo-ExpressionString cmdlet converts any .NET object to a object type's defined string representation.
-        Dictionaries and PSObjects are converted to hash literal expression format. The field and properties are converted to key expressions,
-        the field and properties values are converted to property values, and the methods are removed. Objects that implements IEnumerable
-        are converted to array literal expression format.
-        Each line of the resulting string is indented by the specified number of spaces.
-    .PARAMETER Obj
-        Object to convert.
+        The ConvertTo-ExpressionString cmdlet converts any object to its type's string representation.
+        Dictionaries and PSObjects are converted to hash literal expression format.
+        The field and properties are converted to key expressions,
+        the field and properties values are converted to property values,
+        and the methods are removed. Objects that implements IEnumerable are converted to array
+        literal expression format.
+    .PARAMETER InputObject
+        Input object to convert.
     .PARAMETER IndentationLevel
         Number of spaces to perpend to each line of the resulting string.
+    .PARAMETER Minify
+        Determines whether the output string shall be minified to reduce its size.
     .EXAMPLE
-        ConvertTo-ExpressionString -Obj $Null, $True, $False
+        ConvertTo-ExpressionString -InputObject $Null, $True, $False
         $Null
         $True
         $False
 
         Converts PowerShell literals expression string.
     .EXAMPLE
-        ConvertTo-ExpressionString -Obj @{Name = "Custom object instance"}
+        ConvertTo-ExpressionString -InputObject @{Name = "Custom object instance"}
         @{
           'Name' = 'Custom object instance'
         }
 
         Converts hashtable to PowerShell hash literal expression string.
     .EXAMPLE
-        ConvertTo-ExpressionString -Obj @( $Name )
+        ConvertTo-ExpressionString -InputObject @( $Name )
         @(
           $Null
         )
 
         Converts array to PowerShell array literal expression string.
     .EXAMPLE
-        ConvertTo-ExpressionString -Obj (New-PSObject "SampleType" @{Name = "Custom object instance"})
+        ConvertTo-ExpressionString -InputObject (New-PSObject "SampleType" @{Name = "Custom object instance"})
         <# SampleType #`>
         @{
           'Name' = 'Custom object instance'
@@ -52,95 +58,127 @@ function ConvertTo-ExpressionString {
 
         Converts custom PSObject to PowerShell hash literal expression string with a custom type name in the comment block.
     #>
-    [CmdletBinding(PositionalBinding = $False)]
-    [OutputType([String[]])]
+    [CmdletBinding(PositionalBinding = $False,
+                   DefaultParameterSetName = 'Indentation',
+                   HelpUri = '$LeetABit_ReferenceDoc_GitHubLink')]
+    [OutputType([String])]
 
     param (
         [Parameter(HelpMessage = 'Provide an object to convert.',
                    Position = 0,
-                   Mandatory = $True,
-                   ValueFromPipeline = $True,
-                   ValueFromPipelineByPropertyName = $True)]
+                   Mandatory,
+                   ValueFromPipeline,
+                   ValueFromPipelineByPropertyName)]
         [AllowNull()]
         [AllowEmptyCollection()]
         [Object]
-        $Obj,
+        $InputObject,
 
-        [Parameter(HelpMessage = 'Provide an indentation level.',
-                   Position = 1,
-                   Mandatory = $False,
-                   ValueFromPipeline = $True,
-                   ValueFromPipelineByPropertyName = $True)]
-        [ValidateRange([ValidateRangeKind]::NonNegative)]
-        [Int32]
-        $IndentationLevel = 0
+        [Parameter(ParameterSetName = 'Indentation')]
+        [AllowNull()]
+        [String]
+        $Indentation = '',
+
+        [Parameter(ParameterSetName = 'Indentation')]
+        [AllowNull()]
+        [String]
+        $AdditionalIndentation = ' ',
+
+        [Parameter(ParameterSetName = 'Indentation')]
+        [Switch]
+        $SkipFirstLineIndentation,
+
+        [Parameter(ParameterSetName = 'Minify')]
+        [Switch]
+        $Minify
     )
 
-    process {
-        $prefix = " " * $IndentationLevel
+    begin {
+        if ($Minify) {
+            $firstLineIdnentation = ''
+            $itemsSpace = ''
+            $recursiveParams = @{
+                'Minify' = $True
+            }
 
-        if ($Null -eq $Obj) {
+            $joinParams = @{
+                'Minify' = $True
+            }
+        } else {
+            $firstLineIdnentation = if ($SkipFirstLineIndentation) { '' } else { $Indentation }
+            $itemsSpace = ' '
+            $recursiveParams = @{
+                'Indentation' = "$Indentation$AdditionalIndentation"
+                'AdditionalIndentation' = $AdditionalIndentation
+                'SkipFirstLineIndentation' = $True
+            }
+
+            $joinParams = @{
+                'Indentation' = "$Indentation"
+                'AdditionalIndentation' = $AdditionalIndentation
+                'SkipFirstLineIndentation' = $SkipFirstLineIndentation
+            }
+        }
+    }
+
+    process {
+        if ($Null -eq $InputObject) {
             '$Null'
         }
-        elseif ($Obj -is [String]) {
-            "'$Obj'"
-        }
-        elseif ($Obj -is [SwitchParameter] -or $Obj -is [Boolean]) {
-            "`$$Obj"
-        }
-        elseif ($Obj -is [IDictionary]) {
-            $result = "@{"
-            $Obj.Keys | ForEach-Object {
-                $value = ConvertTo-ExpressionString $Obj[$_] ($IndentationLevel + 2)
-                $result += [Environment]::NewLine + "$prefix  '$_' = $value; "
+        elseif ($InputObject -is [String]) {
+            if ($InputObject -contains '`r' -or $InputObject -contains '`n') {
+                "$firstLineIdnentation@""$([Environment]::NewLine)$InputObject$([Environment]::NewLine)""@"
+            } else {
+                "$firstLineIdnentation'$InputObject'"
             }
-
-            $result = $result.Substring(0, $result.Length - 2)
-            $result += [Environment]::NewLine + "$prefix}"
-            $result
         }
-        elseif ($Obj -is [PSCustomObject]) {
-            $result = ""
+        elseif ($InputObject -is [SwitchParameter] -or $InputObject -is [Boolean]) {
+            "$firstLineIdnentation`$$InputObject"
+        }
+        elseif ($InputObject -is [IDictionary]) {
+            $InputObject.Keys | ForEach-Object {
+                $propertyName = ConvertTo-ExpressionString $_ @recursiveParams
+                $propertyValue = ConvertTo-ExpressionString $InputObject[$_] @recursiveParams
+                "$propertyName$itemsSpace=$itemsSpace$propertyValue"
+            } | Join-StringItems -Prefix '@{' -Suffix '}' -ItemSeparator ";" @joinParams
+        }
+        elseif ($InputObject -is [PSCustomObject]) {
+            $result = ''
 
-            if ($Obj.PSObject.TypeNames.Count -gt 0) {
-                $result += "<# "
-                $Obj.PSObject.TypeNames | ForEach-Object {
-                    if ($_ -ne "Selected.System.Management.Automation.PSCustomObject" -and
-                        $_ -ne "System.Management.Automation.PSCustomObject" -and
-                        $_ -ne "System.Object") {
-                        $result += "[$_], "
-                    }
+            $SkipObjectFirstLineIndentation = $SkipFirstLineIndentation
+            if (-not $Minify) {
+                $types = $InputObject.PSObject.TypeNames | Where-Object {
+                    $_ -ne "Selected.System.Management.Automation.PSCustomObject" -and
+                    $_ -ne "System.Management.Automation.PSCustomObject" -and
+                    $_ -ne "System.Object"
                 }
 
-                $result = $result.Substring(0, $result.Length - 2)
-                $result += " #>"
-                $result += [Environment]::NewLine
+                if ($types) {
+                    $SkipObjectFirstLineIndentation = $false
+                    $result = $types | ForEach-Object {
+                        "[$_]"
+                    } | Join-StringItems -Prefix '<#' -Suffix '#>' -ItemSeparator "," @joinParams
+
+                    if ($result) {
+                        $result += [Environment]::NewLine
+                    }
+                }
             }
 
-            $result += "@{"
-            Get-Member -InputObject $Obj -MemberType NoteProperty | ForEach-Object {
-                $value = $Obj | Select-Object -ExpandProperty $_.Name
-                $value = ConvertTo-ExpressionString $value ($IndentationLevel + 1)
-                $result += [Environment]::NewLine + "$prefix  '$($_.Name)' = $value; "
+            Get-Member -InputObject $InputObject -MemberType NoteProperty | ForEach-Object {
+                $name = $_.Name
+                $value = $InputObject | Select-Object -ExpandProperty $name | ConvertTo-ExpressionString @recursiveParams
+                "'$name'$itemsSpace=$itemsSpace$value"
+            } | Join-StringItems -Prefix '@{' -Suffix '}' -ItemSeparator ";" @joinParams -SkipFirstLineIndentation:$SkipObjectFirstLineIndentation
+        } elseif ($InputObject -is [IEnumerable]) {
+            $items = @()
+            foreach ($item in $InputObject) {
+                $items += ConvertTo-ExpressionString -InputObject $item @recursiveParams
             }
 
-            $result = $result.Substring(0, $result.Length - 2)
-            $result += [Environment]::NewLine + "$prefix}"
-            $result
-        }
-        elseif ($Obj -is [IEnumerable]) {
-            $result = "("
-            $Obj | ForEach-Object {
-                $value = ConvertTo-ExpressionString $_ ($IndentationLevel + 1)
-                $result += [Environment]::NewLine + "$prefix  $value, "
-            }
-
-            $result = $result.Substring(0, $result.Length - 2)
-            $result += [Environment]::NewLine + "$prefix)"
-            $result
-        }
-        else {
-            [String]$Obj
+            $items | Join-StringItems -Prefix '@(' -Suffix ')' -ItemSeparator "," @joinParams
+        } else {
+            [String]$InputObject
         }
     }
 }

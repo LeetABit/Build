@@ -24,20 +24,20 @@ $MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {
 }
 
 
-Register-BuildExtension -ExtensionName "LeetABit.Build.Git" -BuildInitializer {
-    param(
-        [String]
-        $SourceRoot
-    )
+# Register-BuildExtension -ExtensionName "LeetABit.Build.Git" -BuildInitializer {
+#     param(
+#         [String]
+#         $SourceRoot
+#     )
 
-    process {
-        # ? current task name?
+#     process {
+#         # ? current task name?
 
-        $version = Get-GitSemVer -Version1 -NoPreRelease
-        $prereleaseVersion = (Get-GitSemVer -Version1).Substring($version.Length)
-        $releaseNotes = Get-GitReleaseNotes
-        LeetABit.Build.Arguments\Add-CommandArgument -ParameterName 'LeetABit_Version' -ParameterValue $version
-        LeetABit.Build.Arguments\Add-CommandArgument -ParameterName 'LeetABit_PrereleaseVersion' -ParameterValue $prereleaseVersion
-        LeetABit.Build.Arguments\Add-CommandArgument -ParameterName 'LeetABit_ReleaseNotes' -ParameterValue $releaseNotes
-    }
-}
+#         $version = Get-GitSemVer -Version1 -NoPreRelease
+#         $prereleaseVersion = (Get-GitSemVer -Version1).Substring($version.Length)
+#         $releaseNotes = Get-GitReleaseNotes
+#         LeetABit.Build.Arguments\Add-CommandArgument -ParameterName 'LeetABit_Version' -ParameterValue $version
+#         LeetABit.Build.Arguments\Add-CommandArgument -ParameterName 'LeetABit_PrereleaseVersion' -ParameterValue $prereleaseVersion
+#         LeetABit.Build.Arguments\Add-CommandArgument -ParameterName 'LeetABit_ReleaseNotes' -ParameterValue $releaseNotes
+#     }
+# }

@@ -106,7 +106,7 @@ LeetABit.Build.Extensibility\Register-BuildTask "analyze" "rebuild", {
     }
 }
 
-LeetABit.Build.Extensibility\Register-BuildTask "test" "analyze", {
+LeetABit.Build.Extensibility\Register-BuildTask "test" {
     <#
     .SYNOPSIS
         Tests specified project.
@@ -117,6 +117,9 @@ LeetABit.Build.Extensibility\Register-BuildTask "test" "analyze", {
         $ProjectPath,
 
         [String]
+        $SourceRoot,
+
+        [String]
         $TestRoot,
 
         [String]
@@ -124,7 +127,7 @@ LeetABit.Build.Extensibility\Register-BuildTask "test" "analyze", {
     )
 
     process {
-        Test-Project -ProjectPath $ProjectPath -TestRoot $TestRoot -ArtifactsRoot $ArtifactsRoot
+        Test-Project -ProjectPath $ProjectPath -SourceRoot $SourceRoot -TestRoot $TestRoot -ArtifactsRoot $ArtifactsRoot
     }
 }
 

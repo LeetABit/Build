@@ -32,7 +32,11 @@
                         <CustomEntry>
                           <CustomItem>
                             <ExpressionBinding>
-                              <ScriptBlock>"$_.Name $_.Parameters: $_.Message"</ScriptBlock>
+                              <ScriptBlock>"$($_.Name)"</ScriptBlock>
+                            </ExpressionBinding>
+                            <NewLine/>
+                            <ExpressionBinding>
+                              <ScriptBlock>"  $($_.Message)"</ScriptBlock>
                             </ExpressionBinding>
                             <NewLine/>
                           </CustomItem>
@@ -51,7 +55,7 @@
         </CustomEntries>
       </CustomControl>
     </View>
-    <View>
+    <!-- <View>
       <Name>Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord-View</Name>
       <ViewSelectedBy>
         <TypeName>Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord</TypeName>
@@ -90,6 +94,6 @@
           </CustomEntry>
         </CustomEntries>
       </CustomControl>
-    </View>
+    </View> -->
   </ViewDefinitions>
 </Configuration>

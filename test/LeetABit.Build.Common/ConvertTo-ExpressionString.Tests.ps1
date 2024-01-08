@@ -1,6 +1,5 @@
 BeforeDiscovery {
     $script:scalarTestCases = @(
-        @{ InputObject = @(); Expected = '@()' }
         @{ InputObject = $Null; Expected = '$Null' }
         @{ InputObject = $True; Expected = '$True' }
         @{ InputObject = $False; Expected = '$False' }
@@ -23,6 +22,147 @@ BeforeDiscovery {
             @{ InputObject1 = $left.InputObject; InputObject2 = $right.InputObject; Expected1 = $left.Expected; Expected2 = $right.Expected }
         }
     }
+
+    $script:Variable = 'Variable'
+    $script:complexObject = @{
+        NullProperty = $Null
+        Empties = @(
+            @()
+            @{}
+        )
+        BooleanProperties = @(
+            $True,
+            $False
+        )
+        NumericProperties = @{
+            Zero = 0
+            Negative = -1337
+            Exponent = 1E50
+            Double = 3.14159
+            SmallPositiveExponent = 2.1E5
+            SmallNegativeExponent = 9E-2
+        }
+        StringProperty = @{
+            Empty = ''
+            Regular = 'Regular'
+            Controls = "`0`a`b`e`f`n`r`t`v"
+            FakeControls = '`0`a`b`e`f`n`r`t`v`"'
+            Mixed = "`1```'`"` `0`a`b`e`f`n`r`t`v"
+            Digit = '0'
+        }
+        ' ' = 'Space'
+        "`t" = 'Tab'
+        "`n" = 'NewLine'
+        "`b" = 'Backspace'
+        '`' = 'Backtick'
+        $script:Variable = '$script:Variable'
+        '$variable' = '$variable'
+        Ordered = [Ordered]@{
+            Z = 'Z'
+            A = 'A'
+        }
+        'SimplePSObject' = [PSObject]@{
+            Property = 'Value'
+        }
+        'TyppedPSObject' = New-PSObject 'CustomType','1Additional.Type' @{
+            Property = 'Value'
+        }
+        Enums = @(
+            [System.AttributeTargets]::Assembly -or [System.AttributeTargets]::Class
+            [System.ConsoleColor]::Black
+        )
+        'Equals=' = 'Equals'
+    }
+
+    $script:complexObjectExpression = @"
+@{
+    NullProperty = `$Null
+    BooleanProperties = @(
+        `$True
+        `$False
+    )
+    NumericProperties = @{
+        Zero = 0
+        Negative = -1337
+        Exponent = 1E+50
+        Double = 3.14159
+        SmallPositiveExponent = 210000
+        SmallNegativeExponent = 0.09
+    }
+    StringProperty = @{
+        Empty = ''
+        Regular = 'Regular'
+        Controls = "``0``a``b``e``f``n``r``t``v"
+        FakeControls = '``0``a``b``e``f``n``r``t``v``"'
+        Mixed = '1````'" ``0``a``b``e``f``n``r``t``v'
+    }
+    ' ' = 'Space'
+    "``t" = 'Tab'
+    "``n" = 'NewLine'
+    "``b" = 'Backspace'
+    '```' = 'Backtick'
+    Variable = '`$script:Variable'
+    '`$variable' = '`$variable'
+    Ordered = [Ordered]@{
+        Z = 'Z'
+        A = 'A'
+    }
+    'SimplePSObject' = [PSObject]@{
+        Property = Value
+    }
+    'TyppedPSObject' = New-PSObject 'CustomType','1Additional.Type' @{
+        Property = Value
+    }
+    Enums = @(
+        [System.AttributeTargets]::Assembly -or [System.AttributeTargets]::Class
+        [System.ConsoleColor]::Black
+    )
+    'Equals=' = 'Equals'
+}
+"@
+$script:complexObjectExpressionMinified = '@{' +
+    'NullProperty=$Null;' + 
+    'BooleanProperties=@(' +
+        '$True,' +
+        '$False' +
+    ');' +
+    'NumericProperties=@{' +
+        'Zero=0;' +
+        'Negative=-1337;' +
+        'Exponent=1E+50;' +
+        'Double=3.14159;' +
+        'SmallPositiveExponent=210000;' +
+        'SmallNegativeExponent=0.09' +
+    '};' + 
+    'StringProperty=@{' +
+        "Empty='';" +
+        "Regular='Regular';" +
+        "Controls=`"``0``a``b``e``f``n``r``t``v`";" +
+        "FakeControls='``0``a``b``e``f``n``r``t``v```";" +
+        "Mixed='1````'`" ``0``a``b``e``f``n``r``t``v'" +
+    "};" +
+    "' '='Space';" +
+    "`"``t`"='Tab';" +
+    "`"``n`"='NewLine';" +
+    "`"``b`"='Backspace';" +
+    "'``'='Backtick';" +
+    "Variable='`$script:Variable';" +
+    "'`$variable'='`$variable';" +
+    "Ordered=[Ordered]@{" +
+        "Z='Z';" +
+        "A='A'" +
+    "};" +
+    "SimplePSObject=[PSObject]@{" +
+        "Property='Value'" +
+    "};" +
+    "TyppedPSObject=New-PSObject 'CustomType','1Additional.Type' @{" +
+        "Property='Value'" +
+    "};" +
+    "Enums=@(" +
+        "[System.AttributeTargets]::Assembly -or [System.AttributeTargets]::Class," +
+        "[System.ConsoleColor]::Black" +
+    ")" +
+"}"
 }
 
 Describe 'ConvertTo-ExpressionString <InputObject>' -ForEach $scalarTestCases {
@@ -76,5 +216,19 @@ Describe "ConvertTo-ExpressionString @{ 'Property 1' = @{ 'Property 1' = <InputO
         $inputObject['Property 2'] = $null
         $result = ConvertTo-ExpressionString -InputObject $inputObject
         $result | Should -Be "@{$([Environment]::NewLine) 'Property 1' = @{$([Environment]::NewLine)  'Property 1' = $Expected1$([Environment]::NewLine)  'Property 2' = $Expected2$([Environment]::NewLine) }$([Environment]::NewLine) 'Property 2' = `$Null$([Environment]::NewLine)}"
+    }
+}
+
+Describe "ConvertTo-ExpressionString complex" -ForEach @($complexObject) {
+    It "Returns complex" {
+        $result = ConvertTo-ExpressionString -InputObject $script:complexObject
+        $result | Should -Be $script:complexObjectExpress
+    }
+}
+
+Describe "ConvertTo-ExpressionString complex" {
+    It "Returns complex" {
+        $result = ConvertTo-ExpressionString -InputObject $script:complexObject -Minify
+        $result | Should -Be $script:complexObjectExpressionMinified
     }
 }
